@@ -1,0 +1,420 @@
+
+"ok" = "OK";
+"cancel" = "Cancel";
+//ARCoordinate
+
+"phone" = "phone";
+"mission_complete" = "[Mission Complete]";
+
+//ARViewController
+"mission_completed" = "Mission Complete!";
+"finish_time" = "End Time";
+"mission_quiz" = "Mission Quiz Open!";
+"obtain_fail" = "Item Not Acquired!";
+"obtain_fail_message_0" = "Run Start item has not been acquired.";
+"obtain_fail_message_1" = "This Run End is not available.\n Acquire other Run End items";
+"obtain_fail_message_2" = "";
+"obtain_fail_message_3" = "sec has passed";
+"obtain_correct" = "Solution Item acquired!";
+"obtain_correct_message" = "You can get an answer \n if you win mission quiz or quiz item.";
+"obtain_hint" = "Hint Item acquired!";
+"obtain_no_hint" = "Lose the draw!! No hint.";
+"obtain_random_success" = "Gambling acquired!";
+"obtain_random_success_message" = "You can get one of the items \n that are not yet won at random";
+"obtain_random_fail" = "Gambling Fail!";
+"obtain_random_fail_message" = "There are no item that can get by Gambling item. \n End item is not allowed to get by random winning";
+"save_fail" = "Server Not Conneted!";
+"save_fail_message" = "Try again this Mission!";
+"radius_of_visibility" = "Visible range";
+"obtain_run_start" = "Run Start Item acquired!";
+"obtain_run_start_info" = "Acquire Run End Item in time limit";
+"obtain_success" = "%@ Item acquired!";
+"obtain_run_record" = "Time Record %@";
+"obtain_start_message" = "If you touch OK, \n the item will be released Mission.";
+"obtain_radar_ar" ="You'll see the distance and direction of the item that has Stealth attribute in Augmented Reality screen.";
+"obtain_radar_map" =  "It shows the item that has Hidden attribute in the map.";
+"obtain_radar_mine" =  "It shows the exploding radius of Mine item in the map.";
+"obtain_mine_nobomb" =  "the damage of Mine can be avoided if you win Defense item.";
+
+"ar_clear1" = "Stealth disvoery!";
+"ar_clear2" = "Stealth Radar needed!";
+"ar_tip1" = "The distance of closest item is displayed. In case of the item that has Stealth attribute, its distance will not be shown";
+"ar_tip2" = "It is the visibility range in which the item can be seen in AR screen. Only the item that is in the visibility range can be seen and won";
+"ar_tip3" =  "Fit the hour hand(item direction) into the fan shape(phone direction). Item will be shown in AR screen once item comes into the visibility range. Shake to win!!!";
+// Bulletin
+
+"obtain_badge" = "Badge acquired!";
+"obtain_badge_fail" = "Item acquisition conditions";
+"obtain_badge_success_message_0" = "Mission Badge acquired.";
+"obtain_badge_success_message_1" = "Mission Play Badge acquired.";
+"obtain_badge_success_message_2" = "Mission Design Badge acquired..";
+"obtain_badge_fail_message_0" = "You can collect Badge if you complete Mission";
+"obtain_badge_fail_message_2" = "You can acquire Badge if you complete %d Missions";
+"obtain_badge_fail_message_3" = "You can acquire Badge if you design %d Missions";
+
+//GamePlayAlert
+
+"success" = "Congratulation!";
+"success_message" = "Game Passed!";
+
+//Login.m
+
+
+"success_login" = "Login Success!";
+"success_login_message" = "You can use this service.";
+"fail_login" = "Login Fail!";
+"fail_login_message" = "Try again";
+
+//Mission Builder
+"item_message" = " Item  DisPlay  Visible Range";
+"Current Location" = "Current Location";
+"builder_item_hint" = " Item Touch:Setting, Item Drag:Move";
+
+//MissionBuiderINfo
+"data_check_title_0" = "No Mission Title";
+"data_check_message_0" = "Enter a Mission title";
+
+"data_check_title_1" = "No Mission Description";
+"data_check_message_1" = "Enter a mission description.";
+
+"data_check_title_2" = "No Mission Place";
+"data_check_message_2" = "Enter a mission location that will be easily recognized by users. E.g. Disneyland, Lake Park, etc.";
+
+"data_check_title_2_0" = "No Badge";
+"data_check_message_2_0" = "Set to the badge of Mission Symbol";
+
+
+"data_check_title_3" = "Set up more than 3 Items";
+"data_check_message_3" = "Please set items on the map by tapping.\n Mission requires at least Start Item and End Item.";
+
+"data_check_title_5" = "No Run End time limit";
+"data_check_message_5" = "Touch the Run End item and \n Set Time Limt in the detail setup \n Please refer to the distance and set time limit.";
+
+"data_check_title_8" = "No Set End item";
+"data_check_message_8" = "Please set 1 End Item on the map by tapping";
+
+"data_check_title_9_0" = "End Item Number : %d";
+"data_check_message_9" = "Mission requires a only one End Item \n Touch the End item and \n delete End Item in the detail setup";
+
+"data_check_title_10" = "No set Start Item";
+"data_check_message_10" = "Touch the map and set Start Item \n Mission requires a one Start Item";
+
+"data_check_title_11_0" = "Start Item Number : %d";
+"data_check_message_11" = "Only one start item is needed that indicates the beginning of a mission. \n Delete the item after you choose it in the detail setup.";
+
+"data_check_title_12" = "No Quiz Item Questions";
+"data_check_message_12" = "Touch the Quiz item and \n Enter detail setup and add your quiz questions";
+
+"data_check_title_13" = "No Quiz Item Answer";
+"data_check_message_13" = "Touch the Quiz item and \n Add your quiz answer in the detail setup";
+
+"data_check_title_14" = "No set Stealth Radar";
+"data_check_message_14" = "You've got to add Stealth radar \n in case you've added the item that has Stealth display attribute";
+
+"data_check_title_15" = "No Mission Time Limt";
+"data_check_message_15" = "configure suitable time to make the mission more interesting \n set up the time to more than 5 minutes";
+
+"data_check_title_16" = "Error Mission Time Limt";
+"data_check_message_16" = "Mission time limit should be set to 5 minutes.";
+
+//mission BuiderDetail
+
+"data_title" = "No Quiz Questions";
+"data_message" = "A quiz item requires at least one question.\n Enter a quiz question.";
+
+"builer_word_0" = "Basic Item Info";
+"builer_word_1" = "Item Type";
+
+"builer_word_2" = "Display Type?";
+"builer_word_3" = "Explosion Range";
+"builer_word_4" = "Hidden Item Range";
+
+"builer_word_5" = "Mandatory?";
+"builer_word_6" = "Display Type?";
+"builer_word_7" = "Visible Range";
+
+"builer_word_8" = "Additional Item Info";
+
+"builer_word_9" = "Charging Time";
+"builer_word_10" = "Initial Power";
+
+"builer_word_11" = "Run Start Number";
+"builer_word_12" = "Straight Distance";
+"builer_word_13" = "Time Limit";
+
+"builer_word_14" = "Enter instructions or a message.";
+
+"builer_word_15" = "Game";
+
+"builer_word_16" = "Item Quiz";
+"builer_word_17" = "Enter a quiz question";
+"builer_word_18" = "Answer";
+"builer_word_19" = "Enter a quiz answer";
+
+"builer_word_20" = "The probablity of (1 / additional times) will be applied during the mission play.";
+"builer_word_21" = "Add Quiz";
+
+"builer_word_22" = "Run Start Num";
+
+"builer_word_23" = "Enter a hint about Mission Quiz";
+"builer_word_24" = "Enter a message when Item acquired(option)";
+
+//missionBuilderInfo
+
+"info_word_0" = "Mission Setup";
+
+"info_word_title_0" = "Mission Title";
+"info_word_message_0" = "Enter a mission Title.";
+
+"info_word_title_1" = "Mission Description";
+"info_word_message_1" = "Enter a detailed mission description.";
+
+"info_word_title_2" = "Place";
+"info_word_message_2" = "Enter a place that can be easily recognized";
+
+"info_word_title_3" = "Mission Quiz";
+"info_word_message_3" = "Enter a mission quiz";
+
+"info_word_title_4" = "Answer";
+"info_word_message_4" = "Enter the correct mission answer";
+
+"info_word_1" = "Virtual Mode?";
+"info_word_2" = "Time Limit";
+
+"info_word_3" = "Mission Badge Setup";
+"info_word_4" = "Set to the badge of Mission Symbol";
+
+"info_section_3" = " You can play only where you \n created the mission if you are Virtual Mode off";
+
+"info_check_title_3" = "No Mission Quiz answers";
+"info_check_message_3" = "Enter the correct mission answer";
+
+//MissionListDetailController
+
+"detail_0" = "Notice";
+"detail_1" = "An item has been added. Start again.";
+
+"detail_2" = "Mission not open";
+"detail_3" = "Mission has not been opened yet.";
+
+"detail_5" = "Virtual mode to be run from mission creation place. Real mode to be run from based on current location of the user. If you in virtual mode, depending on the terrain may be difficult to play.";
+
+"detail_7" = "continue";
+"detail_8" = "New start";
+"detail_start" = "Mission Start";
+
+"detail_9" = "Virtual Mode";
+"detail_10" = "Real Mode";
+
+"detail_11" = "More Information";
+
+"detail_info_0" = "Mission Title";
+"detail_info_1" = "Mission Description";
+"detail_info_2" = "Mission Place";
+"detail_info_3" = "Best Record";
+"detail_info_4" = "Mission Play Record";
+"detail_info_5" = "Mission Create Date : %@";
+"detail_info_6" = "My Play Time";
+"detail_info_7" = "Number of item in mission";
+"detail_info_8" = "Total : (%d) Mandatory : (%d)";
+
+"locationDenied_msg" = "Not available location services";
+"locationDenied_title" ="It cannot be used in case LBS is turned off.\n Turn on the Location Services in Iphone Setting.";
+//MissionPlay
+
+//"mission_play_0" = "  Mine    Mandatory                Hide Map   Stealth";
+"mission_play_0" = "  Mine    Mandatory                  Hidden     Stealth";
+
+"mission_play_1" = " Run Time Limit:";
+"mission_play_2" = " Elapsed time:";
+
+"mission_play_3" = "Mission Failed!";
+"mission_play_4" = "Time Limit";
+
+"mission_play_button_0" = "Mission Exit";
+"mission_play_button_1" = "Buy Time Item";
+"mission_play_button_2" = "Time Incrase";
+
+"mission_play_time_0" = "Use time incrase item";
+"mission_play_time_1" = "Do you want to use the time increase item? \n (you have %d item)";
+
+"mission_play_finish1" = "Time Record: %@";
+"mission_play_finish2" = "Congratulation!\n Please Rate the Mission.";
+
+"mission_play_6" = "Mine did not damage using Defense item";
+"mission_play_7" = "The most recently acquired %@ item has been lost.";
+"mission_play_8" = "A mine has exploded!";
+
+"mission_play_9" = "Run End Item Not Acquired!!";
+"mission_play_10" = "Time Limit";
+
+"mission_play_test1" = "Mission Complete!";
+"mission_play_test2" = "Congratulation!\n Mission can be uploaded!";
+
+
+"mission_play_tip_1" = "It displays the number of mines left.\n Mine item is not shown in map and AR screen";
+"mission_play_tip_2" = "It displays the number of mandatory items left to complete the mission.";
+"mission_play_tip_3" = "It displays the number of Transparent items which are not shown in map screen";
+"mission_play_tip_4" = "It displays the number of Stealth items which are not shown in the Radar information in AR screen.";
+
+"mission_play_exit_title" = "Mission Complete";
+"mission_play_exit_message" = "Are you sure you want to exit the mission?";
+
+// MissionPlayInfo
+
+"mission_info_0" = "Mission Title";
+"mission_info_1" = "Mission Description";
+
+"mission_info_2" = "Mission Information";
+"mission_info_3" = "Mission Quiz";
+"mission_info_4" = "Mission time limit";
+"mission_info_5" = "Time limit";
+
+"mission_info_6" = "Inventory Items";
+"mission_info_7" = "Gold";
+"mission_info_8" = "Silver";
+"mission_info_9" = "Bronze";
+
+"mission_info_10" = "Player Ranking";
+
+//PwdChg
+
+"pwd_0" = "Error mandatory field!";
+"pwd_1" = "enter current password.";
+"pwd_2" = "Enter new password";
+"pwd_3" = "password missmatch!";
+"pwd_4" = "password missmatch.";
+"pwd_5" = "Error change password!";
+"pwd_6" = "Try again later.";
+"pwd_7" = "Chage Success!";
+"pwd_8" = "Use login.";
+
+
+// QuizPlayAlert
+
+"quiz_0" = "Hint : [The number of letters:%d]";
+"quiz_1" = "Hint : [The number of letters:%d][first letter:%@]";
+"quiz_2" = "Use Solution!";
+"quiz_message_0" = "Would you like to use Solution Item?";
+"quiz_message_1" = "Would you like to use a pay item? (%d Items left)";
+
+"quiz_4" = "Success!";
+"quiz_5" = "That's Great!";
+"quiz_6" = "Wrong Answer!";
+"quiz_7" = "Would you like to challenge again? \n If you acquire an solution item you can know the answer!";
+"quiz_8" = "Try Again";
+"quiz_9" = "Quiz : %@";
+"quiz_10" = "Try later.";
+
+"quiz_button_0" = "Solution Item";
+"quiz_button_1" = "Use Solution";
+"quiz_button_2" = "Buy Solution";
+//TextAlertView
+
+"text_alert_0" = "Please reply to Mission";
+
+
+//userReg
+
+"user_reg_0" = "Password Error!";
+"user_reg_1" = "Please enter a valid mail address.";
+"user_reg_2" = "Please enter a password at least 4 characters.";
+"user_reg_3" = "Password Error!";
+"user_reg_4" = "Passwords do not match.";
+"user_reg_5" = "Registration Error!";
+"user_reg_6" = "Registration Complete!";
+"user_reg_7" = "Auto Login...";
+"user_reg_8" = "Mail Error!";
+
+// bulletin 
+
+"bulletin_title" = "Badge List";
+"mission_badge" = "Mission Badge";
+"play_badge" = "Play Badge";
+"desig_badge" = "Design Badge";
+
+
+// myInfo 
+
+"my_title" = "My Information";
+"user_id" = "User ID";
+"design_mission" = "Desgned Mission";
+"play_mission" = "Played Mission";
+
+"my_info_0" = "Inventory";
+"my_info_1" = "Time increase";
+"my_info_2" = "Quiz Solution";
+"my_info_3" = "%d";
+"my_info_4" = "Buy";
+// mission list
+
+"m_list_0" = "Popular Mission";
+"m_list_1" = "New Mission";
+"m_list_2" = "Near Mission";
+
+"m_list_3" = "Playing Mission List";
+"m_list_4" = "Popular Mission List";
+"m_list_5" = "New Mission List";
+"m_list_6" = "Near Mission List";
+
+
+//setting
+"setting_title0" = "Tutorial";
+"setting_title1" = "Help";
+"setting_title2" = "Send mail";
+"setting_title3" = "Would you like to send mail \n for errors or Suggestions?";
+// missionBuiler List 
+
+"builer_list_title" = "Mission Design";
+
+"builer_list_pop1" = "Modify or Test?";
+"builer_list_pop2" = "You can upload on the server if you can finish designed mission testing";
+"builer_list_pop3" = "Modify";
+"builer_list_pop4" = "Test";
+
+"builer_list_pop11" = "Modify or Test?";
+"builer_list_pop12" = "You can upload on the server if you finished designed mission testing";
+"builer_list_pop13" = "Modify";
+"builer_list_pop14" = "Server upload";
+
+
+//MissionlnfoAlertview
+
+"m_info_alert_0" = "Mission Title";
+"m_info_alert_1" = "Mission Description";
+"m_info_alert_2" = "Top time record";
+"m_info_alert_3" = "Mission Quiz";
+"m_info_alert_4" = "Quiz Hint";
+"m_info_alert_5" = "Inventory";
+
+//NSLocalizedString(@"ok", nil)
+
+// purchsas
+
+"purchase_0" = "Completing your purchase";
+"purchase_1" = "Purchase has been completed.";
+"purchase_2" = "Failure purchase";
+"purchase_3" = "Purchase failed.";
+"purchase" = "Preparing purchase..";
+
+//AppDel
+"appDel_game0" = "None";
+"appDel_game1" = "Beginer Level";
+"appDel_game2" = "Normal Level";
+"appDel_game3" = "Senior Level";
+"appDel_option" = "Option";
+"appDel_mandatory" = "Mandatory";
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,51 @@
+//
+// Prefix header for all source files of the 'TreasureHunter' target in the 'TreasureHunter' project
+//
+
+#ifdef __OBJC__
+#import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
+#endif
+
+#ifdef DEBUG
+#define NSLog( s, ... ) NSLog( @"<%p %@:(%d)> %@", self, [[NSString stringWithUTF8String:__FILE__] lastPathComponent], __LINE__, [NSString stringWithFormat:(s), ##__VA_ARGS__] )
+#else
+#define NSLog( s, ... )
+#endif
+
+#define APPDEL (TreasureHunterAppDelegate *)[[UIApplication sharedApplication] delegate]
+#define BASEURL [NSURL fileURLWithPath:[[NSBundle mainBundle] bundlePath]]
+
+#define RGB(r, g, b) [UIColor colorWithRed:r/255.0 green:g/255.0 blue:b/255.0 alpha:1]
+#define RGBA(r, g, b, a) [UIColor colorWithRed:r/255.0 green:g/255.0 blue:b/255.0 alpha:a]
+
+#define UIColorFromRGB(rgbValue) [UIColor colorWithRed:((float)((rgbValue & 0xFF0000) >> 16))/255.0 green:((float)((rgbValue & 0xFF00) >> 8))/255.0 blue:((float)(rgbValue & 0xFF))/255.0 alpha:1.0]
+//사용법: UIColor color = UIColorFromRGB(0xF7F7F7);
+
+enum {  
+    DESIGNING,
+    TESTED,
+    SERVER_UPLOAD,
+    FIRST_DESIGN //빌더에서 처음 디자인된 미션 삭제용으로 사용
+};
+//아이템 획득 필수 여부
+enum  {
+	MANDATORY_N,      
+	MANDATORY_Y
+};
+enum {
+    REAL_MODE,
+    VIRTUAL_MODE
+};
+/*
+ //Start,End 아이템 존재 여부
+ enum  {
+ NONE,
+ BOTH,
+ START,
+ END,
+ 
+ }
+ */
+
+

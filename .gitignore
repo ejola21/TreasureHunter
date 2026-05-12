@@ -1,0 +1,26 @@
+# macOS
+.DS_Store
+._*
+
+# Subversion
+.svn/
+
+# Xcode
+build/
+DerivedData/
+*.xcuserdata
+*.xcworkspace
+xcuserdata/
+
+# Provisioning profiles
+*.mobileprovision
+
+# User-specific
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
