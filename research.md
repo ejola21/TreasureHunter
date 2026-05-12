@@ -673,41 +673,410 @@ AcquiredTime TEXT     -- 획득 시간
 
 ### 8.1 HTTPRequest 아키텍처
 
-- **비동기** NSURLConnection 기반
-- **타임아웃**: 5초
-- **Base URL**: `http://nexapp.co.kr/playspot/J_MyList.php`
+- **비동기** NSURLConnection 기반 (delegate 패턴)
+- **동기** NSURLConnection `sendSynchronousRequest` 사용
 - **메서드**: 모든 요청이 POST (REST가 아닌 트랜잭션 코드 기반)
-- **인코딩**: NSDictionary → URL-encoded form body
+- **인코딩**: UTF-8, URL-encoded form body (`param1=value1&param2=value2`)
+- **인증**: 세션/토큰 없음. 요청마다 user_id 전송, 비밀번호는 MD5 해시 후 전송
+- **응답 형식**: 대부분 JSON (SBJsonParser), 일부 단순 문자열 ("SUCCESS" / "FAIL")
 
-### 8.2 트랜잭션 코드 목록
+```objc
+// HTTPRequest.h - 비동기 요청
+- (void)requestAsyncPOST:(NSURL *)url
+              parameters:(NSString *)params
+                delegate:(id)delegate
+                callback:(SEL)callback;
 
-| 코드 | 용도 | 주요 파라미터 |
-|------|------|-------------|
-| 200 | 미션 상세 조회 | missionID |
-| 300 | 미션 리뷰/댓글 | missionID |
-| 500 | 플레이 중 미션 목록 | last, lang |
-| 501 | 공개 미션 목록 | last, lang, lat, lon |
-| 502 | 내 디자인 목록 | last, lang |
-| 503 | 튜토리얼 미션 | gb (언어) |
-| 600 | 디자인 미션 수 | id |
-| 601 | 플레이 미션 수 | id |
-| 602 | 현재 게임 목록 | id |
-| 800 | 로그인 | user_id, password(MD5) |
-| tr_user_reg | 회원가입 | user_id, password(MD5) |
-
-### 8.3 미션 다운로드 응답 형식
-
+// HTTPRequest.h - 동기 요청
+- (NSString *)requestSyncPOST:(NSURL *)url
+                   parameters:(NSString *)params;
 ```
-M{미션JSON}^I{아이템JSON배열}^Q{퀴즈JSON배열}
+
+**타임아웃:**
+| 모드 | 시간 | 캐시 정책 |
+|------|------|----------|
+| 비동기 | 5초 | `NSURLRequestUseProtocolCachePolicy` |
+| 동기 | 30초 | `NSURLRequestReturnCacheDataElseLoad` |
+
+### 8.2 서버 URL 목록
+
+| 용도 | URL |
+|------|-----|
+| 메인 API | `http://nexapp.co.kr/playspot/J_MyList.php` |
+| 미션 랭킹 | `http://nexapp.co.kr/playspot/mission_play_info.php` |
+| 비밀번호 변경 | `http://nexapp.co.kr/playspot/user.php` |
+| 이미지 업로드 | `http://nexapp.co.kr/playspot/image_save.php` |
+| 유저 정보 관리 | `http://mking.elogin.co.kr/xe/user.php` |
+| 뱃지 이미지 | `http://nexapp.co.kr/playspot/badge/{ImageName}.png` |
+
+### 8.3 API 상세 인터페이스 (전체 트랜잭션 코드)
+
+---
+
+#### TR=200 — 미션 상세 다운로드
+
+| 항목 | 값 |
+|------|-----|
+| URL | `J_MyList.php` |
+| Method | POST |
+
+**Request:**
 ```
-- `^` 구분자로 섹션 분리
-- M = Mission, I = Items, Q = Quizzes
-- SBJsonParser로 각 섹션 파싱
+tr=200&missionID={missionID}
+```
 
-### 8.4 이미지 서버
+**Response:** `^` 구분자로 분리된 멀티파트 포맷
+```
+^M{"MissionID":"...","Title":"...","Description":"...","Place":"...","Designer":"...", ...}
+^I[{"ItemID":1,"Mandatory":0,"ItemType":"40","Latitude":37.5,"Longitude":127.0, ...}, ...]
+^Q[{"Seq":1,"Quiz":"질문","Answer":"정답","Probability":100}, ...]
+```
 
-- **배지 다운로드**: `http://nexapp.co.kr/playspot/badge/{missionID}.png`
-- **배지 업로드**: `http://nexapp.co.kr/playspot/image_save.php` (multipart form-data)
+**파싱 로직:**
+1. 응답을 `^`로 split
+2. 각 라인의 첫 글자(M/I/Q) 확인
+3. index 1부터 substring → JSON 파싱
+
+**Mission 응답 필드:**
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| MissionID | String | 미션 고유 ID |
+| Title | String | 미션 제목 |
+| Description | String | 미션 설명 |
+| Place | String | 장소명 |
+| Designer | String | 디자이너 ID |
+| RunLimitTime | String | 제한 시간 |
+| Status | Int | 상태 (DESIGNING=0, TESTED=1, SERVER_UPLOAD=2) |
+| Quiz | String | 미션 퀴즈 |
+| Answer | String | 미션 답 |
+| Virtual | Int | 가상모드 지원 (0/1) |
+| WriteDate | String | 작성일 |
+| PlayCnt | Int | 플레이 수 |
+| FailCnt | Int | 실패 수 |
+| RecommendCnt | Int | 추천 수 |
+| RecommendAvg | Int | 평균 평점 |
+| ShortUser1~3 | String | 랭킹 유저명 |
+| ShortRecord1~3 | String | 랭킹 기록 |
+
+**MissionItem 응답 필드:**
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| ItemID | Int | 아이템 ID |
+| Mandatory | Int | 필수 여부 (0=N, 1=Y) |
+| ItemType | String | 아이템 타입 코드 ("40"=퀴즈, "49"=출발 등) |
+| Latitude | Double | 위도 |
+| Longitude | Double | 경도 |
+| BlackCnt | Int | 감점 횟수 |
+| BlackTime | Int | 감점 시간(초) |
+| RangeAR | Int | AR 표시 범위(m) |
+| ShowType | String | 표시 타입 (Normal/Hidden/Stealth/Transparent) |
+| EffectiveTime | Int | 유효 시간(초) |
+| EffectiveRange | Int | 유효 범위(m) |
+| ItemGame | Int | 미니게임 종류 |
+| Info | String | 아이템 정보/힌트 |
+| RelationItemID | Int | 연관 아이템 ID |
+
+**ItemQuiz 응답 필드:**
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| Seq | Int | 퀴즈 순서 |
+| Quiz | String | 퀴즈 문제 |
+| Answer | String | 정답 |
+| Probability | Int | 출제 확률(%) |
+
+---
+
+#### TR=300 — 미션 댓글 조회
+
+| 항목 | 값 |
+|------|-----|
+| URL | `J_MyList.php` |
+
+**Request:**
+```
+tr=300&missionID={missionID}
+```
+
+**Response:** JSON 배열
+```json
+[{"MReply": "재미있어요!"}, {"MReply": "추천합니다"}]
+```
+
+---
+
+#### TR=400 — 미션 리뷰/평점 등록
+
+| 항목 | 값 |
+|------|-----|
+| URL | `J_MyList.php` |
+
+**Request:**
+```
+tr=400&MID={missionID}&UID={userID}&Score={평점float}&Reply={리뷰텍스트}
+```
+
+**Response:** 없음 (fire-and-forget)
+
+---
+
+#### TR=500 — 미션 목록 (전체)
+
+| 항목 | 값 |
+|------|-----|
+| URL | `J_MyList.php` |
+
+**Request:**
+```
+tr=500&last={페이지커서}&lang={언어코드}
+```
+- `last`: 페이지네이션 커서 (정수, 0부터 시작)
+- `lang`: `NSUserDefaults`의 `AppleLanguages[0]`
+
+**Response:** JSON 배열 (Mission 객체 목록)
+
+---
+
+#### TR=501 — 미션 목록 (위치 기반)
+
+**Request:**
+```
+tr=501&last={커서}&lang={언어}&latitude={위도}&longitude={경도}
+```
+
+**Response:** JSON 배열 (근처 미션 목록)
+
+---
+
+#### TR=502 — 미션 목록 (탭1)
+
+**Request:**
+```
+tr=502&last={커서}&lang={언어}
+```
+
+**Response:** JSON 배열
+
+---
+
+#### TR=503 — 튜토리얼 미션 목록
+
+**Request:**
+```
+tr=503&gb={지역코드}
+```
+- `gb`: 한국어 `"0%"`, 기타 `"1%"`
+
+**Response:** JSON 배열 (튜토리얼 미션 목록)
+
+---
+
+#### TR=600 — 내가 디자인한 미션 목록
+
+**Request:**
+```
+tr=600&id={userID}
+```
+
+**Response:** JSON 배열 (`MissionID` 필드 포함)
+
+---
+
+#### TR=601 — 내가 플레이한 미션 목록
+
+**Request:**
+```
+tr=601&id={userID}
+```
+
+**Response:** JSON 배열 (`MissionID` 필드 포함)
+
+---
+
+#### TR=602 — 현재 플레이 중인 미션 목록
+
+**Request:**
+```
+tr=602&id={userID}
+```
+
+**Response:** JSON 배열
+
+---
+
+#### TR=700 — 미션 서버 업로드
+
+**Request:**
+```
+tr=700
+&mission={missionID}}}{mTitle}}}{mDescription}}}{mPlace}}}{mDesigner}}}{mRunLimitTime}}}{mStatus}}}{mQuiz}}}{mAnswer}}}{mVirtual}}}{mLang}}}{mWriteDate}
+&missionItem={missionID}}}{itemID}}}{mandatory}}}{itemType}}}{latitude}}}{longitude}}}{blackCnt}}}{blackTime}}}{rangeAR}}}{showType}}}{effectiveRange}}}{effectiveTime}}}{itemGame}}}{info}}}{relationItemID}}}{writeDate}**{다음아이템...}
+&itemQuiz={missionID}}}{itemID}}}{seq}}}{quiz}}}{answer}}}{probability}**{다음퀴즈...}
+```
+
+- 필드 구분자: `}}}` (닫는 중괄호 3개)
+- 레코드 구분자: `**` (아이템/퀴즈 간)
+
+**Response:** `"SUCCESS"` 문자열
+
+---
+
+#### TR=800 — 로그인
+
+**Request:**
+```
+tr=800&user_id={이메일}&password={MD5해시}
+```
+
+**Response:** `"SUCCESS"` 또는 오류 메시지
+
+---
+
+#### TR=tr_user_reg — 회원가입
+
+| 항목 | 값 |
+|------|-----|
+| URL | `J_MyList.php` |
+
+**Request:**
+```
+tr=tr_user_reg&user_id={이메일}&password={MD5해시}
+```
+
+**Response:** `"SUCCESS"` 또는 오류 메시지
+
+---
+
+#### TR=tr_pwd_chg — 비밀번호 변경
+
+| 항목 | 값 |
+|------|-----|
+| URL | `user.php` |
+
+**Request:**
+```
+tr=tr_pwd_chg&user_id={이메일}&old_password={MD5}&new_password={MD5}
+```
+
+**Response:** `"SUCCESS"`
+
+---
+
+#### TR=tr_user_sel — 유저 정보 조회
+
+| 항목 | 값 |
+|------|-----|
+| URL | `http://mking.elogin.co.kr/xe/user.php` |
+
+**Request:**
+```
+tr=tr_user_sel&user_id={userID}
+```
+
+**Response:** 유저 데이터 (JSON)
+
+---
+
+#### TR=tr_user_chg — 유저 정보 수정
+
+| 항목 | 값 |
+|------|-----|
+| URL | `http://mking.elogin.co.kr/xe/user.php` |
+
+**Request:**
+```
+tr=tr_user_chg&user_id={userID}&password={MD5}&email_addr={이메일}&phone_no={전화번호}
+```
+
+**Response:** `"SUCCESS"`
+
+---
+
+#### TR=c_mission_play_start — 미션 플레이 시작
+
+**Request:**
+```
+tr=c_mission_play_start&mission_play={missionID},{playerID},{startTime},{isVirtualMode}
+```
+
+---
+
+#### TR=c_mission_play_finish — 미션 완료
+
+**Request:**
+```
+tr=c_mission_play_finish&mission_play={missionID},{playerID},{endTime},{isVirtualMode}
+```
+
+---
+
+#### TR=c_mission_play_fail — 미션 실패
+
+**Request:**
+```
+tr=c_mission_play_fail&mission_play={missionID},{playerID},{endTime},{isVirtualMode}
+```
+
+---
+
+#### TR=c_mission_play_ranking — 미션 랭킹 조회
+
+| 항목 | 값 |
+|------|-----|
+| URL | `mission_play_info.php` |
+
+**Request:**
+```
+tr=c_mission_play_ranking&mission_id={missionID}
+```
+
+**Response:**
+```json
+{
+  "ShortUser1": "user1", "ShortRecord1": "00:05:30",
+  "ShortUser2": "user2", "ShortRecord2": "00:08:12",
+  "ShortUser3": "user3", "ShortRecord3": "00:10:45"
+}
+```
+
+---
+
+### 8.4 이미지 다운로드/업로드
+
+**뱃지 이미지 다운로드:**
+```
+GET http://nexapp.co.kr/playspot/badge/{ImageName}.png
+```
+
+**이미지 업로드:**
+```
+POST http://nexapp.co.kr/playspot/image_save.php
+Content-Type: multipart/form-data; boundary=treasurehunter
+
+--treasurehunter
+Content-Disposition: form-data; name="userfile"; filename="{imageID}"
+Content-Type: image/png
+
+{바이너리 이미지 데이터}
+--treasurehunter--
+```
+
+### 8.5 소스 파일 참조
+
+| 트랜잭션 | 소스 파일 |
+|----------|-----------|
+| TR=200, 300 | `MissionListDetailController.m` |
+| TR=400 | `MissionPlay.m` |
+| TR=500, 501, 502, 601, 602 | `MissionList.m` |
+| TR=503 | `Setting.m` |
+| TR=600 | `MissionBuilderList.m` |
+| TR=700 | `MissionBuilderList.m` |
+| TR=800 | `Login.m` |
+| tr_user_reg | `UserReg.m` |
+| tr_pwd_chg | `PwdChg.m` |
+| tr_user_sel, tr_user_chg | `UserInfoChg.m` |
+| c_mission_play_* | `MissionPlay.m` |
+| c_mission_play_ranking | `MissionPlayInfo.m` |
+| 이미지 다운로드/업로드 | `ImageManager.m` |
 
 ---
 
