@@ -1,0 +1,17 @@
+{
+  "MissionID": "tutorial001",
+  "Title": "튜토리얼: 기본 미션",
+  "Description": "Play Spot의 기본 사용법을 배우는 튜토리얼 — Start → 게임 → 퀴즈 → End 순서로 진행합니다.",
+  "Place": "튜토리얼 광장",
+  "Designer": "playspot",
+  "RunLimitTime": "00:10:00",
+  "Status": 2,
+  "Virtual": 1,
+  "WriteDate": "2026-05-13",
+  "PlayCnt": 0,
+  "FailCnt": 0,
+  "RecommendCnt": 0,
+  "RecommendAvg": 5,
+  "Quiz": "",
+  "Answer": ""
+}

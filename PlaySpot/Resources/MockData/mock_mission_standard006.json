@@ -1,0 +1,17 @@
+{
+  "MissionID": "standard006",
+  "Title": "스탠다드 복합 미션",
+  "Description": "힌트, 지뢰, 타임 런이 모두 포함된 복합 미션입니다.",
+  "Place": "튜토리얼 광장",
+  "Designer": "playspot",
+  "RunLimitTime": "00:20:00",
+  "Status": 2,
+  "Virtual": 1,
+  "WriteDate": "2026-05-13",
+  "PlayCnt": 0,
+  "FailCnt": 0,
+  "RecommendCnt": 0,
+  "RecommendAvg": 5,
+  "Quiz": "",
+  "Answer": ""
+}

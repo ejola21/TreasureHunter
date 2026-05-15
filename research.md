@@ -1373,3 +1373,603 @@ Mission ──┬── MissionItem[] ──── ItemQuiz[]
 ---
 
 *이 보고서는 TreasureHunter(Play Spot) 프로젝트의 전체 소스 코드, 튜토리얼 이미지, 리소스 에셋을 분석하여 작성되었습니다.*
+
+---
+
+## 부록: MissionItem 테이블 컬럼 완전 분석
+
+본 부록은 [Classes/MissionItem.h](Classes/MissionItem.h), [Classes/MissionItem.m](Classes/MissionItem.m), [Classes/Dao/MissionItemDao.m](Classes/Dao/MissionItemDao.m), [Classes/TreasureHunterAppDelegate.m](Classes/TreasureHunterAppDelegate.m) 등 레거시 소스를 정밀 추적하여 모든 컬럼의 용도, 코드값, 기본값, 허용 범위를 정리한다.
+
+### 컬럼 개요
+
+| 컬럼 | SQLite 타입 | ObjC 타입 | 기본값 (`init`) | 코드값 보유 | 비고 |
+|---|---|---|---|:---:|---|
+| `missionID` | TEXT | NSMutableString | nil | — | (MissionID, ItemID) PK |
+| `itemID` | INTEGER | int | 0 | — | 미션 내 1부터 자동 증가 |
+| `mandatory` | INTEGER | int | `MANDATORY_N`(0) | ✅ | 0/1 enum |
+| `itemType` | TEXT | NSMutableString | nil | ✅ | 27종 코드 |
+| `latitude` | REAL | CLLocationDegrees | 0.0 | — | GPS 위도 |
+| `longitude` | REAL | CLLocationDegrees | 0.0 | — | GPS 경도 |
+| `blackCnt` | INTEGER | int | **5** | ✅ | 1~10 picker  미구현|
+| `blackTime` | INTEGER | int | **300** (5분) | ✅ | 5~10분 picker (초 단위) 미구현|
+| `rangeAR` | INTEGER | int | **30** | ✅ | 30~100m picker (10m 단위) |
+| `showType` | TEXT | NSMutableString | nil | ✅ | 4종 코드, builder 노출은 3종 |
+| `effectiveRange` | INTEGER | int | 0 | ✅ | 2~60m picker |
+| `effectiveTime` | INTEGER | int | 0 | — | 타임아웃 제한시간(초) |
+| `itemGame` | INTEGER | int | 0 | ✅ | 0~3 (None/Beg/Norm/Senior) |
+| `info` | TEXT | NSMutableString | nil | — | 자유 텍스트 (힌트/설명) |
+| `relationItemID` | INTEGER | int | 0 | — | RunStart↔End 짝맞춤 |
+| `quizSeq` | INTEGER | int | **1** | — | 빌더에서 다음 퀴즈 seq |
+| `rnpSeq` | INTEGER | int | 0 | — | (현재 미사용) |
+
+> **세 가지 진실의 출처**:
+> - **상수**: `Classes/MissionItem.h` 의 `#define I_*`, `SHOW_*`
+> - **enum**: `TreasureHunter_Prefix.pch` 의 `MANDATORY_N/Y`, `DESIGNING/TESTED/SERVER_UPLOAD/FIRST_DESIGN`, `REAL_MODE/VIRTUAL_MODE`
+> - **picker 배열**: `TreasureHunterAppDelegate.m:300-317` 의 `itemTypeKeys`, `showTypeKeys`, `itemGame`, `effectiveRange`, `rangeAR`, `blackCnt`, `blackTime`
+
+---
+
+### 컬럼별 상세 분석
+
+#### `missionID` (TEXT, PK)
+- 값 형식: `{userID}{yyyyMMddHHmmss}` 또는 서버 발급 ID
+- 미션과 1:N 외래키. (`missionID`, `itemID`) 가 복합 PK
+- 신규 PlaySpot Swift: 동일 (`MissionItem.missionID: String`)
+
+#### `itemID` (INTEGER, PK)
+- 미션 내 자동 증가 정수. 빌더에서 1번부터 부여
+- 다른 컬럼(`relationItemID`)과 cross-reference 시 참조 키
+- 신규: `MissionItem.itemID: Int`
+
+#### `mandatory` (INTEGER, enum)
+
+[`TreasureHunter_Prefix.pch:32-35`](TreasureHunter_Prefix.pch#L32-L35):
+
+| 코드값 | 상수 | 의미 | UI 라벨 (en/ko) |
+|:---:|---|---|---|
+| `0` | `MANDATORY_N` | 선택 아이템 | "Option" / "선택" |
+| `1` | `MANDATORY_Y` | 필수 아이템 (★ 표시) | "Mandatory" / "필수" |
+
+- 화면 하단 "남은필수" 카운터에 반영
+- **End 자신**도 항상 `MANDATORY_Y` (별표 아이콘)
+- `MissionItem.h:62`: `mandatory = MANDATORY_N` 가 기본값
+- 빌더 picker: [`AppDelegate.m:312`](Classes/TreasureHunterAppDelegate.m#L312)
+
+#### `itemType` (TEXT, 27 코드값)
+
+[`MissionItem.h:18-59`](Classes/MissionItem.h#L18-L59) 의 모든 `#define I_*` 매크로 — **빠진 것 없음 전체 27개**:
+
+| 코드 | 매크로 | 카테고리 | 영문 라벨 | 한글 라벨 | 빌더 노출 | 기능 |
+|:---:|---|---|---|---|:---:|---|
+| `"00"` | `I_NUM00` | 수집 | (Number 0) | — | ✗ | 숫자 수집 (현재 미사용) |
+| `"01"` | `I_NUM01` | 수집 | (Number 1) | — | ✗ | 숫자 수집 |
+| `"02"` | `I_NUM02` | 수집 | (Number 2) | — | ✗ | 숫자 수집 |
+| `"03"` | `I_NUM03` | 수집 | (Number 3) | — | ✗ | 숫자 수집 |
+| `"04"` | `I_NUM04` | 수집 | (Number 4) | — | ✗ | 숫자 수집 |
+| `"05"` | `I_NUM05` | 수집 | (Number 5) | — | ✗ | 숫자 수집 |
+| `"06"` | `I_NUM06` | 수집 | (Number 6) | — | ✗ | 숫자 수집 |
+| `"07"` | `I_NUM07` | 수집 | (Number 7) | — | ✗ | 숫자 수집 |
+| `"08"` | `I_NUM08` | 수집 | (Number 8) | — | ✗ | 숫자 수집 |
+| `"09"` | `I_NUM09` | 수집 | (Number 9) | — | ✗ | 숫자 수집 |
+| `"10"` | `I_ALPHABET` | 수집 | (Alphabet) | — | ✗ | 문자 수집 (현재 미사용) |
+| `"40"` | `I_QUIZ` | 퀴즈 | "Quiz" | "Quiz" | ✓ | 퀴즈 풀기 |
+| `"41"` | `I_QUIZ20` | 퀴즈 | (Quiz20) | — | ✗ | 20개+ 변형 퀴즈 |
+| `"42"` | `I_TIMEOUT_S` | 타임아웃 | "Run Start" | "Run Start" | ✓ | 카운트다운 시작 |
+| `"43"` | `I_TIMEOUT_E` | 타임아웃 | "Run End" | "Run End" | ✓ | 카운트다운 종료 (relationItemID 필요) |
+| `"48"` | `I_END` | 미션 | "End" | "End" | ✓ | 미션 종료. 항상 mandatory |
+| `"49"` | `I_START` | 미션 | "Start" | "Start" | ✓ | 미션 시작. 항상 mandatory |
+| `"50"` | `I_RANDOM` | 특수 | "Gambling" | "Gambling" | ✓ | 랜덤 미보유 아이템 1개 획득 |
+| `"51"` | `I_SIMPLE` | 수집 | "Hint" | "Hint" | ✓ | 힌트 (itemGame≠0이면 미니게임) |
+| `"52"` | `I_SOLUTION` | 파워업 | "Solution" | "Solution" | ✓ | 퀴즈 정답 공개 |
+| `"54"` | `I_PENALTY_REMOVE` | 파워업 | (Penalty Remove) | — | ✗ | 퀴즈 페널티 초기화 (현재 미사용) |
+| `"55"` | `I_MINE` | 위험 | "Mine" | "Mine" | ✓ | 진입 시 자동 폭발 |
+| `"56"` | `I_BLACK` | 위험 | "Dark" | "Dark" | ✓ | 영역 내 아이템 가림 |
+| `"59"` | `I_COUPON` | 보상 | "쿠폰" | "쿠폰" | ✓ | 쿠폰/할인 (info 에 내용) |
+| `"61"` | `I_MINE_NOBOMB` | 파워업 | "Defense" | "Defense" | ✓ | 지뢰 1회 방어 |
+| `"65"` | `I_RADAR_AR` | 레이더 | "Stealth Radar" | "Stealth Radar" | ✓ | Stealth ShowType AR 표시 |
+| `"66"` | `I_RADAR_MAP` | 레이더 | "Map Radar" | "Map Radar" | ✓ | Hidden ShowType 지도 표시 |
+| `"67"` | `I_RADAR_ALL` | 레이더 | (All Radar) | — | ✗ | Map+AR Radar 동시 효과 (코드만 존재) |
+| `"68"` | `I_RADAR_MINE` | 레이더 | "Mine Radar" | "Mine Radar" | ✓ | 지뢰 영역 빨간 원 표시 |
+| `"69"` | `I_RADAR_BLACK` | 레이더 | (Radar Black) | — | ✗ | 미구현 (`MissionBuilderDetail.m:523` "현재 구현 안됨" 주석) |
+| `"91"` | `I_STORE` | 보상 | "Store" | "Store" | ✓ | 상점/IAP (info 에 상품 정보) |
+
+**빌더 picker 라벨** ([`AppDelegate.m:300-303`](Classes/TreasureHunterAppDelegate.m#L300-L303)):
+- `itemTypeKeys`: `[Start, End, Hint, Quiz, Gambling, Run Start, Run End, Mine, Dark, Defense, Solution, Stealth Radar, Map Radar, Mine Radar, 쿠폰, Store]` (16개)
+- `itemTypeFiles`: `[start, end, simple, quiz, random_box, time_start, time_end, mine, black, mine_nobomb, genius, radar_ar, radar_map, radar_mine, coupon, store]` — 이미지 파일명 prefix
+
+> **요약**: 헤더에 정의된 27개 중 **빌더에서 노출되는 건 16개**. 나머지(NUM00~09, ALPHABET, QUIZ20, PENALTY_REMOVE, RADAR_ALL, RADAR_BLACK)는 코드만 정의되어 있고 빌더 UI 에서 선택 불가하다 (서버 마이그레이션 데이터에서만 등장 가능).
+
+#### `latitude`, `longitude` (REAL)
+- WGS84 GPS 좌표
+- 빌더에서 지도를 길게 눌러 핀 추가, 드래그로 이동
+- Virtual 모드 setup 시 [VirtualModeManager](PlaySpot/Game/VirtualModeManager.swift) 가 start 아이템 좌표를 플레이어 위치로 평행이동
+- 신규: `CLLocationDegrees` (둘 다 0.0 기본)
+
+#### `blackCnt` (INTEGER, 1~10)
+
+[`AppDelegate.m:315`](Classes/TreasureHunterAppDelegate.m#L315):
+```objc
+blackCnt = [@"1", @"2", @"3", @"4", @"5", @"6", @"7", @"8", @"9", @"10"]
+```
+
+- 기본값: `5` ([`MissionItem.m:64`](Classes/MissionItem.m#L64))
+- 의도: Dark/Mine 영역의 페널티 횟수. 그러나 **현재 레거시 런타임에서 사용처 없음** (DAO 저장만)
+- 신규 Swift: 동일 디폴트 (`MissionItem.swift:13`)
+
+#### `blackTime` (INTEGER, 초 단위)
+
+[`AppDelegate.m:317`](Classes/TreasureHunterAppDelegate.m#L317):
+```objc
+blackTime = [@"5분", @"6분", @"7분", @"8분", @"9분", @"10분"]
+// 빌더에서 (선택 인덱스+1) * 5 * 60 초로 저장 (MissionBuilderDetail.m:752)
+```
+
+| picker 인덱스 | 라벨 | 저장값 (초) |
+|:---:|---|---:|
+| 0 | "5분" | 300 |
+| 1 | "6분" | 360 |
+| 2 | "7분" | 420 |
+| 3 | "8분" | 480 |
+| 4 | "9분" | 540 |
+| 5 | "10분" | 600 |
+
+- 기본값: `300` (5분)
+- 의도: Dark/Mine 영역 시간 패널티. 현재 사용처 없음 (DAO 저장만)
+- 빌더 코드 ([`MissionBuilderDetail.m:752`](Classes/MissionBuilderDetail.m#L752)): `blackTime = (selectedRow+1) * 5 * 60`
+
+#### `rangeAR` (INTEGER, 미터, 30~100)
+
+[`AppDelegate.m:314`](Classes/TreasureHunterAppDelegate.m#L314):
+```objc
+rangeAR = [@"30", @"40", @"50", @"60", @"70", @"80", @"90", @"100"]
+```
+
+- 기본값: `30`
+- 빌더에서 10m 단위 8단계로 선택
+- **3가지 런타임 용도** ([`MissionPlay.m`](Classes/MissionPlay.m)):
+  1. AR 가시성 ([`ARViewController.m:1219`](Classes/ARViewController.m#L1219)): `radialDistance > rangeAR` 면 AR 표시 안 함
+  2. 지뢰 폭발 범위 ([`MissionPlay.m:1469`](Classes/MissionPlay.m#L1469)): `[playerLoc distanceFromLocation:itemLoc] <= rangeAR` 면 폭발
+  3. 다크존 영향 범위 ([`MissionPlay.m:2138`](Classes/MissionPlay.m#L2138)): black 아이템의 rangeAR 안에 있는 다른 아이템 가림
+- 지도에서는 mine/black 아이템에 한해 `rangeAR` 반경의 원을 그림 ([`MissionPlay.m:906`](Classes/MissionPlay.m#L906))
+
+#### `showType` (TEXT, 4 코드값)
+
+[`MissionItem.h:65-68`](Classes/MissionItem.h#L65-L68):
+
+| 코드 | 매크로 | UI 라벨 | 지도 기본 | AR 기본 | 빌더 노출 |
+|:---:|---|---|:---:|:---:|:---:|
+| `"1"` | `SHOW_TRANSPARENT` | (Transparent) | ✗ | ✗ | ✗ |
+| `"2"` | `SHOW_AR` | "Hidden" | ✗ | ✓ | ✓ |
+| `"3"` | `SHOW_MAP` | "Stealth" | ✓ | ✗ | ✓ |
+| `"4"` | `SHOW_ALL` | "Normal" | ✓ | ✓ | ✓ |
+
+[`AppDelegate.m:305-306`](Classes/TreasureHunterAppDelegate.m#L305-L306):
+```objc
+showTypeKeys = [SHOW_ALL, SHOW_AR, SHOW_MAP]      // ← TRANSPARENT 제외
+showTypeObjects = [@"Normal", @"Hidden", @"Stealth"]
+```
+
+> **중요**: `SHOW_TRANSPARENT` 코드는 헤더에 정의되어 있고 런타임 가시성 판정에서 사용되지만 ([`MissionPlay.m`](Classes/MissionPlay.m) 내 9곳), **빌더 UI에는 노출되지 않는다**. 즉 사용자가 직접 만든 미션은 1/2/3/4 중 2/3/4만 가질 수 있고, 1(Transparent)은 서버에서 다운로드 받은 데이터에만 존재 가능.
+
+가시성 매트릭스 (자세한 내용은 본문 § 부록 "파워업/레이더 가시성 매트릭스" 참고):
+- Normal(4): 항상 보임
+- Hidden(2): 지도에선 Map Radar/All Radar 필요, AR엔 항상 보임
+- Stealth(3): 지도엔 항상 보임, AR엔 Stealth Radar/All Radar 필요
+- Transparent(1): 양쪽 모두 레이더 필요
+
+#### `effectiveRange` (INTEGER, 미터, 2~60)
+
+[`AppDelegate.m:313`](Classes/TreasureHunterAppDelegate.m#L313):
+```objc
+effectiveRange = [@"2", @"3", @"4", @"5", @"6", @"7", @"8", @"9", @"10", @"20", @"30", @"40", @"50", @"60"]
+```
+
+- 기본값: 0
+- 의도: Run End 가 Run Start 와 떨어져 있어야 하는 거리(?). [`MissionBuilder.m:651`](Classes/MissionBuilder.m#L651) 에서 Run End 생성 시 `effectiveRange = 42` 하드코딩 + [`MissionBuilderDetail.m:553`](Classes/MissionBuilderDetail.m#L553) 에서 두 아이템 거리 자동 측정
+- **현재 게임 런타임에서 직접 검사하는 코드 없음** (저장만)
+
+#### `effectiveTime` (INTEGER, 초)
+
+- 기본값: 0
+- **타임아웃 제한 시간** (Run Start ~ Run End)
+- [`MissionPlay.m:880, 1394`](Classes/MissionPlay.m#L880): `timeOutLimitTime = item.effectiveTime`
+- 빌더에서 `MM:SS` 형식 입력 후 [`AppDelegate.timeFormat2sec`](Classes/TreasureHunterAppDelegate.m) 로 초 변환
+- Run Start (`I_TIMEOUT_S`)와 Run End (`I_TIMEOUT_E`) 둘 다 동일 값으로 저장 ([`MissionBuilder.m:551-552`](Classes/MissionBuilder.m#L551-L552))
+- 신규 Swift: `MissionItem.effectiveTime: Int` 동일
+
+#### `itemGame` (INTEGER, 4 코드값)
+
+[`AppDelegate.m:311`](Classes/TreasureHunterAppDelegate.m#L311):
+
+| 값 | 매크로 | 영문 (`appDel_game*`) | 한글 |
+|:---:|---|---|---|
+| `0` | — | "None" | "없음" |
+| `1` | — | "Beginer Level" | "난이도 하" |
+| `2` | — | "Normal Level" | "난이도 중" |
+| `3` | — | "Senior Level" | "난이도 상" |
+
+- 기본값: `0`
+- **`0` = 미니게임 없음** (단순 획득). 1~3 = 미니게임 활성
+- **적용 가능 아이템** ([`ARViewController.m:715, 753`](Classes/ARViewController.m#L715)):
+  - `simple`(Hint), `radarAR`, `radarMap`, `radarAll`, `radarMine`, `solution`, `mineNoBomb` 가 `itemGame != 0` 이면 미니게임 발동
+- **미니게임 메커니즘** ([`GamePlayAlert.m:31-33`](Classes/GamePlayAlert.m#L31-L33)):
+  - `type` 이 `arc4random()%2` 로 매번 랜덤하게 0(터치) / 1(흔들기) 결정
+  - `level` = `itemGame` 값
+- **레벨별 진행도 가산값** ([`GamePlayAlert.m:114-141`](Classes/GamePlayAlert.m#L114-L141)):
+
+| level | 터치 (type=0) per 클릭 | 흔들기 (type=1) per 흔들기 |
+|:---:|---:|---:|
+| 1 (Beginner) | +6 | +7 |
+| 2 (Normal) | +5 | +6 |
+| 3 (Senior) | +4 | +5 |
+| 그 외 | +7 | +8 |
+
+- timeCount 가 100 도달 → 클리어, 0 → 실패. 1초마다 -1
+- 흔들기 임계: 가속도 1.4G
+
+#### `info` (TEXT, 자유 텍스트)
+
+빌더에서 텍스트 입력으로 설정 ([`MissionBuilderDetail.m:258, 277, 308`](Classes/MissionBuilderDetail.m#L258)). 아이템 타입별로 의미가 다름:
+
+| 적용 아이템 | 용도 | 표시 시점 |
+|---|---|---|
+| Hint | 힌트 메시지. 비어있으면 "Lose the draw!! No hint." | 획득 알림 |
+| Start | 시작 안내 메시지 | "Start Item acquired!" 팝업 |
+| Run Start | 타임어택 안내 | 획득 알림 |
+| Run End | 타임어택 종료 안내 | 획득 알림 |
+| Solution | 솔루션 사용 안내 | 획득 알림 |
+| 레이더 (각종) | 레이더 효과 설명 | 획득 알림 |
+| Coupon | 쿠폰 코드/내용 | 획득 알림 |
+| Store | 상품 정보 (key=value 등) | 획득 알림 |
+
+- 신규 Swift: `MissionItem.info: String = ""`. 모든 `setAcquiredAlert` 케이스에서 `if item.info.isEmpty` 체크 후 디폴트 메시지 fallback ([`GameEngine.swift:386-440`](PlaySpot/Game/GameEngine.swift))
+
+#### `relationItemID` (INTEGER)
+
+- Run Start ↔ Run End 짝맞춤 키
+- 빌더에서 Run End 추가 시 자동으로 가장 최근 Run Start 의 `itemID` 를 양쪽에 set ([`MissionBuilder.m:649-657`](Classes/MissionBuilder.m#L649-L657))
+- 런타임에서 Run Start 획득 시 같은 `relationItemID` 를 가진 Run End 검색 → `effectiveTime` 추출하여 카운트다운 시작
+- Run End 획득 시 Run Start 가 활성 상태인지 검증
+- **시간 검증 로직**: Run End 의 `effectiveTime` 안에 Run End 도달 못 하면 실패 (`finishRunTimeAlert`)
+- 신규 Swift: 동일 (`MissionItem.relationItemID: Int = 0`)
+
+#### `quizSeq` (INTEGER, 빌더 카운터)
+
+- 기본값: `1` ([`MissionItem.m:63`](Classes/MissionItem.m#L63))
+- **빌더에서만 사용**: 한 아이템에 여러 퀴즈 변형(`ItemQuiz.seq`)을 추가할 때 다음 seq 번호 부여용
+- [`MissionItem.m:79`](Classes/MissionItem.m#L79) `addItemQuiz`: `itemQuiz.seq = self.quizSeq++` (post-increment)
+- DB 저장은 안 됨 (모델 메모리 카운터)
+- 신규 Swift: 동일 (`MissionItem.quizSeq: Int = 1`) — 단, Swift 포트는 빌더 미구현이라 사용처 없음
+
+#### `rnpSeq` (INTEGER, 미사용)
+
+- 기본값: 0
+- **레거시/신규 모두 사용처 없음**. 향후 power-up 아이템 시퀀스용으로 예약된 것으로 추정
+- DAO 저장 컬럼에도 없음 ([`MissionItemDao.m`](Classes/Dao/MissionItemDao.m) 의 select/insert 컬럼 목록에 미포함)
+
+#### `itemQuizzes` (관계, 별도 테이블)
+
+- `MissionItem` 자체 컬럼이 아닌 1:N 관계 (배열)
+- 별도 `ItemQuiz` 테이블 (`missionID`, `itemID`, `seq` PK)
+- `MissionItem.itemType == I_QUIZ`(40) 또는 `I_QUIZ20`(41) 일 때만 의미
+- 신규 Swift: `MissionItem.quizzes: [ItemQuiz] = []` (디코딩 시 별도 그룹핑, [`GameEngine.swift:62-67`](PlaySpot/Game/GameEngine.swift#L62-L67))
+
+---
+
+### 빌더 picker → DB 저장값 매핑 한눈에 보기
+
+| picker 컬럼 | 노출 옵션 수 | 저장 형식 | 저장 변환 |
+|---|---:|---|---|
+| `itemType` | 16 | TEXT 코드 | picker 키 그대로 |
+| `mandatory` | 2 | INT (0/1) | 인덱스 그대로 |
+| `showType` | 3 | TEXT 코드 | picker 키 그대로 (TRANSPARENT 제외) |
+| `rangeAR` | 8 | INT (m) | 라벨 → intValue |
+| `effectiveRange` | 14 | INT (m) | 라벨 → intValue |
+| `effectiveTime` | (텍스트 입력) | INT (초) | `MM:SS` → `timeFormat2sec` |
+| `itemGame` | 4 | INT (0~3) | 인덱스 그대로 |
+| `blackCnt` | 10 | INT | 라벨 → intValue |
+| `blackTime` | 6 | INT (초) | (인덱스+1) × 300 |
+| `info` | (텍스트 입력) | TEXT | 그대로 |
+| `relationItemID` | (자동) | INT | Run End 추가 시 자동 산출 |
+
+### 컬럼 사용 빈도 vs 미사용 컬럼
+
+| 분류 | 컬럼 |
+|---|---|
+| **항상 사용** | missionID, itemID, mandatory, itemType, latitude, longitude, rangeAR, showType |
+| **타입별 조건부 사용** | effectiveTime (Run S/E), relationItemID (Run S/E), info (Hint/Start/...), itemGame (Hint/Radar/Solution/Defense), itemQuizzes (Quiz) |
+| **저장은 되지만 런타임 미참조** | blackCnt (DAO 저장만), blackTime (DAO 저장만), effectiveRange (저장+빌더UI만) |
+| **완전 미사용** | rnpSeq |
+
+### Swift 포트와의 차이점
+
+| 컬럼 | 레거시 ObjC 기본값 | 신규 Swift 기본값 ([`MissionItem.swift`](PlaySpot/Models/MissionItem.swift)) | 비고 |
+|---|---|---|---|
+| `mandatory` | `MANDATORY_N`(0) | `.optional` (`MandatoryFlag` enum) | 동일 |
+| `itemType` | nil | `.simple` (`ItemType` enum) | Swift 가 `.simple` 디폴트 |
+| `rangeAR` | 30 | 30 | 동일 |
+| `blackCnt` | 5 | 5 | 동일 |
+| `blackTime` | 300 | 300 | 동일 |
+| `quizSeq` | 1 | 1 | 동일 |
+| `showType` | nil | `.all` (`ShowType` enum) | Swift 가 `.all`(Normal) 디폴트 |
+| `info` | nil | `""` | 동일 의미 |
+| `rnpSeq` | 0 | 0 | 둘 다 미사용 |
+
+> Swift 포트는 enum 기반 type-safe 디코딩으로 nil 가능성을 제거. JSON 디코딩 시 누락 필드는 위 디폴트가 적용됨 ([`MissionItem.swift:52-72`](PlaySpot/Models/MissionItem.swift#L52-L72)).
+
+---
+
+## 부록: AR 화면 아이템 가시성 / 획득 가능성 정밀 분석
+
+> 본 부록은 "AR 화면에서 획득 불가능한 아이템이 있는가", "start 획득 전에 더 가까운 다른 아이템이 표시되는가", "start 획득 후 표시 순서/획득 불가 로직" 질문에 대한 정밀 분석이다. 레거시 [Classes/ARViewController.m](Classes/ARViewController.m)와 신규 [PlaySpot/AR/ARGameView.swift](PlaySpot/AR/ARGameView.swift) / [PlaySpot/Game/GameEngine.swift](PlaySpot/Game/GameEngine.swift)를 함께 비교한다.
+
+### A. 핵심 원칙 — AR 화면에는 "가장 가까운 1개"만 표시된다
+
+레거시 [ARViewController.m:1487-1546](Classes/ARViewController.m#L1487-L1546)에서 `minDistItem` 을 계산해 후보 중 거리 최소 한 개만 선정하고, 이어지는 [1549-1613](Classes/ARViewController.m#L1549-L1613) 의 두 번째 루프에서 `minDistItem.annoItem == coordinate.annoItem` 인 경우에만 viewToDraw를 화면에 추가한다. 즉 AR 화면에는 **항상 단 하나의 아이템 아이콘**만 그려진다.
+
+Swift 포트 [ARGameView.swift:201-204](PlaySpot/AR/ARGameView.swift#L201-L204) 도 `visibleItems`가 nearest 1개만 반환하도록 같은 동작을 구현한다 — `return [nearest]`.
+
+> 이 사실은 모든 후속 분석의 전제다. "여러 아이템이 동시에 떠 있을 텐데..."라는 가정은 이 게임의 AR 모델에서 잘못된 가정이다.
+
+---
+
+### B. start 획득 전(`missionStarted == false`)의 AR 표시 규칙
+
+#### B-1. 레거시 동작 — **START 만** 표시 (END 도 제외됨)
+
+[ARViewController.m:1496-1547](Classes/ARViewController.m#L1496-L1547) 의 minDistItem 선정 루프는 **2단계 필터** 구조다.
+
+**1단계 — outer filter ([1498-1502](Classes/ARViewController.m#L1498-L1502))** — START AND END 둘 다 통과:
+```objc
+for (ARCoordinate *coordinate in ar_coordinates) {
+    if(([coordinate.annoItem.missionItem.itemType isEqualToString:I_START] == NO) &&
+       ([coordinate.annoItem.missionItem.itemType isEqualToString:I_END] == NO) &&
+       (caller.missionStarted == NO)) {
+        continue;   // ← start/end 외엔 스킵 (END는 통과)
+    }
+    ...
+```
+
+**2단계 — inner branch ([1510-1544](Classes/ARViewController.m#L1510-L1544))** — `missionStarted == NO` 분기는 **START 만** 받음:
+```objc
+if(caller.missionStarted == YES) {
+    ... // END는 mandatory > 1 체크 후 candidate (post-start 전용)
+    minDistItem.annoItem = coordinate.annoItem;
+}
+else if ([coordinate.annoItem.missionItem.itemType isEqualToString:I_START] == YES)
+{
+    // ← pre-start 일 때 오직 START 만 minDistItem 으로 등록됨
+    minDistItem.annoItem = coordinate.annoItem;
+}
+// END + missionStarted == NO → 어느 분기에도 매칭 안 됨 → minDistItem 갱신 안 됨
+```
+
+**결과**: pre-start 시 END 가 START 보다 가까워도 `minDistItem` 은 START 로 유지된다. AR 두 번째 루프 ([1549-1613](Classes/ARViewController.m#L1549-L1613)) 는 `minDistItem.annoItem == coordinate.annoItem` 인 경우에만 그리므로 END는 화면에 안 그려진다.
+
+> 참고: [viewportContainsCoordinate:1222-1226](Classes/ARViewController.m#L1222-L1226) 도 START/END 둘 다 통과시키지만, 이 함수는 "뷰포트 안에 있는가"만 판단하고 실제 그리기는 위의 2단계 필터를 통과해 minDistItem 으로 선정된 항목만 한다.
+
+**최종 결론**: 레거시 AR 화면은 start 획득 전에 **오직 START 아이템 1개만** 표시한다. quiz/hint/radar 는 물론 END 도 표시되지 않는다.
+
+#### B-2. start 보다 가까운 mine — 폭발 처리
+
+mine 은 후보 풀에서는 빠지지만 [viewportContainsCoordinate:1232-1240](Classes/ARViewController.m#L1232-L1240) 에서 **별도 분기**로 처리된다:
+
+```objc
+if([item.itemType isEqualToString:I_MINE]){
+    if (coordinate.radialDistance <= item.rangeAR) {
+        [caller mineBlast:item];   // ← 표시 없이 즉시 폭발
+        ...
+    }
+}
+```
+
+따라서 start 미획득 상태에서도 mine 의 rangeAR 안에 들어가면 폭발은 발생한다. mine 자체는 AR에 그려지지 않으며 "획득" 대상도 아니다.
+
+#### B-3. shake-to-acquire 의 2차 방어선
+
+[ARViewController.m:492-496](Classes/ARViewController.m#L492-L496) `getItemAnimation` 안에서 흔들기로 획득을 시도할 때도 한 번 더 검사:
+
+```objc
+outstandingItem = minDistItemInView.annoItem.missionItem;
+if([outstandingItem.itemType isEqualToString:I_START] == NO) {
+    if(caller.missionStarted == NO) {
+        return;   // ← 흔들어도 무시
+    }
+}
+```
+
+#### B-4. Swift 포트 매칭 여부
+
+[ARGameView.swift:220-223](PlaySpot/AR/ARGameView.swift#L220-L223):
+```swift
+// 미션 시작 전엔 start / end 만 허용
+if !engine.missionStarted, item.itemType != .start, item.itemType != .end {
+    continue
+}
+```
+
+[ARGameView.swift:226](PlaySpot/AR/ARGameView.swift#L226) — mine/black 영구 제외:
+```swift
+if item.itemType == .black || item.itemType.isMine { continue }
+```
+
+**❌ B-1 동작 불일치**: Swift 는 START / END 둘 다 후보로 잡고 거리 최소를 그대로 nearest 로 선정한다. 따라서 pre-start 에 END 가 START 보다 가까우면 **END 가 표시된다** — 레거시는 START 만 표시. **수정 필요.**
+
+올바른 Swift 코드:
+```swift
+if !engine.missionStarted, item.itemType != .start { continue }   // ← START 만
+```
+
+**⚠️ B-2 (mine 자동 폭발) 차이점**: Swift `nearestVisibleItem` 은 mine 을 단순 `continue` 로 스킵만 한다. 레거시처럼 "AR 화면을 켜고 mine 의 rangeAR 안에 있으면 자동 폭발" 을 트리거하는 코드는 [ARGameView](PlaySpot/AR/ARGameView.swift) 어디에도 없다. mine 폭발은 Map 화면의 `MissionPlayView.handleItemTap` → `engine.handleMineBlast(item:)` 경로로만 실행된다. **AR 화면에 진입한 상태에서 자동 mine 폭발은 발생하지 않는다.** (의도적인지 누락인지 확인 필요.)
+
+---
+
+### C. start 획득 후(`missionStarted == true`)의 표시 규칙
+
+#### C-1. 레거시 minDistItem 후보 필터 ([ARViewController.m:1504-1547](Classes/ARViewController.m#L1504-L1547))
+
+후보가 되려면 모두 통과해야 한다:
+
+| 조건 | 코드 위치 | 설명 |
+|---|---|---|
+| 미획득 (`dicItemEnd[id] != "Y"`) | 1505 | 이미 먹은 건 제외 |
+| `itemType != I_MINE` | 1506 | mine 은 표시 후보 아님 |
+| `itemType != I_BLACK` | 1507 | black 도 제외 |
+| `itemType != I_TIMEOUT_S` 이거나 `isTimeOutS == 0` | 1522-1526 | 이미 타임아웃 진행 중이면 또 다른 timeoutStart 숨김 |
+| `itemType != I_END` 이거나 `mandatory ≤ 1` | 1527-1530 | end 는 다른 필수가 1개 이하로 줄어야 후보 |
+
+> ⚠️ **레거시의 "주석 처리된" ShowType 필터** ([1512-1521](Classes/ARViewController.m#L1512-L1521)):
+> ```objc
+> if(caller.missionStarted == YES)
+> {
+>     /*
+>      //아이템이 ALL 투명이거나 AR 투명일경우 AR 레이더, all 레이더 없을경우 skip
+>      if (([coordinate.annoItem.missionItem.showType isEqualToString:SHOW_TRANSPARENT] ||
+>      [coordinate.annoItem.missionItem.showType isEqualToString:SHOW_MAP]) &&
+>      ([caller.dicRnPTaken valueForKey:I_RADAR_AR] == nil &&
+>      [caller.dicRnPTaken valueForKey:I_RADAR_ALL] == nil ))
+>      {
+>      continue;
+>      }
+>      */
+>     ...
+> }
+> ```
+> 이 ShowType skip 로직은 **주석 처리되어 비활성**이다. 즉 레거시도 `transparent`/`mapOnly` 아이템을 후보에서 제외하지 않는다 — 대신 "후보로는 선정되지만 그릴 때 아이콘 대신 'Hidden' 안내 문구로 대체"하는 방식([1622-1638](Classes/ARViewController.m#L1622-L1638))을 쓴다:
+> ```objc
+> if (([minDistItem.annoItem.missionItem.showType isEqualToString:SHOW_TRANSPARENT] ||
+>      [minDistItem.annoItem.missionItem.showType isEqualToString:SHOW_MAP]) &&
+>     ([caller.dicRnPTaken valueForKey:I_RADAR_AR] == nil &&
+>      [caller.dicRnPTaken valueForKey:I_RADAR_ALL] == nil ))
+> {
+>     [ar_infoView setTitle:NSLocalizedString(@"ar_clear1", nil) forState:UIControlStateNormal];
+>     [ar_infoView1 setTitle:NSLocalizedString(@"ar_clear2", nil) forState:UIControlStateNormal];
+>     [radianItem removeFromSuperview];   // ← 레이더 화살표도 숨김
+>     [radianPhone removeFromSuperview];
+> }
+> ```
+
+#### C-2. Swift 포트 차이점 — ShowType "Hidden 문구 대체" 누락
+
+Swift [ARGameView.swift:206-251](PlaySpot/AR/ARGameView.swift#L206-L251) `nearestVisibleItem` 은 ShowType 을 **전혀 보지 않는다**:
+
+| ShowType | 레이더 보유 | 레거시 AR | Swift AR |
+|---|---|---|---|
+| `all`(4) | — | 아이콘 표시 | 아이콘 표시 ✓ |
+| `arOnly`(2) | — | 아이콘 표시 | 아이콘 표시 ✓ |
+| `mapOnly`(3) | radarAR / radarAll 없음 | "Hidden" 문구 + 화살표 숨김 | **아이콘 그대로 노출** ❌ |
+| `transparent`(1) | radarAR / radarAll 없음 | "Hidden" 문구 + 화살표 숨김 | **아이콘 그대로 노출** ❌ |
+| `mapOnly`/`transparent` | radarAR / radarAll 보유 | 아이콘 표시 | 아이콘 표시 ✓ |
+
+> ⚠️ **버그 후보**: Swift 포트는 `Stealth(mapOnly)` / `Hidden(transparent)` 아이템이 가까이 있을 때 레이더 없이도 AR에 그대로 그려진다. 레거시는 같은 상황에서 화면에 "Hidden — radar required" 안내만 띄우고 실제 위치는 가렸다. (현재 Swift 동작이 더 관대함 → 게임 밸런스 깨짐 소지.)
+
+#### C-3. 두 코드 모두 일치하는 "표시는 되지만 획득 불가" 케이스
+
+엄밀히 말하면 AR 화면에 표시된 아이템이 **곧 획득 가능**은 아니다. 표시 후 획득 진행은 다음을 통과해야 한다:
+
+1. 사용자가 아이콘을 탭하거나 폰을 흔든다.
+2. Swift: [MissionPlayView.handleItemTap](PlaySpot/Views/MissionPlay/MissionPlayView.swift#L148-L164) → `ItemInteraction.isInRange` (rangeAR 내) → `ItemInteraction.interactionType` 분기.
+3. interactionType 별 처리:
+   - `.quiz` → `QuizView` 시트 표시. **퀴즈 정답 맞추기 전까지 획득 안 됨.**
+   - `.miniGame` → `MiniGameView` 시트 표시. **미니게임 클리어 전까지 획득 안 됨.**
+   - `.mineExplode` → `engine.handleMineBlast(item:)` (보호 아이템 없으면 폭발).
+   - `.darkEffect` → `acquireItem` 으로 처리되지만 black 은 nearest 후보에서 이미 제외됨.
+   - 그 외 → `engine.acquireItem(item)` 즉시 획득.
+
+따라서 AR에 표시되는 1개의 아이템이 quiz/miniGame 이라면, 사용자는 그 아이템을 **봐도 흔들기/탭만으로는 절대 획득 못 한다.** 별도 UI(퀴즈/미니게임)를 통과해야 한다.
+
+> ⚠️ AR 화면에서 흔들기로 quiz / miniGame 을 띄우는 동작이 [ARGameView.handleShake](PlaySpot/AR/ARGameView.swift#L90-L102) 에 명시적으로 구현되어 있지 않다. `onItemTapped?(item)` 만 호출하므로 결국 `MissionPlayView.handleItemTap` 의 분기를 타게 되는데, 이 핸들러는 `appState.locationService.currentLocation` 을 다시 읽어 `ItemInteraction.isInRange` 검사를 한 번 더 한다. 즉 AR이 "표시했다 = 획득 가능"이 아니라, 흔들기 → tap 핸들러 → 거리 재검사 → 거리 OK 면 quiz/miniGame 시트 또는 즉시 획득. AR 표시 후 시트 표시까지 한 단계 더 거치는 셈.
+
+---
+
+### D. AR에서 절대 획득 불가능한 아이템 (의도적 설계)
+
+| 아이템 타입 | AR 표시 여부 | 사유 |
+|---|---|---|
+| `mine`(55) | 표시 안 됨 | 거리 진입 시 자동 폭발(레거시) — 획득이 아닌 피격 대상. Swift는 폭발도 발생 안 함(누락) |
+| `mineNoBomb`(61) | 표시 안 됨 | `.isMine == true` 로 분류되어 nearest 후보에서 제외. 지도에서만 획득 가능 |
+| `black`(56) | 표시 안 됨 | unconditionally `continue`. dark 영역은 시각적 효과일 뿐 획득 대상 아님 |
+| `end`(48), 필수 잔여 > 1 | 표시 안 됨 | 모든 필수 아이템 처리 후에만 노출 |
+| `timeoutStart`(42), 이미 진행 중 | 표시 안 됨 | 중복 트리거 방지 |
+| `start`(49), 미션 진행 중 | 표시 안 됨 | 이미 획득됨(`dicItemEnd == "Y"`) → 미획득 필터에서 제외 |
+
+> 즉 mine, mineNoBomb, black 은 **AR 흔들기로 절대 획득되지 않는 아이템들**이다. mineNoBomb (Defence) 는 의외로 AR에 안 뜨는데, `ItemType.isMine` 정의에 포함되기 때문이다 ([ItemType.swift:98](PlaySpot/Models/ItemType.swift#L98)):
+> ```swift
+> var isMine: Bool { self == .mine || self == .mineNoBomb }
+> ```
+> 이건 레거시 [ARViewController.m:1506](Classes/ARViewController.m#L1506) 의 `I_MINE` 단독 체크와 비교하면 Swift가 **더 엄격**하다. 레거시는 mineNoBomb 를 nearest 후보에서 제외하지 않으므로 AR에서 흔들어 획득할 수 있다. Swift 는 같은 케이스에서 후보 자체에서 빠진다 → **mineNoBomb (방어 아이템) 을 AR에서 획득 불가능.** 지도에서만 가능.
+>
+> ⚠️ 이는 레거시와 행동 차이이며 의도된 변경인지 확인 필요.
+
+---
+
+### E. 지도(Map)에서의 추가 가시성 규칙 (참고)
+
+질문에 직접 포함되진 않았지만, "표시 순서" 측면에서 지도는 AR과 다른 규칙을 가진다.
+
+#### E-1. 신규 Swift `GameEngine.shouldShowOnMap` ([GameEngine.swift:365-384](PlaySpot/Game/GameEngine.swift#L365-L384))
+
+```swift
+func shouldShowOnMap(_ item: MissionItem) -> Bool {
+    // 1) 미션 시작 전엔 start 만 표시
+    if !missionStarted, item.itemType != .start { return false }
+    // 2) end 는 필수 잔여 > 1 이면 숨김
+    if item.itemType == .end, mandatoryRemaining > 1 { return false }
+    // 3) mine 은 radarMine 이 있을 때만
+    if item.itemType.isMine { return hasRadarMine }
+    // 4) ShowType + 레이더 조합으로 판정
+    return item.showType.isVisibleOnMap(hasRadarMap: hasRadarMap, hasRadarAll: hasRadarAll)
+}
+```
+
+#### E-2. 레거시 지도 — Dark Zone 가림 효과 ([MissionPlay.m:2128-2157](Classes/MissionPlay.m#L2128-L2157))
+
+레거시는 "black 아이템의 rangeAR 원 안에 있는 다른 아이템은 지도에서 아이콘이 nil 처리되어 가려짐" 로직이 있다:
+
+```objc
+for (CircleItem *circleItem in self.mapOverlays)
+{
+    if([circleItem.missionItem.itemType isEqualToString:I_BLACK] &&
+       /* black 미획득 */)
+    {
+        if ([circleItemLoc distanceFromLocation:tmpItemLoc] <= circleItem.missionItem.rangeAR &&
+            ![_tmpItem.missionItem.itemType isEqualToString:I_START])
+        {
+            if ([_tmpItem.missionItem.itemType isEqualToString:I_BLACK]) { break; }
+            else {
+                imgFile = nil;                       // ← 아이콘 숨김
+                customPinView.canShowCallout = NO;
+                break;
+            }
+        }
+    }
+}
+```
+
+> ⚠️ Swift `shouldShowOnMap` 에는 이 "다크존 안에 들어간 다른 아이템 가리기" 로직이 **누락**되어 있다. dark004 미션 등에서 dark 원 내부의 아이템이 레거시처럼 사라지지 않고 그대로 보이게 된다.
+
+---
+
+### F. 정리 — 발견한 차이점 요약
+
+| # | 항목 | 레거시 | Swift 포트 | 영향 |
+|---|---|---|---|---|
+| F-1 | start 미획득 시 AR 표시 | **START 만** (END 도 제외) | START + END 둘 다 후보 → END 가 더 가까우면 END 표시 | ❌ 행동 차이 |
+| F-2 | AR 화면 mine 자동 폭발 | rangeAR 진입 시 자동 `mineBlast:` | `.onChange(currentLocation)` 으로 `detectMineBlast()` → `onItemTapped(mine)` 라우팅하여 폭발 + AR 닫기 (`mineBlastTriggered` 플래그로 중복 방지) | ✅ 적용 |
+| F-3 | AR 에서 mineNoBomb(Defence) 흔들기 획득 | 가능 | 후보 제외 조건을 `isMine` → `== .mine` 으로 좁힘 (mineNoBomb 후보 포함) | ✅ 적용 |
+| F-4 | Stealth/Hidden 아이템 (radar 없음) AR 표시 | 후보로 잡되 "Hidden" 안내 문구로 대체 + 화살표 숨김 | (b) 방식: `nearestItemIsHiddenByShowType` 컴퓨티드 프로퍼티가 nearest 의 ShowType + 레이더 보유를 검사하여 `ARItemView(isHiddenByShowType:)` 분기로 "Hidden — Stealth Radar required" 플레이스홀더 렌더, `ARRadarView(suppressArrows:)` 로 phone/item 화살표 둘 다 숨김. 흔들기 획득은 정상 동작 | ✅ 적용 (방식 b) |
+| F-5 | end 아이템 표시 (필수 잔여 > 1) | 숨김 | 숨김 | ✅ 일치 |
+| F-6 | timeoutStart 중복 표시 | 숨김 | 숨김 | ✅ 일치 |
+| F-7 | 다크존 내 아이템 지도 가리기 | 지원 | `GameEngine.shouldShowOnMap` 에 `isInsideUnacquiredDarkZone(_:)` 헬퍼 추가, 미획득 black 아이템 원 안의 다른 아이템 (start, black 자신 제외) 은 지도 숨김 | ✅ 적용 |
+| F-8 | quiz / miniGame "표시 = 획득 아님" | 별도 UI 필수 | 별도 UI 필수 (`MissionPlayView.handleItemTap` 분기) | ✅ 일치 |
+| F-9 | shake 0.5초 쿨다운 | 있음 | 있음 (`shakeAcquireCooldown`) | ✅ 일치 |
+| F-10 | nearest 1개만 표시 | 1개 | 1개 (`visibleItems = [nearest]`) | ✅ 일치 |
+
+### G. 권장 후속 작업
+
+1. **F-2 (mine 자동 폭발 누락)**: [ARGameView](PlaySpot/AR/ARGameView.swift) 의 `nearestVisibleItem` 또는 별도 onChange 훅에서 mine 들의 거리 검사 후 `engine.handleMineBlast(item:)` 트리거. 레거시 의도 복원.
+2. **F-3 (mineNoBomb AR 획득 불가)**: nearest 후보 필터를 `item.itemType == .mine` 로만 좁히거나, `isMine` 체크를 nearest 단계가 아닌 인터랙션 단계로 옮긴다. 의도 결정 필요.
+3. **F-4 (Stealth ShowType 무시)**: `nearestVisibleItem` 에 `item.showType.isVisibleInAR(hasRadarAR:hasRadarAll:)` 체크 추가. 레이더 없는 stealth 후보는 후보군에서 빼거나 ARItemView 가 "Hidden" 플레이스홀더를 그리도록 조건부 분기.
+4. **F-7 (다크존 가리기)**: `GameEngine.shouldShowOnMap` 에 black 아이템 + 거리 검사 추가. dark004 미션 시뮬레이터 검증으로 동작 확인.
+
+이 4개 차이점은 게임플레이 의도/밸런스에 직접 영향을 주므로 의도된 변경인지 확인 후 동기화해야 한다.

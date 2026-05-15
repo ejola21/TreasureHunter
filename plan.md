@@ -109,7 +109,7 @@ PlaySpot/
 
 ---
 
-## 2. Phase 1 — 데이터 모델 & 상수 정의
+## 2. Phase 1 — 데이터 모델 & 상수 정의 ✅ 완료
 
 ### 2.1 아이템 타입 (기존: MissionItem.h 상수 24개)
 
@@ -415,7 +415,7 @@ struct ItemRnPInPlay: Codable {
 
 ---
 
-## 3. Phase 2 — 데이터베이스 (SwiftData)
+## 3. Phase 2 — 데이터베이스 (SwiftData) ✅ 완료
 
 기존 FMDB + 수동 SQL → **GRDB.swift** (SQLite 래퍼, 기존 treasure.sqlite 스키마 호환).
 
@@ -698,7 +698,7 @@ struct PlayStateRepository {
 
 ---
 
-## 4. Phase 3 — 네트워크 레이어
+## 4. Phase 3 — 네트워크 레이어 ✅ 완료
 
 기존 `HTTPRequest` (NSURLConnection delegate 패턴) → **async/await + URLSession**
 
@@ -858,7 +858,7 @@ struct MissionDTO {
 
 ---
 
-## 5. Phase 4 — 위치 & 센서 서비스
+## 5. Phase 4 — 위치 & 센서 서비스 ✅ 완료
 
 ### 5.1 LocationService (기존: AppDelegate의 CLLocationManagerDelegate + MissionPlay의 GPS)
 
@@ -994,7 +994,7 @@ final class MotionService {
 
 ---
 
-## 6. Phase 5 — AR 시스템 (ARKit)
+## 6. Phase 5 — AR 시스템 (ARKit) ✅ 완료
 
 기존 UIImagePickerController + 수동 좌표 계산 → **ARKit + RealityKit**
 
@@ -1235,7 +1235,7 @@ struct ARRadarView: View {
 
 ---
 
-## 7. Phase 6 — 게임 엔진 (핵심 로직)
+## 7. Phase 6 — 게임 엔진 (핵심 로직) ✅ 완료
 
 기존 `MissionPlay.m` (2,259줄)의 비즈니스 로직을 UI에서 분리.
 
@@ -1534,7 +1534,7 @@ enum VirtualModeManager {
 
 ---
 
-## 8. Phase 7 — UI (SwiftUI)
+## 8. Phase 7 — UI (SwiftUI) ✅ 완료
 
 ### 8.1 앱 진입점 (기존: TreasureHunterAppDelegate)
 
@@ -2128,7 +2128,7 @@ struct MissionBuilderView: View {
 
 ---
 
-## 9. Phase 8 — 인앱 결제 (StoreKit 2)
+## 9. Phase 8 — 인앱 결제 (StoreKit 2) ✅ 완료
 
 기존 `SKPaymentQueue` + `SKPaymentTransactionObserver` → **StoreKit 2 async API**
 
@@ -2175,7 +2175,7 @@ actor StoreService {
 
 ---
 
-## 10. Phase 9 — 사운드 & 햅틱
+## 10. Phase 9 — 사운드 & 햅틱 ✅ 완료
 
 기존 `AudioToolbox` + `AudioServicesCreateSystemSoundID` → **AVFoundation + UIImpactFeedbackGenerator**
 
@@ -2241,7 +2241,7 @@ final class HapticService {
 
 ---
 
-## 11. Phase 10 — 이미지 매니저
+## 11. Phase 10 — 이미지 매니저 ✅ 완료
 
 기존 `ImageManager` (동기 다운로드 + Documents 캐시) → **async + FileManager 캐시**
 
@@ -2323,7 +2323,7 @@ private func UIImagePNGRepresentation(_ image: UIImage) -> Data? {
 
 ---
 
-## 12. Phase 11 — 인증 시스템
+## 12. Phase 11 — 인증 시스템 ✅ 완료
 
 기존 `Login.m` + `UserReg.m` (MD5 + 서버 POST) → **SwiftUI + async**
 
@@ -2393,7 +2393,7 @@ struct LoginView: View {
 
 ---
 
-## 13. Phase 12 — 리소스 마이그레이션
+## 13. Phase 12 — 리소스 마이그레이션 ✅ 완료
 
 ### 13.1 이미지 에셋 이관
 
@@ -2446,7 +2446,7 @@ Info.plist의 `UIAppFonts` 설정 유지.
 
 ---
 
-## 14. Phase 13 — 테스트
+## 14. Phase 13 — 테스트 ✅ 완료
 
 ### 14.1 단위 테스트
 
@@ -3097,3 +3097,7 @@ PlaySpot/
 - SVProgressHUD → 커스텀 SwiftUI LoadingHUD
 - DLStarRatingControl → 커스텀 SwiftUI StarRatingView
 - CMPopTipView → Apple TipKit + 커스텀 SwiftUI 뷰
+
+** ﬁ테스트 아이디 
+Email: test@test.com                                                                   
+  - Password: 1234

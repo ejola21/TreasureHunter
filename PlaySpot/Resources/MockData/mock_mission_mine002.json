@@ -1,0 +1,17 @@
+{
+  "MissionID": "mine002",
+  "Title": "지뢰 & 레이더 미션",
+  "Description": "지뢰를 피하고 방어 아이템과 레이더를 활용해 미션을 완료하세요.",
+  "Place": "튜토리얼 광장",
+  "Designer": "playspot",
+  "RunLimitTime": "00:15:00",
+  "Status": 2,
+  "Virtual": 1,
+  "WriteDate": "2026-05-13",
+  "PlayCnt": 0,
+  "FailCnt": 0,
+  "RecommendCnt": 0,
+  "RecommendAvg": 5,
+  "Quiz": "",
+  "Answer": ""
+}

@@ -1,0 +1,17 @@
+{
+  "MissionID": "dark004",
+  "Title": "다크 존 미션",
+  "Description": "다크 아이템 범위 안의 아이템은 지도에서 사라집니다. 스텔스 레이더로 AR에서 찾으세요.",
+  "Place": "튜토리얼 광장",
+  "Designer": "playspot",
+  "RunLimitTime": "00:15:00",
+  "Status": 2,
+  "Virtual": 1,
+  "WriteDate": "2026-05-13",
+  "PlayCnt": 0,
+  "FailCnt": 0,
+  "RecommendCnt": 0,
+  "RecommendAvg": 5,
+  "Quiz": "",
+  "Answer": ""
+}

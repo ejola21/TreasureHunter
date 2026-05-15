@@ -1,0 +1,17 @@
+{
+  "MissionID": "gambling005",
+  "Title": "맵 레이더 & 갬블링 미션",
+  "Description": "맵 레이더로 숨겨진 아이템을 찾고, 갬블링 박스로 랜덤 아이템을 획득하세요.",
+  "Place": "튜토리얼 광장",
+  "Designer": "playspot",
+  "RunLimitTime": "00:15:00",
+  "Status": 2,
+  "Virtual": 1,
+  "WriteDate": "2026-05-13",
+  "PlayCnt": 0,
+  "FailCnt": 0,
+  "RecommendCnt": 0,
+  "RecommendAvg": 5,
+  "Quiz": "",
+  "Answer": ""
+}

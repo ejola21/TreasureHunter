@@ -1,0 +1,17 @@
+{
+  "MissionID": "run003",
+  "Title": "타임 런 미션",
+  "Description": "Run Start를 획득하면 타이머가 시작됩니다. 제한 시간 안에 Run End를 찾으세요!",
+  "Place": "튜토리얼 광장",
+  "Designer": "playspot",
+  "RunLimitTime": "00:15:00",
+  "Status": 2,
+  "Virtual": 1,
+  "WriteDate": "2026-05-13",
+  "PlayCnt": 0,
+  "FailCnt": 0,
+  "RecommendCnt": 0,
+  "RecommendAvg": 5,
+  "Quiz": "",
+  "Answer": ""
+}

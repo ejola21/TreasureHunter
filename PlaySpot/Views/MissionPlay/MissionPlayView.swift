@@ -1,0 +1,412 @@
+// Views/MissionPlay/MissionPlayView.swift
+import SwiftUI
+import MapKit
+
+struct MissionPlayView: View {
+    @State private var engine = GameEngine()
+    @State private var showAR = false
+    @State private var showQuiz: MissionItem?
+    @State private var showMiniGame: MissionItem?
+    @State private var showInfo = false
+    @State private var cameraPosition: MapCameraPosition = .automatic
+    @Environment(\.dismiss) private var dismiss
+    @Environment(AppState.self) private var appState
+
+    let missionID: String
+    let isNewStart: Bool
+    let isVirtualMode: Bool
+
+    var body: some View {
+        ZStack(alignment: .bottom) {
+            Map(position: $cameraPosition) {
+                UserAnnotation()
+
+                ForEach(engine.items, id: \.itemID) { item in
+                    if engine.shouldShowOnMap(item) {
+                        Annotation(item.itemType.displayName, coordinate: item.coordinate) {
+                            Image(item.mapIconName)
+                                .resizable()
+                                .frame(width: 36, height: 36)
+                                .grayscale(engine.dicItemEnd[item.itemID] == "Y" ? 1.0 : 0.0)
+                                .onTapGesture { handleItemTap(item) }
+                        }
+                    }
+                }
+
+                ForEach(engine.items.filter { shouldShowCircle($0) }, id: \.itemID) { item in
+                    MapCircle(center: item.coordinate, radius: CLLocationDistance(item.rangeAR))
+                        .foregroundStyle(circleColor(for: item).opacity(0.3))
+                        .stroke(circleColor(for: item), lineWidth: 1)
+                }
+            }
+            .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                LegacyTopChrome(
+                    timeString: timeString,
+                    isTimeOutWarning: engine.isTimeOutActive && engine.remainingRunTime < 10,
+                    onExit: {
+                        engine.stopTimer()
+                        dismiss()
+                    },
+                    onRecenter: recenterCamera,
+                    onInfo: { showInfo = true }
+                )
+                Spacer()
+            }
+
+            LegacyBottomBar(
+                mineCount: engine.mineCount,
+                mandatoryRemaining: engine.mandatoryRemaining,
+                hiddenCount: engine.hiddenOnMapCount,
+                stealthCount: engine.stealthOnARCount,
+                onCamera: { showAR = true }
+            )
+        }
+        .fullScreenCover(isPresented: $showAR) {
+            ARGameView(
+                items: engine.items,
+                locationService: appState.locationService,
+                motionService: appState.motionService,
+                itemStatuses: engine.dicItemEnd,
+                engine: engine,
+                onItemTapped: { item in
+                    showAR = false
+                    handleItemTap(item)
+                },
+                onMapTapped: { showAR = false }
+            )
+        }
+        .sheet(item: $showQuiz) { item in
+            QuizView(item: item, engine: engine)
+        }
+        .sheet(item: $showMiniGame) { item in
+            MiniGameView(item: item, engine: engine)
+        }
+        .alert("Mission Info", isPresented: $showInfo) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(missionInfoText)
+        }
+        .overlay {
+            if engine.missionCompleted {
+                MissionCompletePopup {
+                    engine.stopTimer()
+                    dismiss()
+                }
+            }
+        }
+        .overlay {
+            if let alert = engine.pendingAlert {
+                ItemAcquiredPopup(alert: alert) {
+                    engine.pendingAlert = nil
+                }
+            }
+        }
+        .task {
+            let loc = appState.locationService
+            loc.requestPermission()
+            loc.startUpdating()
+            // 가상 모드: setup 전에 위치를 확보하여 setup에 직접 전달.
+            // awaitFirstLocation은 Task 취소 시 즉시 nil 반환하므로 다음 플레이에 간섭 없음.
+            let playerLoc: CLLocation? = isVirtualMode ? await loc.awaitFirstLocation() : nil
+            try? await engine.setup(
+                missionID: missionID,
+                isNewStart: isNewStart,
+                virtualMode: isVirtualMode,
+                playerLocation: playerLoc)
+            fitCameraToItems()
+        }
+        // setup 시점에 위치 픽스를 못 받았으면(권한 다이얼로그 지연 등) 늦게 도착할 때 재적용.
+        .onChange(of: appState.locationService.currentLocation) { _, newLoc in
+            guard newLoc != nil, isVirtualMode, !engine.virtualOffsetApplied else { return }
+            if engine.reapplyVirtualOffsetIfNeeded() {
+                fitCameraToItems()
+            }
+        }
+    }
+
+    private var timeString: String {
+        let seconds: Int
+        if engine.isTimeOutActive {
+            seconds = max(0, Int(engine.remainingRunTime))
+        } else {
+            seconds = Int(engine.elapsedTime)
+        }
+        let h = seconds / 3600
+        let m = (seconds % 3600) / 60
+        let s = seconds % 60
+        return String(format: "%02d%02d%02d", h, m, s)
+    }
+
+    private var missionInfoText: String {
+        let total = engine.items.count
+        let done = engine.items.filter { engine.dicItemEnd[$0.itemID] == "Y" }.count
+        return "Items: \(done) / \(total)\nMode: \(isVirtualMode ? "Virtual" : "Real")"
+    }
+
+    private func handleItemTap(_ item: MissionItem) {
+        guard engine.dicItemEnd[item.itemID] != "Y" else { return }
+        guard let location = appState.locationService.currentLocation,
+              ItemInteraction.isInRange(playerLocation: location, item: item) else { return }
+
+        let interaction = ItemInteraction.interactionType(for: item)
+        switch interaction {
+        case .quiz:
+            showQuiz = item
+        case .miniGame:
+            showMiniGame = item
+        case .mineExplode:
+            try? engine.handleMineBlast(item: item)
+        default:
+            try? engine.acquireItem(item)
+        }
+    }
+
+    /// 아이템 + 사용자 위치를 감싸는 영역으로 카메라를 맞춘다.
+    private func fitCameraToItems() {
+        let items = engine.items
+        guard !items.isEmpty else { return }
+
+        var lats = items.map(\.latitude)
+        var lons = items.map(\.longitude)
+        if let user = appState.locationService.currentLocation?.coordinate {
+            lats.append(user.latitude)
+            lons.append(user.longitude)
+        }
+        guard let minLat = lats.min(), let maxLat = lats.max(),
+              let minLon = lons.min(), let maxLon = lons.max() else { return }
+
+        let center = CLLocationCoordinate2D(
+            latitude: (minLat + maxLat) / 2,
+            longitude: (minLon + maxLon) / 2)
+        let span = MKCoordinateSpan(
+            latitudeDelta: max(maxLat - minLat, 0.002) * 1.6,
+            longitudeDelta: max(maxLon - minLon, 0.002) * 1.6)
+        cameraPosition = .region(MKCoordinateRegion(center: center, span: span))
+    }
+
+    /// 현위치 버튼 — 사용자 위치 기준으로 카메라 재설정.
+    private func recenterCamera() {
+        guard let user = appState.locationService.currentLocation?.coordinate else {
+            fitCameraToItems()
+            return
+        }
+        cameraPosition = .region(MKCoordinateRegion(
+            center: user,
+            span: MKCoordinateSpan(latitudeDelta: 0.003, longitudeDelta: 0.003)))
+    }
+
+    private func shouldShowCircle(_ item: MissionItem) -> Bool {
+        guard engine.dicItemEnd[item.itemID] != "Y" else { return false }
+        return item.itemType.isMine || item.itemType == .black
+    }
+
+    private func circleColor(for item: MissionItem) -> Color {
+        item.itemType == .black ? .purple : .red
+    }
+}
+
+// MARK: - 레거시 상단 크롬 (Exit | flip-timer | recenter | info)
+
+private struct LegacyTopChrome: View {
+    let timeString: String         // "HHMMSS" 6자리
+    let isTimeOutWarning: Bool
+    let onExit: () -> Void
+    let onRecenter: () -> Void
+    let onInfo: () -> Void
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Button(action: onExit) {
+                Text("Exit")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6)
+                            .stroke(Color.white.opacity(0.9), lineWidth: 1)
+                            .background(RoundedRectangle(cornerRadius: 6).fill(Color.black.opacity(0.25)))
+                    )
+            }
+
+            Spacer(minLength: 4)
+
+            flipCounter
+
+            Spacer(minLength: 4)
+
+            Button(action: onRecenter) {
+                Image("UI/button_now")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 34)
+            }
+
+            Button(action: onInfo) {
+                Image("UI/button_info")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 34)
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(
+            LinearGradient(
+                colors: [Color(red: 0.18, green: 0.45, blue: 0.50),
+                         Color(red: 0.10, green: 0.30, blue: 0.34)],
+                startPoint: .top, endPoint: .bottom)
+            .ignoresSafeArea(edges: .top)
+        )
+    }
+
+    private var flipCounter: some View {
+        HStack(spacing: 2) {
+            ForEach(Array(timeString.enumerated()), id: \.offset) { _, ch in
+                Text(String(ch))
+                    .font(.system(size: 22, weight: .bold, design: .monospaced))
+                    .foregroundColor(isTimeOutWarning ? .red : .white)
+                    .frame(width: 18, height: 30)
+                    .background(
+                        RoundedRectangle(cornerRadius: 3)
+                            .fill(Color.black)
+                            .overlay(
+                                Rectangle()
+                                    .fill(Color.white.opacity(0.18))
+                                    .frame(height: 1)
+                            )
+                    )
+            }
+        }
+    }
+}
+
+// MARK: - 레거시 하단 상태바 (Mine | 남은필수 | (camera 갭) | Hide Map | Stealth)
+
+private struct LegacyBottomBar: View {
+    let mineCount: Int
+    let mandatoryRemaining: Int
+    let hiddenCount: Int
+    let stealthCount: Int
+    let onCamera: () -> Void
+
+    var body: some View {
+        ZStack(alignment: .top) {
+            // 보라색/짙은 색 배경 바
+            VStack(spacing: 0) {
+                HStack(spacing: 0) {
+                    counter(label: "지뢰", value: mineCount, valueColor: .red)
+                    counter(label: "남은필수", value: mandatoryRemaining, valueColor: Color(red: 1.0, green: 0.50, blue: 0.30))
+                    Spacer().frame(width: 72) // 카메라 버튼 자리
+                    counter(label: "Hide Map", value: hiddenCount, valueColor: .white)
+                    counter(label: "Stealth", value: stealthCount, valueColor: .white)
+                }
+                .padding(.horizontal, 4)
+                .frame(height: 60)
+            }
+            .background(
+                LinearGradient(
+                    colors: [Color(red: 0.20, green: 0.20, blue: 0.28),
+                             Color(red: 0.08, green: 0.08, blue: 0.12)],
+                    startPoint: .top, endPoint: .bottom)
+                .ignoresSafeArea(edges: .bottom)
+            )
+
+            // 카메라 버튼 — 바 위로 절반 정도 띄움
+            Button(action: onCamera) {
+                Image("UI/playAR_button")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 68, height: 68)
+                    .shadow(color: .black.opacity(0.4), radius: 3, y: 2)
+            }
+            .offset(y: -22)
+        }
+    }
+
+    private func counter(label: String, value: Int, valueColor: Color) -> some View {
+        VStack(spacing: 2) {
+            Text(label)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(.white)
+            Text(String(format: "%03d", value))
+                .font(.system(size: 16, weight: .bold, design: .monospaced))
+                .foregroundColor(valueColor)
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
+// MARK: - 아이템 획득 팝업 (모든 타입 공통)
+
+struct ItemAcquiredPopup: View {
+    let alert: ItemAcquiredAlert
+    let onOK: () -> Void
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.45).ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                // 로고
+                Image("Game/logo_noshadow")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 44)
+                    .padding(.top, 20)
+                    .padding(.bottom, 12)
+
+                Divider().background(Color.gray.opacity(0.3))
+
+                // 아이콘 + 제목
+                HStack(spacing: 12) {
+                    Image(alert.itemIconName)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 48, height: 48)
+
+                    Text(alert.title)
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundColor(.black)
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 16)
+
+                // 메시지
+                Text(alert.message)
+                    .font(.system(size: 14))
+                    .foregroundColor(.gray)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 20)
+
+                Divider().background(Color.gray.opacity(0.3))
+
+                // OK 버튼
+                Button(action: onOK) {
+                    Text("OK")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(Color.orange)
+                }
+            }
+            .background(Color.white)
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .padding(.horizontal, 40)
+            .shadow(color: .black.opacity(0.25), radius: 12, y: 4)
+        }
+    }
+}
+
+#if DEBUG
+// MissionPlayView는 Map/Location 의존이라 Canvas에서 지도는 비어 보일 수 있음.
+// 시뮬레이터(⌘R)에서 검증 권장. 여기는 컴파일 확인 + 크롬 레이아웃 미리보기 용도.
+#Preview("MissionPlay") {
+    MissionPlayView(missionID: "tutorial001", isNewStart: true, isVirtualMode: true)
+        .environment(AppState.shared)
+}
+#endif
