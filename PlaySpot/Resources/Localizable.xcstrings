@@ -122,7 +122,6 @@
       }
     },
     "ar_clear1" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -139,7 +138,6 @@
       }
     },
     "ar_clear2" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2449,7 +2447,6 @@
       }
     },
     "mission_completed" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -4286,7 +4283,6 @@
       }
     },
     "radius_of_visibility" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -4411,9 +4407,6 @@
       }
     },
     "Stealth" : {
-
-    },
-    "Stealth Radar required" : {
 
     },
     "success" : {

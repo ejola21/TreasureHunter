@@ -13,7 +13,8 @@ final class MotionService {
     // 기존 GamePlayAlert의 shake 감지용
     var isShaking: Bool = false
     private var lastAcceleration: CMAcceleration?
-    private let shakeThreshold: Double = 1.2
+    /// 레거시 ARViewController.m / GamePlayAlert.m:112 의 1.4G 임계.
+    private let shakeThreshold: Double = 1.4
 
     func startUpdates() {
         guard motionManager.isDeviceMotionAvailable else { return }

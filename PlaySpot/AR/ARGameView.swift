@@ -191,7 +191,7 @@ struct ARGameView: View {
                 .scaleEffect(scale)
 
                 HStack {
-                    Text(hintDistanceText)
+                    Text(nearestItemInfoText)
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.white)
                         .shadow(color: .black, radius: 2)
@@ -210,113 +210,139 @@ struct ARGameView: View {
         .frame(height: UIScreen.main.bounds.width * 61.0 / 319.0)
     }
 
-    /// 가장 가까운 미완료 Hint(=simple) 아이템까지의 거리 표시 (없으면 빈 문자열)
-    private var hintDistanceText: String {
-        guard let location = locationService.currentLocation else { return "" }
-        let hint = items
-            .filter { $0.itemType == .simple && itemStatuses[$0.itemID] != "Y" }
-            .min(by: { location.distance(from: $0.location) < location.distance(from: $1.location) })
-        guard let h = hint else { return "" }
-        return "Hint:\(Int(location.distance(from: h.location)))m"
+    /// 좌하단 라벨 — 레거시 ar_infoView 포팅 ([`ARViewController.m:1615-1653`](Classes/ARViewController.m#L1615-L1653)).
+    /// **viewport 무관** — `nearestCandidateItem` 의 displayLabel 과 거리를 항상 표시.
+    /// - 후보 없음 (모든 필수 획득) → 빈 문자열 (레거시 `setTitle:@""`)
+    /// - Stealth/Hidden + radar 없음 → `ar_clear1` ("Stealth disvoery!")
+    /// - 일반 → `"{타입}:{거리}m"` (예: "Quiz:732m")
+    private var nearestItemInfoText: String {
+        guard let item = nearestCandidateItem,
+              let location = locationService.currentLocation else { return "" }
+        if nearestItemIsHiddenByShowType {
+            return NSLocalizedString("ar_clear1", comment: "")
+        }
+        let distance = Int(location.distance(from: item.location))
+        return "\(item.itemType.displayLabel):\(distance)m"
     }
 
-    /// AR 작동 유효 반경 (레거시: 100m 고정 표시 — viewportWidthRadians 환산 대신 단순 표기)
-    private var effectiveRangeText: String { "유효 반경:100m" }
+    /// 우하단 라벨 — 레거시 ar_infoView1 포팅 ([`ARViewController.m:1615-1653`](Classes/ARViewController.m#L1615-L1653)).
+    /// **viewport 무관** — `nearestCandidateItem` 의 rangeAR 항상 표시.
+    /// - 후보 없음 → `mission_completed` ("미션 종료!" / "Mission Complete!")
+    /// - Stealth/Hidden + radar 없음 → `ar_clear2` ("Stealth Radar needed!")
+    /// - 일반 → `"{Visible range}:{rangeAR}m"`
+    private var effectiveRangeText: String {
+        guard let item = nearestCandidateItem else {
+            return NSLocalizedString("mission_completed", comment: "")
+        }
+        if nearestItemIsHiddenByShowType {
+            return NSLocalizedString("ar_clear2", comment: "")
+        }
+        return "\(NSLocalizedString("radius_of_visibility", comment: "")):\(item.rangeAR)m"
+    }
 
-    /// 레거시 ARViewController.viewportContainsCoordinate: + 가장 가까운 1개만 그리는 동작 포팅.
-    /// AR 화면에는 한 번에 **1개**의 아이템만 표시되며, 그 1개는 다음 모든 조건을 통과한 후보 중 거리 최소인 항목이다.
+    /// 레거시 ARViewController 의 `minDistItem` 선정 로직 포팅.
+    /// **viewport (rangeAR/azimuth/pitch) 검사 없이** 가장 가까운 유효 후보 1개를 잡는다.
+    /// 하단 라벨 / 레이더 화살표 / showType 분기는 모두 이 candidate 에 기반.
+    /// 후보 자격:
     /// - 미획득 (`itemStatuses[id] != "Y"`)
-    /// - 거리 ≤ `item.rangeAR`
-    /// - `missionStarted == false` 이면 **`.start` 만** 후보 (레거시 ARViewController.m:1538 의 `else if I_START` 분기와 일치).
-    ///   END 는 outer filter 통과는 가능하나 inner branch 가 START 만 minDistItem 으로 등록.
-    /// - `.black` 은 항상 제외 (보이지 않음), `.mine` 은 범위 진입 시 별도 폭발 로직이라 표시 제외.
-    ///   단, `.mineNoBomb`(Defence)는 후보 포함 — 레거시 ARViewController.m:1506 의 I_MINE 단독 체크 일치.
-    /// - `.timeoutStart` 는 이미 타임아웃이 진행 중이면 제외
-    /// - `.end` 는 아직 다른 필수 아이템이 1개 초과 남아 있으면 제외
-    /// - F-4 (b): Stealth/Hidden ShowType 도 후보에 포함되며, 화면 그릴 때 `nearestItemIsHiddenByShowType`
-    ///   에 따라 ARItemView 가 "Hidden" 안내 플레이스홀더로 렌더링된다 (레거시 충실).
-    private var visibleItems: [MissionItem] {
-        guard let nearest = nearestVisibleItem else { return [] }
-        return [nearest]
-    }
-
-    /// F-4 (b): visibleItems 의 nearest 가 Stealth/Hidden + 적절한 레이더 없음 상태인가?
-    /// true 일 때 ARItemView 는 "Hidden" 플레이스홀더로 그리고 ARRadarView 의 화살표를 숨긴다.
-    private var nearestItemIsHiddenByShowType: Bool {
-        guard let nearest = visibleItems.first else { return false }
-        let hasRadarAR = engine.dicRnPTaken[ItemType.radarAR.rawValue] != nil
-        let hasRadarAll = engine.dicRnPTaken[ItemType.radarAll.rawValue] != nil
-        return !nearest.showType.isVisibleInAR(hasRadarAR: hasRadarAR, hasRadarAll: hasRadarAll)
-    }
-
-    private var nearestVisibleItem: MissionItem? {
-        guard let location = locationService.currentLocation,
-              let heading = locationService.heading else { return nil }
-
-        let headingRadians = heading.trueHeading * .pi / 180.0
-        let devicePitch = motionService.pitch - .pi / 2
+    /// - `missionStarted == false` 이면 **`.start` 만** ([`ARViewController.m:1538`](Classes/ARViewController.m#L1538))
+    /// - `.black`, `.mine` 영구 제외 ([`ARViewController.m:1506-1507`](Classes/ARViewController.m#L1506-L1507))
+    ///   단 `.mineNoBomb`(Defense) 는 포함 (F-3 — 레거시 I_MINE 단독 제외 일치)
+    /// - `.timeoutStart` 는 이미 타임아웃 진행 중이면 제외 ([`ARViewController.m:1522-1526`](Classes/ARViewController.m#L1522-L1526))
+    /// - `.end` 는 다른 필수 1개 초과 남아 있으면 제외 ([`ARViewController.m:1527-1530`](Classes/ARViewController.m#L1527-L1530))
+    private var nearestCandidateItem: MissionItem? {
+        guard let location = locationService.currentLocation else { return nil }
 
         var bestItem: MissionItem?
         var bestDistance = Double.greatestFiniteMagnitude
 
         for item in items {
-            // 미획득
             guard itemStatuses[item.itemID] != "Y" else { continue }
-
-            // 미션 시작 전엔 start 만 후보로 허용 (레거시 ARViewController.m:1538 분기 일치).
-            // END 가 더 가깝게 배치돼도 pre-start 단계에선 표시되지 않는다.
-            if !engine.missionStarted, item.itemType != .start {
-                continue
-            }
-
-            // F-3: 폭발 지뢰만 제외. mineNoBomb(Defence) 는 흔들기 획득 가능하게 허용.
+            if !engine.missionStarted, item.itemType != .start { continue }
             if item.itemType == .black || item.itemType == .mine { continue }
-
-            // 타임아웃 중인데 또 다른 timeoutStart 표시 금지
             if item.itemType == .timeoutStart, engine.isTimeOutActive { continue }
-
-            // end 는 다른 필수 아이템이 1개 초과 남아 있으면 숨김 (1개 = end 자신)
             if item.itemType == .end, engine.mandatoryRemaining > 1 { continue }
 
-            // F-4 (b): Stealth/Hidden ShowType 은 후보에 포함시키되,
-            // 화면 그릴 때 nearestItemIsHiddenByShowType 분기로 "Hidden" 플레이스홀더로 표시.
-
-            // 거리/뷰포트 체크
-            let coord = ARCoordinate.from(location: item.location, origin: location)
-            if coord.radialDistance > Double(item.rangeAR) { continue }
-
-            let relativeAzimuth = coord.azimuth - headingRadians
-            if abs(relativeAzimuth) > viewportWidthRadians / 2 { continue }
-
-            let relativePitch = coord.inclination - devicePitch
-            if abs(relativePitch) > viewportHeightRadians / 2 { continue }
-
-            if coord.radialDistance < bestDistance {
-                bestDistance = coord.radialDistance
+            let distance = location.distance(from: item.location)
+            if distance < bestDistance {
+                bestDistance = distance
                 bestItem = item
             }
         }
-
         return bestItem
     }
 
-    /// 기존 ARViewController의 pointForCoordinate: 대체
+    /// 그리기 대상 — `nearestCandidateItem` 이 viewport (rangeAR + azimuth + pitch) 안에 있을 때만 1개.
+    /// 레거시 [`ARViewController.m:1549-1613`](Classes/ARViewController.m#L1549-L1613) — `minDistItem` 이 viewportContainsCoordinate 통과해야 그림.
+    private var visibleItems: [MissionItem] {
+        guard let nearest = nearestVisibleItem else { return [] }
+        return [nearest]
+    }
+
+    /// F-4 (b): nearest **candidate** 가 Stealth/Hidden + 레이더 없음 상태인가?
+    /// 레거시 [`ARViewController.m:1624-1627`](Classes/ARViewController.m#L1624-L1627) 의 `minDistItem.showType` 검사.
+    /// true 일 때:
+    ///   - 좌하단 라벨: ar_clear1 ("Stealth disvoery!")
+    ///   - 우하단 라벨: ar_clear2 ("Stealth Radar needed!")
+    ///   - 레이더 화살표 (phone/item) 둘 다 숨김
+    ///   - viewport 안에 들어가면 ARItemView 는 Hidden 플레이스홀더로
+    private var nearestItemIsHiddenByShowType: Bool {
+        guard let candidate = nearestCandidateItem else { return false }
+        let hasRadarAR = engine.dicRnPTaken[ItemType.radarAR.rawValue] != nil
+        let hasRadarAll = engine.dicRnPTaken[ItemType.radarAll.rawValue] != nil
+        return !candidate.showType.isVisibleInAR(hasRadarAR: hasRadarAR, hasRadarAll: hasRadarAll)
+    }
+
+    private var nearestVisibleItem: MissionItem? {
+        guard let candidate = nearestCandidateItem,
+              let location = locationService.currentLocation else { return nil }
+
+        let coord = ARCoordinate.from(location: candidate.location, origin: location)
+        if coord.radialDistance > Double(candidate.rangeAR) { return nil }
+
+        // pitch(수직) 검사는 의도적으로 생략.
+        // 이유: ARCoordinate.from 이 inclination=0 으로 고정 (지면 평면 가정) 이라 검사 자체가 무의미.
+        // 또한 CMDeviceMotion 은 시뮬레이터에서 데이터를 제공하지 않아 pitch=0 → devicePitch=-π/2 →
+        // relativePitch=π/2 가 되어 모든 아이템이 항상 viewport 밖으로 판정되는 버그 유발.
+        // 레거시 ARGeoCoordinate 는 altitude 차이로 실제 inclination 을 계산했지만 우리는 평면 가정이므로
+        // pitch 검사 제거가 정확. 거리(rangeAR) 만으로 가시성 판정.
+
+        // azimuth(수평) 검사: heading 이 있을 때만. 시뮬레이터에서 heading nil 이면 통과.
+        if let heading = locationService.heading {
+            let headingRadians = heading.trueHeading * .pi / 180.0
+            let relativeAzimuth = normalizeAngle(coord.azimuth - headingRadians)
+            if abs(relativeAzimuth) > viewportWidthRadians / 2 { return nil }
+        }
+
+        return candidate
+    }
+
+    /// 각도를 -π ~ π 범위로 정규화 (방위각 wrap-around 보정).
+    private func normalizeAngle(_ angle: Double) -> Double {
+        var a = angle
+        while a > .pi { a -= 2 * .pi }
+        while a < -.pi { a += 2 * .pi }
+        return a
+    }
+
+    /// 기존 ARViewController의 pointForCoordinate: 대체.
+    /// y(수직) 는 항상 화면 중앙에 고정 — ARCoordinate.from 이 inclination=0 (평면 가정) 이라
+    /// pitch 기반 수직 위치 계산이 무의미하기 때문. 시뮬레이터 motion 누락 문제도 함께 회피.
+    /// x(수평) 는 heading 있을 때 azimuth 기반, 없으면 화면 중앙.
     private func screenPosition(for item: MissionItem, in size: CGSize) -> CGPoint? {
-        guard let location = locationService.currentLocation,
-              let heading = locationService.heading else { return nil }
+        guard let location = locationService.currentLocation else { return nil }
 
         let coord = ARCoordinate.from(location: item.location, origin: location)
-        let headingRadians = heading.trueHeading * .pi / 180.0
-        let relativeAzimuth = coord.azimuth - headingRadians
 
-        // 수평 위치: 방위각 기반
-        let x = size.width / 2.0 + (relativeAzimuth / viewportWidthRadians) * (size.width / 2.0)
-
-        // 수직 위치: 기울기 기반.
-        // CMDeviceMotion.attitude.pitch는 폰을 평평하게 눕히면 0, 직립(카메라 정면 응시)일 때 ≈ π/2.
-        // 레거시 ARViewController는 "직립=수평선 정조준"을 0으로 다뤘으므로 π/2 만큼 빼서 정규화한다.
-        let devicePitch = motionService.pitch - .pi / 2
-        let y = size.height / 2.0 - (coord.inclination - devicePitch) / viewportHeightRadians * (size.height / 2.0)
+        let x: CGFloat
+        if let heading = locationService.heading {
+            let headingRadians = heading.trueHeading * .pi / 180.0
+            let relativeAzimuth = normalizeAngle(coord.azimuth - headingRadians)
+            x = size.width / 2.0 + CGFloat(relativeAzimuth / viewportWidthRadians) * (size.width / 2.0)
+        } else {
+            x = size.width / 2.0
+        }
+        let y = size.height / 2.0
 
         return CGPoint(x: x, y: y)
     }

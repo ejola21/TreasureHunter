@@ -159,6 +159,17 @@ struct PlayStateRepository {
         }
     }
 
+    /// 단일 아이템의 MissionItemInPlay 조회 (failCnt 등 상태 검사용).
+    func fetchItemInPlay(missionID: String, playerID: String, itemID: Int) throws -> MissionItemInPlay? {
+        try db.read { db in
+            let row = try Row.fetchOne(db, sql: """
+                SELECT * FROM MissionItemInPlay
+                WHERE MissionID=? AND PlayerID=? AND ItemID=?
+                """, arguments: [missionID, playerID, itemID])
+            return row.map { mapRowToItemInPlay($0) }
+        }
+    }
+
     /// 기존: UPDATE MissionItemInPlay SET EndYN=?, ...
     func updateItemInPlay(_ item: MissionItemInPlay) throws {
         try db.write { db in

@@ -21,15 +21,18 @@ struct MissionPlayView: View {
             Map(position: $cameraPosition) {
                 UserAnnotation()
 
-                ForEach(engine.items, id: \.itemID) { item in
-                    if engine.shouldShowOnMap(item) {
-                        Annotation(item.itemType.displayName, coordinate: item.coordinate) {
-                            Image(item.mapIconName)
-                                .resizable()
-                                .frame(width: 36, height: 36)
-                                .grayscale(engine.dicItemEnd[item.itemID] == "Y" ? 1.0 : 0.0)
-                                .onTapGesture { handleItemTap(item) }
-                        }
+                // SwiftUI Map 의 Annotation 은 ForEach 안의 `if` 조건만으로는
+                // 가시성 변경을 즉시 반영하지 않을 수 있다 (annotation 캐싱).
+                // filter 로 데이터 셋 자체를 줄여 강제 재렌더링.
+                // 레거시 MissionPlay.m:1979-1981 의 didSelectAnnotationView 는 빈 함수 —
+                // Map 핀 탭은 callout 표시 전용이고 획득은 절대 일어나지 않는다.
+                // 모든 획득은 AR 화면에서만 (흔들기 / AR 아이콘 탭 / mine 자동 폭발).
+                ForEach(engine.items.filter { engine.shouldShowOnMap($0) }, id: \.itemID) { item in
+                    Annotation(item.itemType.displayLabel, coordinate: item.coordinate) {
+                        Image(item.mapIconName)
+                            .resizable()
+                            .frame(width: 36, height: 36)
+                            .grayscale(engine.dicItemEnd[item.itemID] == "Y" ? 1.0 : 0.0)
                     }
                 }
 
@@ -99,7 +102,7 @@ struct MissionPlayView: View {
         .overlay {
             if let alert = engine.pendingAlert {
                 ItemAcquiredPopup(alert: alert) {
-                    engine.pendingAlert = nil
+                    engine.dismissCurrentAlert()
                 }
             }
         }
@@ -197,9 +200,16 @@ struct MissionPlayView: View {
             span: MKCoordinateSpan(latitudeDelta: 0.003, longitudeDelta: 0.003)))
     }
 
+    /// 지도에 영역 원(MapCircle)을 그릴지 판정.
+    /// - 레거시 MissionPlay.m:906 은 미획득 mine 의 rangeAR 을 빨간 원으로 그리되, Mine Radar 보유 시에만 표시.
+    /// - mineNoBomb(Defense)는 일반 핀 아이콘으로 표시되며 원 없음.
+    /// - black(Dark)은 미획득 시 검은 원 영구 표시.
     private func shouldShowCircle(_ item: MissionItem) -> Bool {
         guard engine.dicItemEnd[item.itemID] != "Y" else { return false }
-        return item.itemType.isMine || item.itemType == .black
+        if item.itemType == .mine {
+            return engine.dicRnPTaken[ItemType.radarMine.rawValue] != nil
+        }
+        return item.itemType == .black
     }
 
     private func circleColor(for item: MissionItem) -> Color {

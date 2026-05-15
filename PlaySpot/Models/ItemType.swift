@@ -39,7 +39,8 @@ enum ItemType: String, Codable, CaseIterable {
 
     // MARK: - 분류 프로퍼티
 
-    var displayName: LocalizedStringKey {
+    /// 레거시 AppDelegate.itemTypeObjects 와 동일. AR 화면 좌측 라벨 등에서 String 으로 사용.
+    var displayLabel: String {
         switch self {
         case .start: "Start"
         case .end: "End"
@@ -61,6 +62,8 @@ enum ItemType: String, Codable, CaseIterable {
         default: "Item"
         }
     }
+
+    var displayName: LocalizedStringKey { LocalizedStringKey(displayLabel) }
 
     /// 기존 itemTypeFiles 배열 대체 — 리소스 이미지 파일명 접두사
     var imageFileName: String {

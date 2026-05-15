@@ -15,36 +15,6 @@
     "RecommendAvg": 5
   },
   {
-    "MissionID": "ejola20110517204326",
-    "Title": "관악산 보물찾기",
-    "Description": "관악산 근처 보물을 찾아보세요",
-    "Place": "서울 관악구",
-    "Designer": "ejola",
-    "RunLimitTime": "01:00:00",
-    "Status": 2,
-    "Virtual": 1,
-    "WriteDate": "2011-05-17",
-    "PlayCnt": 15,
-    "FailCnt": 3,
-    "RecommendCnt": 8,
-    "RecommendAvg": 4
-  },
-  {
-    "MissionID": "ejola20110602210324",
-    "Title": "서울대입구 탐험",
-    "Description": "서울대입구역 주변 미션",
-    "Place": "서울 관악구",
-    "Designer": "ejola",
-    "RunLimitTime": "00:30:00",
-    "Status": 2,
-    "Virtual": 1,
-    "WriteDate": "2011-06-02",
-    "PlayCnt": 22,
-    "FailCnt": 5,
-    "RecommendCnt": 12,
-    "RecommendAvg": 5
-  },
-  {
     "MissionID": "mine002",
     "Title": "지뢰 & 레이더 미션",
     "Description": "지뢰를 피하고 방어 아이템과 레이더를 활용해 미션을 완료하세요.",
