@@ -39,6 +39,22 @@ struct SettingsView: View {
                         .foregroundColor(.secondary)
                 }
 
+                #if DEBUG
+                Section("Debug — 401 자동 재로그인 검증") {
+                    Button("Simulate 401: token 손상 + fetch 시도") {
+                        Task {
+                            // 토큰을 손상시켜 다음 호출이 401 받도록 유도
+                            await AuthSession.shared.setToken("invalid_test_token")
+                            // fetchMissionList 호출 → 401 → 자동 재로그인 → 재시도
+                            _ = try? await AppConfig.dataSource.fetchMissionList(cursor: 0, lang: "ko")
+                        }
+                    }
+                    Text("Console 로그에서 'auto re-login' 출력 확인.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                #endif
+
                 Section("Tutorial") {
                     Button("How to Play") {
                         showTutorial = true

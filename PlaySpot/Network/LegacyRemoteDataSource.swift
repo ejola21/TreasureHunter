@@ -1,9 +1,13 @@
 // Network/LegacyRemoteDataSource.swift — 레거시 /playspot/J_MyList.php 호환 백엔드
-// @deprecated AppConfig.backend == .legacy 인 경우에만 사용. 신규 호출은 RestRemoteDataSource 권장.
+//
+// @deprecated 신규 코드는 [RestRemoteDataSource](RestRemoteDataSource.swift) 사용 권장.
+// 이 구현은 AppConfig.backend == .legacy 인 경우 (Settings 토글) 에만 호출된다.
+// 신규 서버가 안정화되면 별도 PR 로 제거 예정 — 의존하지 말 것.
 import Foundation
 import CoreLocation
 import os
 
+@available(*, deprecated, message: "신규 API 로 마이그레이션됨. AppConfig.backend = .rest 권장. 회귀용으로만 유지.")
 struct LegacyRemoteDataSource: MissionDataSource {
     private let client = APIClient.shared
     private static let log = Logger(subsystem: "com.ejola.playspot", category: "LegacyDS")

@@ -66,15 +66,20 @@ UI를 변경한 경우 풀 검증으로 스크린샷을 확인할 것. 타입체
 - **async/await** 사용. Combine 신규 사용 금지.
 - 로깅은 `print` 대신 `os.Logger` 사용.
 - 의존성 주입은 생성자 주입 (e.g. `MissionDataSource`를 `AppConfig.dataSource`에서 받아옴).
-- DEBUG 빌드는 `LocalDataSource` (번들 JSON), Release는 `RemoteDataSource` ([AppConfig.swift](PlaySpot/Network/AppConfig.swift)).
+- 네트워크 백엔드는 `AppConfig.backend` (UserDefaults 영속, 기본값 `.rest`) 로 토글 — [AppConfig.swift](PlaySpot/Network/AppConfig.swift). Settings 화면 segmented Picker 로 변경 가능. `.rest` = `RestRemoteDataSource` (`/api/v1/**`), `.legacy` = `LegacyRemoteDataSource` (`/playspot/J_MyList.php`). LocalDataSource(번들 JSON mock)는 단위 테스트용.
 
 ## PlaySpot (신규 프로젝트) Architecture
 
-- **PlaySpotApp.swift**: SwiftUI App 진입점, `AppState` 싱글턴(@Observable) 보유.
+- **PlaySpotApp.swift**: SwiftUI App 진입점, `AppState` 싱글턴(@Observable) 보유. `body.task` 에서 `AuthBootstrap.ensureAuthenticated()` 호출하여 REST 백엔드면 토큰 자동 발급(저장된 자격증명 → 재로그인, 없으면 `Guest@<ts>` 자동 register+login).
 - **AppState**: 위치/모션 서비스, 사용자 ID, IAP 카운트(UserDefaults backed).
-- **Network/AppConfig.swift**: DEBUG=`LocalDataSource`, Release=`RemoteDataSource` 스위치.
-- **Network/MissionDataSource.swift**: 데이터 소스 프로토콜.
-- **Network/APIEndpoint.swift**: 레거시 PHP 엔드포인트 매핑 (tr=200 등 transaction code).
+- **Network/AppConfig.swift**: 백엔드 토글. 기본 `.rest` (신규 `/api/v1/**` JSON REST).
+- **Network/MissionDataSource.swift**: 데이터 소스 프로토콜. 13개 메서드 (read/write/auth/play).
+- **Network/RestAPIClient.swift**: actor. URLSession 기반. Authorization 자동 부착 + 401/403 자동 재로그인 인터셉터 (1회 한정).
+- **Network/AuthSession.swift**: actor. JWT 토큰 + 자격증명을 `KeychainStore` 에 영속.
+- **Network/AuthBootstrap.swift**: 진입점 부트스트랩 헬퍼. 동시 호출 race 차단 (inflight Task 공유).
+- **Network/RestRemoteDataSource.swift**: 신규 `/api/v1/**` 백엔드. 기본 사용.
+- **Network/LegacyRemoteDataSource.swift**: `@deprecated`. 레거시 `/playspot/J_MyList.php` (TR=200 dispatcher) — 회귀 안전망.
+- **Network/APIEndpoint.swift**: 레거시 백엔드 전용. `tr=` 디스패처 매핑.
 - **Database/**: GRDB 기반 로컬 저장소. **카탈로그(Mission/Items/Quizzes) 읽기는 `dataSource`(LocalDataSource/RemoteDataSource)가 담당하고, DB는 사용자 플레이 상태(PlayStateRepository, PowerUpRepository, MissionBuilder가 저장한 자작 미션) 전용**. 번들 `treasure.sqlite`의 Mission 테이블은 비어 있으므로 카탈로그를 DB에서 읽으려 하면 빈 결과가 나옴 — 추가 작업 시 이 패턴 유지.
 - **Game/GameEngine.swift**: `setup(...)`는 async. `dataSource.fetchMissionDetail`로 (Mission, Items, Quizzes) 한 번에 로드 후 itemID로 퀴즈 그룹핑.
 - **Models/ItemType.swift**: 아이템 타입 enum. `mapIcon`/`arIcon`은 namespace prefix(`Items/i_X`, `AR/ar_X`) 포함하여 반환.
@@ -94,6 +99,15 @@ xcrun simctl io booted screenshot /tmp/shot.png
 # 컴파일된 asset 카탈로그 검사
 xcrun assetutil --info build/Build/Products/Debug-iphonesimulator/PlaySpot.app/Assets.car | grep '"Name"'
 ```
+
+## API 회귀 (신규 /api/v1/**)
+
+```bash
+# 13 endpoints 스모크 (anonymous 차단 / register / login / 읽기 9개 / 쓰기 2개 / 401 우회) — 22 케이스
+bash scripts/smoke_new_api.sh
+```
+
+[api_plan_new.md](api_plan_new.md) 가 마이그레이션 진척/체크리스트의 단일 진실 출처.
 
 ## (참고) 레거시 Objective-C 프로젝트
 

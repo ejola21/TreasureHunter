@@ -57,9 +57,10 @@ actor RestAPIClient {
         let httpResponse = response as? HTTPURLResponse
         let status = httpResponse?.statusCode ?? 0
 
-        // 401 자동 재로그인 1회 시도
-        if status == 401 {
-            Self.log.info("401 received on \(path, privacy: .public) — attempting auto re-login")
+        // 401/403 자동 재로그인 1회 시도. Spring Security 는 invalid JWT 를 403 으로 응답하는
+        // 경우가 있어 둘 다 토큰 만료로 간주한다 (저장된 자격증명이 있는 경우만).
+        if status == 401 || status == 403 {
+            Self.log.info("\(status, privacy: .public) received on \(path, privacy: .public) — attempting auto re-login")
             if await tryReLogin() {
                 let retryReq = try await buildRequest(method: method, path: path, query: query, body: body)
                 let (data2, resp2) = try await perform(retryReq)
@@ -139,13 +140,20 @@ actor RestAPIClient {
 
     /// 저장된 자격증명으로 /auth/login 재호출. 성공 시 토큰 갱신.
     private func tryReLogin() async -> Bool {
-        guard let creds = await AuthSession.shared.storedCredentials() else { return false }
+        guard let creds = await AuthSession.shared.storedCredentials() else {
+            Self.log.warning("auto re-login skipped: no stored credentials")
+            return false
+        }
+        Self.log.info("auto re-login: attempting for \(creds.userID, privacy: .public)")
+        // 현재 (잘못된) 토큰을 일단 폐기. 새 토큰 발급 후 setToken 호출하므로 race 없음.
+        await AuthSession.shared.clearToken()
         do {
             let req = LoginReq(userId: creds.userID, password: creds.passwordMD5)
             let urlReq = try await buildRequest(method: .POST, path: "/api/v1/auth/login", query: [:], body: req)
             let (data, response) = try await perform(urlReq)
             let res: LoginRes = try decodeOrThrow(data: data, response: response, type: LoginRes.self)
             await AuthSession.shared.setToken(res.token)
+            Self.log.info("auto re-login: SUCCESS — new token issued")
             return true
         } catch {
             Self.log.error("auto re-login failed: \(error.localizedDescription, privacy: .public)")
