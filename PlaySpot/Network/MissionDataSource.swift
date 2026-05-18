@@ -23,10 +23,11 @@ protocol MissionDataSource {
     func fetchCurrentGames(userID: String) async throws -> [Mission]
     /// c_mission_play_ranking — 미션 별 랭킹 (서버 응답은 {ShortUser1, ShortRecord1, ...} 객체)
     func fetchRanking(missionID: String) async throws -> [RankingEntry]
-    /// TR=800 — 로그인 (response="SUCCESS")
-    func login(email: String, passwordMD5: String) async throws -> Bool
-    /// TR=tr_user_reg — 회원가입
-    func register(email: String, passwordMD5: String) async throws -> Bool
+    /// TR=800 — 로그인. password 는 평문. 해싱은 서버 책임.
+    /// Legacy 백엔드는 내부에서 MD5 변환하여 전송.
+    func login(email: String, password: String) async throws -> Bool
+    /// TR=tr_user_reg — 회원가입. password 는 평문.
+    func register(email: String, password: String) async throws -> Bool
     /// TR=700 — 미션 빌더 업로드 (mission, items, quizzes JSON 문자열 묶음)
     func uploadMission(missionJSON: String, itemsJSON: String, quizzesJSON: String) async throws -> Bool
     /// TR=c_mission_play_start / finish / fail — 플레이 기록 (legacy: 콤마 페이로드, rest: 구조화 인자)

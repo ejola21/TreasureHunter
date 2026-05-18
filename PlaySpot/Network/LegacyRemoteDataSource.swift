@@ -94,13 +94,16 @@ struct LegacyRemoteDataSource: MissionDataSource {
 
     // MARK: - 인증
 
-    func login(email: String, passwordMD5: String) async throws -> Bool {
-        let response = try await client.request(.login(userID: email, passwordMD5: passwordMD5))
+    func login(email: String, password: String) async throws -> Bool {
+        // Legacy 서버는 MD5 기대 — 내부에서 변환.
+        let md5 = APIClient.md5(password)
+        let response = try await client.request(.login(userID: email, passwordMD5: md5))
         return Self.isSuccess(response)
     }
 
-    func register(email: String, passwordMD5: String) async throws -> Bool {
-        let response = try await client.request(.register(userID: email, passwordMD5: passwordMD5))
+    func register(email: String, password: String) async throws -> Bool {
+        let md5 = APIClient.md5(password)
+        let response = try await client.request(.register(userID: email, passwordMD5: md5))
         return Self.isSuccess(response)
     }
 

@@ -64,10 +64,10 @@ struct LoginView: View {
         isLoading = true
         defer { isLoading = false }
 
-        let md5Password = APIClient.md5(password)
+        // password 는 평문 전송 — 서버가 해싱 책임. HTTPS 가 전송 보호.
         let dataSource = AppConfig.dataSource  // 토글 반영 위해 task 시점에 조회
         do {
-            let success = try await dataSource.login(email: email, passwordMD5: md5Password)
+            let success = try await dataSource.login(email: email, password: password)
             if success {
                 AppState.shared.userID = email
                 dismiss()
@@ -90,12 +90,11 @@ struct LoginView: View {
         AppState.shared.userID = guestID
 
         if AppConfig.backend == .rest {
-            // 임의 비밀번호 생성 → MD5 → register → login.
-            let rawPW = UUID().uuidString
-            let md5PW = APIClient.md5(rawPW)
+            // 임의 평문 비밀번호 생성 → register → login. (서버 32자 제한 → dash 제거)
+            let guestPW = UUID().uuidString.replacingOccurrences(of: "-", with: "")
             let ds = AppConfig.dataSource
-            _ = try? await ds.register(email: guestID, passwordMD5: md5PW)
-            let ok = (try? await ds.login(email: guestID, passwordMD5: md5PW)) ?? false
+            _ = try? await ds.register(email: guestID, password: guestPW)
+            let ok = (try? await ds.login(email: guestID, password: guestPW)) ?? false
             if !ok {
                 errorMessage = "Guest session setup failed."
                 return

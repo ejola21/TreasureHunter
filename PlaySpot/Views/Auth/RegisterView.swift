@@ -59,15 +59,15 @@ struct RegisterView: View {
         isLoading = true
         defer { isLoading = false }
 
-        let md5Password = APIClient.md5(password)
+        // password 는 평문 전송 — 서버가 해싱.
         let dataSource = AppConfig.dataSource
-        let registered = (try? await dataSource.register(email: email, passwordMD5: md5Password)) ?? false
+        let registered = (try? await dataSource.register(email: email, password: password)) ?? false
         guard registered else {
             errorMessage = "Registration failed (이미 가입된 계정이거나 서버 오류)."
             return
         }
         // 자동 로그인 — REST 백엔드면 토큰 발급. Legacy 면 SUCCESS 여부만 확인.
-        let loggedIn = (try? await dataSource.login(email: email, passwordMD5: md5Password)) ?? false
+        let loggedIn = (try? await dataSource.login(email: email, password: password)) ?? false
         if loggedIn {
             AppState.shared.userID = email
             dismiss()

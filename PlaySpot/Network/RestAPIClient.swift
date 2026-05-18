@@ -153,7 +153,7 @@ actor RestAPIClient {
         // 현재 (잘못된) 토큰을 일단 폐기. 새 토큰 발급 후 setToken 호출하므로 race 없음.
         await AuthSession.shared.clearToken()
         do {
-            let req = LoginReq(userId: creds.userID, password: creds.passwordMD5)
+            let req = LoginReq(userId: creds.userID, password: creds.password)
             let urlReq = try await buildRequest(method: .POST, path: "/api/v1/auth/login", query: [:], body: req)
             let (data, response) = try await perform(urlReq)
             let res: LoginRes = try decodeOrThrow(data: data, response: response, type: LoginRes.self)

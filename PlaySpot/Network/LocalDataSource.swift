@@ -16,7 +16,7 @@ struct LocalDataSource: MissionDataSource {
         true
     }
 
-    func register(email: String, passwordMD5: String) async throws -> Bool {
+    func register(email: String, password: String) async throws -> Bool {
         true
     }
 
@@ -71,7 +71,7 @@ struct LocalDataSource: MissionDataSource {
         try loadJSON("mock_ranking")
     }
 
-    func login(email: String, passwordMD5: String) async throws -> Bool {
+    func login(email: String, password: String) async throws -> Bool {
         true // Mock에서는 항상 로그인 성공
     }
 

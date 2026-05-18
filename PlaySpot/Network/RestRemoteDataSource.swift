@@ -135,12 +135,13 @@ struct RestRemoteDataSource: MissionDataSource {
 
     // MARK: - 인증
 
-    func login(email: String, passwordMD5: String) async throws -> Bool {
+    func login(email: String, password: String) async throws -> Bool {
+        // password 는 평문 — 서버가 해싱 책임. HTTPS 가 전송 보호.
         do {
             let res: LoginRes = try await client.send(.POST, "/api/v1/auth/login",
-                                                      body: LoginReq(userId: email, password: passwordMD5))
+                                                      body: LoginReq(userId: email, password: password))
             await AuthSession.shared.setToken(res.token)
-            await AuthSession.shared.saveCredentials(userID: email, passwordMD5: passwordMD5)
+            await AuthSession.shared.saveCredentials(userID: email, password: password)
             return true
         } catch {
             Self.log.error("login: \(error.localizedDescription, privacy: .public)")
@@ -148,10 +149,10 @@ struct RestRemoteDataSource: MissionDataSource {
         }
     }
 
-    func register(email: String, passwordMD5: String) async throws -> Bool {
+    func register(email: String, password: String) async throws -> Bool {
         do {
             try await client.send(.POST, "/api/v1/auth/register",
-                                  body: RegisterReq(userId: email, password: passwordMD5))
+                                  body: RegisterReq(userId: email, password: password))
             return true
         } catch let APIError.server(code, _, _, _) where code == "DUPLICATE_DATA" {
             // 이미 가입된 사용자 — register 실패지만 login 으로 진행 가능.

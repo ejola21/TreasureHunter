@@ -44,10 +44,10 @@ actor AuthBootstrap {
         log.info("ensureAuth: starting bootstrap")
         let dataSource = AppConfig.dataSource
 
-        // (1) 저장된 자격증명으로 재로그인
+        // (1) 저장된 자격증명으로 재로그인 (평문 비밀번호 + Keychain 보호)
         if let creds = await AuthSession.shared.storedCredentials() {
             log.info("ensureAuth: trying stored credentials for \(creds.userID, privacy: .public)")
-            if let ok = try? await dataSource.login(email: creds.userID, passwordMD5: creds.passwordMD5), ok {
+            if let ok = try? await dataSource.login(email: creds.userID, password: creds.password), ok {
                 AppState.shared.userID = creds.userID
                 log.info("ensureAuth: stored-cred login success")
                 return
@@ -55,13 +55,14 @@ actor AuthBootstrap {
             log.warning("ensureAuth: stored-cred login failed, will create new guest")
         }
 
-        // (2) 신규 게스트 자동 가입
+        // (2) 신규 게스트 자동 가입 — 평문 비밀번호. 해싱은 서버.
+        // 서버에 32자 제한이 있어 UUID 의 dash 를 제거 (8E382F47FF994ADE94C8CC36ECC0F517 = 32자).
         let guestID = AppState.shared.guestUserID
-        let md5PW = APIClient.md5(UUID().uuidString)
+        let guestPW = UUID().uuidString.replacingOccurrences(of: "-", with: "")
         log.info("ensureAuth: registering new guest \(guestID, privacy: .public)")
-        _ = try? await dataSource.register(email: guestID, passwordMD5: md5PW)
+        _ = try? await dataSource.register(email: guestID, password: guestPW)
         log.info("ensureAuth: logging in new guest")
-        if let ok = try? await dataSource.login(email: guestID, passwordMD5: md5PW), ok {
+        if let ok = try? await dataSource.login(email: guestID, password: guestPW), ok {
             AppState.shared.userID = guestID
             log.info("ensureAuth: guest login success — token issued")
         } else {

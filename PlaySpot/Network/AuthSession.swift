@@ -8,7 +8,7 @@ actor AuthSession {
 
     private static let tokenAccount = "jwt.token"
     private static let userIDAccount = "credential.userID"
-    private static let passwordAccount = "credential.passwordMD5"
+    private static let passwordAccount = "credential.password"
 
     private var cachedToken: String?
 
@@ -32,14 +32,14 @@ actor AuthSession {
 
     // MARK: - 저장된 자격증명 (재로그인용)
 
-    /// 다음 401 발생 시 자동 재로그인을 위해 비밀번호(MD5) 와 UserID 를 저장.
-    /// 게스트 사용자는 register 시점에 자동 호출.
-    func saveCredentials(userID: String, passwordMD5: String) {
+    /// 다음 401 발생 시 자동 재로그인을 위해 비밀번호(평문) 와 UserID 를 저장.
+    /// 게스트 사용자는 register 시점에 자동 호출. Keychain 으로 보호 (Secure Enclave-backed).
+    func saveCredentials(userID: String, password: String) {
         KeychainStore.set(userID, account: Self.userIDAccount)
-        KeychainStore.set(passwordMD5, account: Self.passwordAccount)
+        KeychainStore.set(password, account: Self.passwordAccount)
     }
 
-    func storedCredentials() -> (userID: String, passwordMD5: String)? {
+    func storedCredentials() -> (userID: String, password: String)? {
         guard let uid = KeychainStore.get(account: Self.userIDAccount),
               let pw = KeychainStore.get(account: Self.passwordAccount) else { return nil }
         return (uid, pw)

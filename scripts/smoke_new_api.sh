@@ -68,7 +68,8 @@ echo
 # ──────────────────────────────────────────────────────────────
 TS=$(date +%s)
 GUEST="Guest@${TS}-smoke"
-PW=$(printf '%s' "$(uuidgen)" | md5)
+# 평문 비밀번호 (서버가 해싱). 클라이언트 측 MD5 폐기. 서버 32자 제한 → dash 제거.
+PW="$(uuidgen | tr -d '-')"
 
 echo "[2] register new guest"
 status=$(curl -s -o /dev/null -w '%{http_code}' \
