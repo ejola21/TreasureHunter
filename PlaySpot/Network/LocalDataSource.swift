@@ -24,9 +24,13 @@ struct LocalDataSource: MissionDataSource {
         true
     }
 
-    func recordPlayStart(playJSON: String) async throws -> Bool { true }
-    func recordPlayFinish(playJSON: String) async throws -> Bool { true }
-    func recordPlayFail(playJSON: String) async throws -> Bool { true }
+    func recordPlayStart(missionID: String, playerID: String, startTime: Date, isVirtual: Bool) async throws -> Bool { true }
+    func recordPlayFinish(missionID: String, playerID: String, startTime: Date, endTime: Date, isVirtual: Bool) async throws -> Bool { true }
+    func recordPlayFail(missionID: String, playerID: String, startTime: Date, endTime: Date, isVirtual: Bool) async throws -> Bool { true }
+
+    func fetchUser(userID: String) async throws -> UserRes? { nil }
+    func updateUser(userID: String, patch: UserPatchReq) async throws -> Bool { true }
+    func changePassword(userID: String, oldPasswordMD5: String, newPasswordMD5: String) async throws -> Bool { true }
 
     func fetchMissionDetail(missionID: String) async throws -> (Mission, [MissionItem], [ItemQuiz]) {
         // 미션 ID별 파일이 있으면 사용, 없으면 기본 파일 사용

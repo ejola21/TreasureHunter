@@ -4,6 +4,7 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(AppState.self) var appState
     @State private var showTutorial = false
+    @State private var selectedBackend: APIBackend = AppConfig.backend
 
     var body: some View {
         NavigationStack {
@@ -13,10 +14,29 @@ struct SettingsView: View {
 
                     if !appState.isGuest {
                         Button("Logout") {
+                            // 신규 API: 토큰 + 자격증명 폐기. 게스트 사용자로 되돌림.
+                            Task { await AuthSession.shared.reset() }
                             appState.userID = appState.guestUserID
                         }
                         .foregroundColor(.red)
                     }
+                }
+
+                Section("API Backend") {
+                    Picker("Backend", selection: $selectedBackend) {
+                        ForEach(APIBackend.allCases) { backend in
+                            Text(backend.displayName).tag(backend)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .onChange(of: selectedBackend) { _, new in
+                        AppConfig.backend = new
+                        // 백엔드 변경 시 토큰/자격증명 폐기 — 다른 백엔드의 토큰은 무의미.
+                        Task { await AuthSession.shared.reset() }
+                    }
+                    Text("REST 로 전환 시 다음 호출부터 /api/v1/** 사용. 재로그인 필요.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
 
                 Section("Tutorial") {

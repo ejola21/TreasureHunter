@@ -8,7 +8,6 @@ struct LoginView: View {
     @State private var errorMessage: String?
     @State private var isLoading = false
     @Environment(\.dismiss) private var dismiss
-    private let dataSource: MissionDataSource = AppConfig.dataSource
 
     var body: some View {
         NavigationStack {
@@ -48,9 +47,10 @@ struct LoginView: View {
                 .foregroundColor(.blue)
 
                 Button("Continue as Guest") {
-                    dismiss()
+                    Task { await continueAsGuest() }
                 }
                 .foregroundColor(.secondary)
+                .disabled(isLoading)
             }
             .padding()
             .sheet(isPresented: $showRegister) {
@@ -65,6 +65,7 @@ struct LoginView: View {
         defer { isLoading = false }
 
         let md5Password = APIClient.md5(password)
+        let dataSource = AppConfig.dataSource  // 토글 반영 위해 task 시점에 조회
         do {
             let success = try await dataSource.login(email: email, passwordMD5: md5Password)
             if success {
@@ -76,6 +77,31 @@ struct LoginView: View {
         } catch {
             errorMessage = "Connection error. Please try again."
         }
+    }
+
+    /// Guest 자동 가입+로그인.
+    /// REST 백엔드: register → login 사이클로 JWT 발급. 자격증명은 AuthSession 에 영속.
+    /// Legacy 백엔드: 단순 게스트 ID 만 발급하고 dismiss.
+    private func continueAsGuest() async {
+        isLoading = true
+        defer { isLoading = false }
+
+        let guestID = AppState.shared.guestUserID
+        AppState.shared.userID = guestID
+
+        if AppConfig.backend == .rest {
+            // 임의 비밀번호 생성 → MD5 → register → login.
+            let rawPW = UUID().uuidString
+            let md5PW = APIClient.md5(rawPW)
+            let ds = AppConfig.dataSource
+            _ = try? await ds.register(email: guestID, passwordMD5: md5PW)
+            let ok = (try? await ds.login(email: guestID, passwordMD5: md5PW)) ?? false
+            if !ok {
+                errorMessage = "Guest session setup failed."
+                return
+            }
+        }
+        dismiss()
     }
 }
 

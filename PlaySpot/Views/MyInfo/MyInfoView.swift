@@ -44,6 +44,7 @@ struct MyInfoView: View {
             }
             .navigationTitle("My Info")
             .task {
+                await AuthBootstrap.ensureAuthenticated()
                 do {
                     designedMissions = try await dataSource.fetchMyDesigned(userID: appState.userID)
                     playedMissions = try await dataSource.fetchMyPlayed(userID: appState.userID)

@@ -59,25 +59,21 @@ struct RegisterView: View {
         isLoading = true
         defer { isLoading = false }
 
-        #if DEBUG
-        // Mock: 바로 로그인 성공 처리
-        AppState.shared.userID = email
-        dismiss()
-        #else
         let md5Password = APIClient.md5(password)
-        do {
-            let client = APIClient.shared
-            let response = try await client.request(.register(userID: email, passwordMD5: md5Password))
-            if response.trimmingCharacters(in: .whitespacesAndNewlines) == "SUCCESS" {
-                AppState.shared.userID = email
-                dismiss()
-            } else {
-                errorMessage = "Registration failed."
-            }
-        } catch {
-            errorMessage = "Connection error."
+        let dataSource = AppConfig.dataSource
+        let registered = (try? await dataSource.register(email: email, passwordMD5: md5Password)) ?? false
+        guard registered else {
+            errorMessage = "Registration failed (이미 가입된 계정이거나 서버 오류)."
+            return
         }
-        #endif
+        // 자동 로그인 — REST 백엔드면 토큰 발급. Legacy 면 SUCCESS 여부만 확인.
+        let loggedIn = (try? await dataSource.login(email: email, passwordMD5: md5Password)) ?? false
+        if loggedIn {
+            AppState.shared.userID = email
+            dismiss()
+        } else {
+            errorMessage = "Auto-login failed. 직접 로그인해 주세요."
+        }
     }
 }
 

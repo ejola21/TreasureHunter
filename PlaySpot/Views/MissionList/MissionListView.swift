@@ -54,6 +54,9 @@ struct MissionListView: View {
         isLoading = true
         defer { isLoading = false }
 
+        // REST 백엔드면 토큰 보장 후 호출
+        await AuthBootstrap.ensureAuthenticated()
+
         let lang = Locale.current.language.languageCode?.identifier ?? "en"
         let userID = AppState.shared.userID
         do {

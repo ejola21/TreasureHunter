@@ -75,23 +75,22 @@ final class GameEngine {
         return f
     }()
 
-    /// 레거시 uploadMissionPlay: 컴마 4-필드 페이로드 "MissionID,PlayerID,Time,IsVirtual"
-    private func playPayload(time: Date) -> String? {
-        guard let missionID = mission?.id else { return nil }
-        let timeStr = Self.playRecordFormatter.string(from: time)
-        let virtual = isVirtualMode ? "1" : "0"
-        return "\(missionID),\(playerID),\(timeStr),\(virtual)"
-    }
-
     /// 서버 기록은 best-effort — 네트워크 실패가 게임 흐름을 막지 않음.
+    /// 신규 API: 구조화 인자로 호출. 레거시는 DataSource 내부에서 콤마 페이로드로 변환.
     private func recordPlay(action: PlayRecordAction, time: Date) {
-        guard let payload = playPayload(time: time) else { return }
+        guard let missionID = mission?.id else { return }
+        let pid = playerID
+        let virt = isVirtualMode
+        let startTime = missionStartTime ?? time
         let ds = dataSource
         Task.detached {
             switch action {
-            case .start:  _ = try? await ds.recordPlayStart(playJSON: payload)
-            case .finish: _ = try? await ds.recordPlayFinish(playJSON: payload)
-            case .fail:   _ = try? await ds.recordPlayFail(playJSON: payload)
+            case .start:
+                _ = try? await ds.recordPlayStart(missionID: missionID, playerID: pid, startTime: time, isVirtual: virt)
+            case .finish:
+                _ = try? await ds.recordPlayFinish(missionID: missionID, playerID: pid, startTime: startTime, endTime: time, isVirtual: virt)
+            case .fail:
+                _ = try? await ds.recordPlayFail(missionID: missionID, playerID: pid, startTime: startTime, endTime: time, isVirtual: virt)
             }
         }
     }
@@ -103,7 +102,10 @@ final class GameEngine {
     func setup(missionID: String, isNewStart: Bool, virtualMode: Bool, playerLocation: CLLocation? = nil) async throws {
         self.isVirtualMode = virtualMode
 
-        // 1. 카탈로그 데이터(미션/아이템/퀴즈) — DEBUG: LocalDataSource(mock JSON), Release: RemoteDataSource
+        // REST 백엔드면 토큰 보장 후 호출
+        await AuthBootstrap.ensureAuthenticated()
+
+        // 1. 카탈로그 데이터(미션/아이템/퀴즈) — REST: /api/v1/missions/{id}, Legacy: TR=200
         let (fetchedMission, fetchedItems, fetchedQuizzes) = try await dataSource.fetchMissionDetail(missionID: missionID)
         var loadedMission = fetchedMission
         var loadedItems = fetchedItems

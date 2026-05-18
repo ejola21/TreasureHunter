@@ -29,10 +29,19 @@ protocol MissionDataSource {
     func register(email: String, passwordMD5: String) async throws -> Bool
     /// TR=700 — 미션 빌더 업로드 (mission, items, quizzes JSON 문자열 묶음)
     func uploadMission(missionJSON: String, itemsJSON: String, quizzesJSON: String) async throws -> Bool
-    /// TR=c_mission_play_start / finish / fail — 플레이 기록 (JSON 페이로드)
-    func recordPlayStart(playJSON: String) async throws -> Bool
-    func recordPlayFinish(playJSON: String) async throws -> Bool
-    func recordPlayFail(playJSON: String) async throws -> Bool
+    /// TR=c_mission_play_start / finish / fail — 플레이 기록 (legacy: 콤마 페이로드, rest: 구조화 인자)
+    func recordPlayStart(missionID: String, playerID: String, startTime: Date, isVirtual: Bool) async throws -> Bool
+    func recordPlayFinish(missionID: String, playerID: String, startTime: Date, endTime: Date, isVirtual: Bool) async throws -> Bool
+    func recordPlayFail(missionID: String, playerID: String, startTime: Date, endTime: Date, isVirtual: Bool) async throws -> Bool
+
+    // MARK: - User 정보 (신규 API 전용)
+
+    /// GET /api/v1/users/{id} — Legacy 백엔드에서는 미지원.
+    func fetchUser(userID: String) async throws -> UserRes?
+    /// PATCH /api/v1/users/{id} — Legacy 백엔드에서는 미지원.
+    func updateUser(userID: String, patch: UserPatchReq) async throws -> Bool
+    /// PATCH /api/v1/users/{id}/password — Legacy 백엔드에서는 미지원.
+    func changePassword(userID: String, oldPasswordMD5: String, newPasswordMD5: String) async throws -> Bool
 }
 
 enum DataSourceError: Error {

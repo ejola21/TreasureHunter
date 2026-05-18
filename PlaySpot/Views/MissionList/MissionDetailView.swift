@@ -103,6 +103,7 @@ struct MissionDetailView: View {
             )
         }
         .task {
+            await AuthBootstrap.ensureAuthenticated()
             do {
                 replies = try await dataSource.fetchReplies(missionID: mission.id)
             } catch {}

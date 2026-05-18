@@ -1,11 +1,20 @@
-// Network/RemoteDataSource.swift — 서버 (43.201.188.35:8080) 연동 구현
+// Network/LegacyRemoteDataSource.swift — 레거시 /playspot/J_MyList.php 호환 백엔드
+// @deprecated AppConfig.backend == .legacy 인 경우에만 사용. 신규 호출은 RestRemoteDataSource 권장.
 import Foundation
 import CoreLocation
 import os
 
-struct RemoteDataSource: MissionDataSource {
+struct LegacyRemoteDataSource: MissionDataSource {
     private let client = APIClient.shared
-    private static let log = Logger(subsystem: "com.ejola.playspot", category: "RemoteDS")
+    private static let log = Logger(subsystem: "com.ejola.playspot", category: "LegacyDS")
+
+    private static let playRecordFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = TimeZone(identifier: "Asia/Seoul")
+        return f
+    }()
 
     // MARK: - 미션 목록
 
@@ -25,7 +34,6 @@ struct RemoteDataSource: MissionDataSource {
     }
 
     func fetchMyDesigned(userID: String) async throws -> [Mission] {
-        // 신규 서버에서 TR=502 가 mission 배열을 반환 (TR=600 도 동일)
         let response = try await client.request(.myDesigns(last: 0, lang: ""))
         return decodeMissions(response, label: "TR=502")
     }
@@ -65,7 +73,6 @@ struct RemoteDataSource: MissionDataSource {
     // MARK: - 랭킹
 
     func fetchRanking(missionID: String) async throws -> [RankingEntry] {
-        // 서버 응답: {ShortUser1, ShortRecord1, ShortUser2, ShortRecord2, ShortUser3, ShortRecord3}
         let response = try await client.request(.playRanking(missionID: missionID))
         guard let data = response.data(using: .utf8),
               let obj = try? JSONSerialization.jsonObject(with: data) as? [String: String] else {
@@ -100,20 +107,30 @@ struct RemoteDataSource: MissionDataSource {
         return Self.isSuccess(response)
     }
 
-    func recordPlayStart(playJSON: String) async throws -> Bool {
-        let response = try await client.request(.playStart(data: playJSON))
+    func recordPlayStart(missionID: String, playerID: String, startTime: Date, isVirtual: Bool) async throws -> Bool {
+        let payload = legacyPlayPayload(missionID: missionID, playerID: playerID, time: startTime, isVirtual: isVirtual)
+        let response = try await client.request(.playStart(data: payload))
         return Self.isSuccess(response)
     }
 
-    func recordPlayFinish(playJSON: String) async throws -> Bool {
-        let response = try await client.request(.playFinish(data: playJSON))
+    func recordPlayFinish(missionID: String, playerID: String, startTime: Date, endTime: Date, isVirtual: Bool) async throws -> Bool {
+        // 레거시 페이로드는 단일 time 필드 — endTime 만 전송 (start 시각은 서버 측 키 매칭).
+        let payload = legacyPlayPayload(missionID: missionID, playerID: playerID, time: endTime, isVirtual: isVirtual)
+        let response = try await client.request(.playFinish(data: payload))
         return Self.isSuccess(response)
     }
 
-    func recordPlayFail(playJSON: String) async throws -> Bool {
-        let response = try await client.request(.playFail(data: playJSON))
+    func recordPlayFail(missionID: String, playerID: String, startTime: Date, endTime: Date, isVirtual: Bool) async throws -> Bool {
+        let payload = legacyPlayPayload(missionID: missionID, playerID: playerID, time: endTime, isVirtual: isVirtual)
+        let response = try await client.request(.playFail(data: payload))
         return Self.isSuccess(response)
     }
+
+    // MARK: - User (legacy 미지원 — 빈 응답)
+
+    func fetchUser(userID: String) async throws -> UserRes? { nil }
+    func updateUser(userID: String, patch: UserPatchReq) async throws -> Bool { false }
+    func changePassword(userID: String, oldPasswordMD5: String, newPasswordMD5: String) async throws -> Bool { false }
 
     // MARK: - 유틸
 
@@ -125,6 +142,11 @@ struct RemoteDataSource: MissionDataSource {
             Self.log.error("\(label) decode failed: \(error.localizedDescription)")
             return []
         }
+    }
+
+    private func legacyPlayPayload(missionID: String, playerID: String, time: Date, isVirtual: Bool) -> String {
+        let t = Self.playRecordFormatter.string(from: time)
+        return "\(missionID),\(playerID),\(t),\(isVirtual ? 1 : 0)"
     }
 
     /// 레거시 서버의 응답 컨벤션: "SUCCESS" / "OK" / "1" 등을 성공으로 간주.

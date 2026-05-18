@@ -18,6 +18,7 @@ struct PlaySpotApp: App {
         WindowGroup {
             MainTabView()
                 .environment(appState)
+                .task { await AuthBootstrap.ensureAuthenticated() }
         }
     }
 }
