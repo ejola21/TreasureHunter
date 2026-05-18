@@ -28,9 +28,10 @@ struct MissionDetailRes: Decodable {
     let quizzes: [MissionDetailQuiz]
 }
 
-/// 신규 API 의 quizzes 항목은 MissionID/ItemID 가 생략된 슬림 구조.
-/// 클라이언트의 ItemQuiz 로 합성 시 missionID/itemID 를 외부에서 주입한다.
+/// 신규 API 의 quizzes 항목 — MissionID 는 path 에서 알 수 있으므로 생략, ItemID 는 포함.
+/// 서버 응답 예: `{"ItemID":3, "Seq":1, "Quiz":"...", "Answer":"...", "Probability":100}`
 struct MissionDetailQuiz: Decodable {
+    let ItemID: Int
     let Seq: Int
     let Quiz: String
     let Answer: String
