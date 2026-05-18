@@ -80,7 +80,12 @@ struct MiniGameView: View {
         .onReceive(timer) { _ in tick() }
         .onTapGesture {
             // 레거시: type 0(터치 모드)일 때만 탭으로 진행. shake 모드면 무시.
+            // 시뮬레이터는 흔들기 불가 → 탭으로 진행 허용 (개발/테스트 편의).
+            #if targetEnvironment(simulator)
+            registerShake()
+            #else
             if !isShakeMode { registerShake() }
+            #endif
         }
     }
 

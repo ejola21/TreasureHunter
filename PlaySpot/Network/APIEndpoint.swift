@@ -2,12 +2,13 @@
 import Foundation
 
 enum APIEndpoint {
-    static let baseURL = URL(string: "http://nexapp.co.kr/playspot/J_MyList.php")!
-    static let rankingURL = URL(string: "http://nexapp.co.kr/playspot/mission_play_info.php")!
-    static let passwordURL = URL(string: "http://nexapp.co.kr/playspot/user.php")!
-    static let badgeBaseURL = "http://nexapp.co.kr/playspot/badge/"
-    static let imageUploadURL = URL(string: "http://nexapp.co.kr/playspot/image_save.php")!
-    static let userInfoURL = URL(string: "http://mking.elogin.co.kr/xe/user.php")!
+    static let serverHost = "43.201.188.35:8080"
+    static let baseURL = URL(string: "http://\(serverHost)/playspot/J_MyList.php")!
+    static let rankingURL = URL(string: "http://\(serverHost)/playspot/mission_play_info.php")!
+    static let passwordURL = URL(string: "http://\(serverHost)/playspot/user.php")!
+    static let badgeBaseURL = "http://\(serverHost)/playspot/badge/"
+    static let imageUploadURL = URL(string: "http://\(serverHost)/playspot/image_save.php")!
+    static let userInfoURL = URL(string: "http://\(serverHost)/playspot/user.php")!
 
     // 기존 트랜잭션 코드 매핑
     case missionDetail(missionID: String)              // tr=200

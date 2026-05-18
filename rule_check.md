@@ -3,7 +3,7 @@
 > [game_rule.md](game_rule.md) (레거시 룰 사양) 와 [research2.md](research2.md) (게임플레이 가이드) 를 기준으로 신규 PlaySpot Swift 포트의 구현을 단계별로 검증하고 갭을 fix.
 >
 > 검증 일자: **2026-05-15**
-> 결과: **54개 룰 검증 / 46개 일치 / 8개 갭 → 모두 fix 적용 완료** ✅
+> 결과: **55개 룰 검증 / 46개 일치 / 9개 갭 → 모두 fix 적용 완료** ✅
 
 ---
 
@@ -179,7 +179,7 @@ if lostMissionItem?.itemType == .start {
 
 ---
 
-## 적용된 Fix 요약 (8건)
+## 적용된 Fix 요약 (9건)
 
 | Fix | 파일 | 핵심 변경 | 영향 | 빌드 |
 |:---:|---|---|---|:---:|
@@ -191,6 +191,7 @@ if lostMissionItem?.itemType == .start {
 | **6** | [`GameEngine.acquireItem`](PlaySpot/Game/GameEngine.swift) Random 분기 + `setAcquiredAlert(for:bonus:)` | Gambling 획득 시 lucky 정보를 알림 메시지에 포함 ("You won: X!"). 활성 타임어택 중엔 Run Start lucky 후보 제외. randItems 비면 "Gambling failed" 메시지 | 사용자가 Random 효과로 무엇이 자동 획득됐는지 알 수 있음. 레거시 [`ARViewController.m:1015-1023`](Classes/ARViewController.m#L1015-L1023) (2단계 alert) 의 정보를 1단계로 통합 | ✅ |
 | **7** ⚠️ critical | [`GameEngine.swift`](PlaySpot/Game/GameEngine.swift) — `acquisitionOrder` 큐, `isMissionCompletedInMemory`, `memoryRandomCandidates`, `memoryLastAcquiredItem` 헬퍼 신설. `acquireItem` Random/End 분기 + `handleMineBlast` 의 SQL 호출 모두 메모리 헬퍼로 교체 | **DB 카탈로그(MissionItem) 비어 있어 INNER JOIN SQL 모두 빈 결과 → 게임 진행 불가**. `fetchRandomCandidates` (Gambling lucky), `fetchLastAcquiredItem` (mine 폭발 lost), `isMissionCompleted` (End 획득 시 미션 완료) 모두 무력화 상태였음 | **Gambling lucky 획득 정상 작동, mine 폭발 데미지 정상, End 획득 시 미션 완료 정상** ([CLAUDE.md](CLAUDE.md) "DB 는 사용자 플레이 상태 전용" 정책 준수) | ✅ |
 | **8** | [`GameEngine.swift`](PlaySpot/Game/GameEngine.swift) — `pendingAlertQueue: [ItemAcquiredAlert]` 추가, `enqueueAlert(_:prepend:)`/`dismissCurrentAlert()` 헬퍼 신설. 모든 `pendingAlert = ...` 직접 할당을 `enqueueAlert(...)` 으로 교체. random 의 setAcquiredAlert 는 `prepend: true` 로 push. [`MissionPlayView.swift`](PlaySpot/Views/MissionPlay/MissionPlayView.swift) 의 OK 핸들러를 `engine.pendingAlert = nil` → `engine.dismissCurrentAlert()` | Random 효과로 lucky 자동 획득 시, 기존엔 lucky 알림이 random 알림에 즉시 덮어씌워져 사용자가 "Gambling acquired!" 만 보고 lucky 알림은 못 봄 | **Gambling 획득 → "Gambling acquired! You won: Hint!" 알림 → OK → "Hint Item acquired!" 알림 → OK → 닫힘. 두 알림 순차 표시.** 레거시 ARViewController.m:1015-1023 의 2단계 alert 와 동일 UX | ✅ |
+| **9** | [`GameEngine.acquireItem`](PlaySpot/Game/GameEngine.swift) Run End 가드 + `activeTimeoutStartID` 추가 + [`MissionPlayView.swift`](PlaySpot/Views/MissionPlay/MissionPlayView.swift) `PulseMapPin` 신설 | 레거시 [`ARViewController.m:637-653`](Classes/ARViewController.m#L637-L653) 의 Run End 사전 검사 (`isTimeOutS == 0` 시 `obtain_fail_message_0` 거부, 짝 ID 다르면 `obtain_fail_message_1`) + [`MissionPlay.m:2197-2218`](Classes/MissionPlay.m#L2197-L2218) 의 Run End 핀 맥동 (CABasicAnimation scale 1.5↔1.0, 0.35초 autoreverses, 무한) 누락 | **(1) Run Start 미획득 상태에서 Run End 시도 → "획득 실패! Run Start 아이템을 먼저 획득하여야 합니다." 알림 + 거부.** (2) 짝 ID 불일치 → "해당 Run End 아이템이 아닙니다." (3) Run Start 획득 후 짝 Run End 핀이 지도에서 0.35초 주기로 1.5x↔1.0x 맥동 시작, 획득/시간초과/mine 폭발 시 정지 | ✅ |
 
 **최종 빌드**: `** BUILD SUCCEEDED **` (xcodebuild Debug iphonesimulator)
 

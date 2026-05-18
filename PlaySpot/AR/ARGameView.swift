@@ -135,16 +135,20 @@ struct ARGameView: View {
 
     // MARK: - 플립 카운터 (MissionPlayView와 동일 룩)
 
+    /// 레거시 MissionPlay.m:622-627 — Run Start 획득 즉시 SBTickerView backColor 가
+    /// RGBA(255,0,51,1) 빨강으로 전환되고 일반 playTimeView 는 숨김.
     private var flipCounter: some View {
         HStack(spacing: 2) {
             ForEach(Array(timeString.enumerated()), id: \.offset) { _, ch in
                 Text(String(ch))
                     .font(.system(size: 22, weight: .bold, design: .monospaced))
-                    .foregroundColor(isTimeOutWarning ? .red : .white)
+                    .foregroundColor(.white)
                     .frame(width: 18, height: 30)
                     .background(
                         RoundedRectangle(cornerRadius: 3)
-                            .fill(Color.black)
+                            .fill(engine.isTimeOutActive
+                                  ? Color(red: 1.0, green: 0.0, blue: 0.2)
+                                  : Color.black)
                             .overlay(
                                 Rectangle()
                                     .fill(Color.white.opacity(0.18))

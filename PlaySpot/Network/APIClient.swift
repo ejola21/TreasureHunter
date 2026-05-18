@@ -7,29 +7,28 @@ actor APIClient {
 
     /// 기존 HTTPRequest.requestUrl:bodyObject: (비동기) 대체
     func request(_ endpoint: APIEndpoint) async throws -> String {
-        var request = URLRequest(url: endpoint.url)
-        request.httpMethod = "POST"
-        request.timeoutInterval = 5.0
-
-        let body = endpoint.parameters
-            .map { "\($0.key.urlEncoded)=\($0.value.urlEncoded)" }
-            .joined(separator: "&")
-        request.httpBody = body.data(using: .utf8)
-
-        let (data, _) = try await URLSession.shared.data(for: request)
-        return String(data: data, encoding: .utf8) ?? ""
+        try await send(endpoint, timeout: 5.0)
     }
 
     /// 기존 HTTPRequest.requestUrlsync:bodyObject: (동기, timeout 30초) 대체
     func requestSync(_ endpoint: APIEndpoint) async throws -> String {
-        var request = URLRequest(url: endpoint.url)
-        request.httpMethod = "POST"
-        request.timeoutInterval = 30.0
+        try await send(endpoint, timeout: 30.0)
+    }
 
-        let body = endpoint.parameters
+    private func send(_ endpoint: APIEndpoint, timeout: TimeInterval) async throws -> String {
+        let query = endpoint.parameters
             .map { "\($0.key.urlEncoded)=\($0.value.urlEncoded)" }
             .joined(separator: "&")
-        request.httpBody = body.data(using: .utf8)
+
+        // 신규 서버는 POST + 쿼리스트링(URL) 방식 — 레거시 호환 (PHP $_REQUEST 가 둘 다 수용)
+        var components = URLComponents(url: endpoint.url, resolvingAgainstBaseURL: false)!
+        components.percentEncodedQuery = query
+        var request = URLRequest(url: components.url!)
+        request.httpMethod = "POST"
+        request.timeoutInterval = timeout
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        request.setValue("*/*", forHTTPHeaderField: "Accept")
+        request.httpBody = Data()
 
         let (data, _) = try await URLSession.shared.data(for: request)
         return String(data: data, encoding: .utf8) ?? ""

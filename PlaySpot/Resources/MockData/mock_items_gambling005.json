@@ -18,23 +18,6 @@
   },
   {
     "MissionID": "gambling005",
-    "ItemID": 2,
-    "ItemType": "66",
-    "Latitude": 37.4890637,
-    "Longitude": 126.8077197,
-    "Mandatory": 1,
-    "ShowType": "4",
-    "RangeAR": 50,
-    "EffectiveRange": 0,
-    "EffectiveTime": 0,
-    "ItemGame": 0,
-    "Info": "맵 레이더: 지도에서 숨겨진 아이템이 표시됩니다.",
-    "RelationItemID": 0,
-    "BlackCnt": 0,
-    "BlackTime": 0
-  },
-  {
-    "MissionID": "gambling005",
     "ItemID": 3,
     "ItemType": "50",
     "Latitude": 37.4890002,

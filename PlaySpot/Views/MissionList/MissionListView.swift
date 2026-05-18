@@ -3,7 +3,7 @@ import SwiftUI
 
 struct MissionListView: View {
     @State private var missions: [Mission] = []
-    @State private var selectedTab = 0
+    @State private var selectedTab = 2
     @State private var isLoading = false
     @State private var selectedMission: Mission?
     private let dataSource: MissionDataSource = AppConfig.dataSource
@@ -55,8 +55,25 @@ struct MissionListView: View {
         defer { isLoading = false }
 
         let lang = Locale.current.language.languageCode?.identifier ?? "en"
+        let userID = AppState.shared.userID
         do {
-            missions = try await dataSource.fetchMissionList(cursor: 0, lang: lang)
+            switch selectedTab {
+            case 0:
+                // Playing — 현재 플레이 중인 미션 (TR=602)
+                missions = try await dataSource.fetchCurrentGames(userID: userID)
+            case 1:
+                // Near Me — 위치 기반 (TR=501). 위치가 아직 없으면 0,0 fallback.
+                let coord = AppState.shared.locationService.currentLocation?.coordinate
+                missions = try await dataSource.fetchPublishedMissions(
+                    cursor: 0,
+                    lang: lang,
+                    latitude: coord?.latitude ?? 0,
+                    longitude: coord?.longitude ?? 0
+                )
+            default:
+                // All — 공개된 모든 미션 (TR=500)
+                missions = try await dataSource.fetchMissionList(cursor: 0, lang: lang)
+            }
         } catch {
             print("❌ loadMissions error: \(error)")
             missions = []

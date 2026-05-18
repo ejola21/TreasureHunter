@@ -25,6 +25,9 @@ final class GameEngine {
     var timeOutStartTime: Date?
     var timeOutLimitTime: Int = 0
     var isTimeOutActive = false
+    /// 현재 활성 Run Start 의 itemID. Run End 의 relationItemID 매칭 검증용.
+    /// 레거시 caller.isTimeOutS 와 동일.
+    var activeTimeoutStartID: Int?
 
     var elapsedTime: TimeInterval = 0
     var remainingRunTime: TimeInterval = 0
@@ -61,6 +64,39 @@ final class GameEngine {
     init(dataSource: MissionDataSource = AppConfig.dataSource) {
         self.dataSource = dataSource
     }
+
+    // MARK: - 서버 플레이 기록 (c_mission_play_start / finish / fail)
+
+    private static let playRecordFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = TimeZone(identifier: "Asia/Seoul")
+        return f
+    }()
+
+    /// 레거시 uploadMissionPlay: 컴마 4-필드 페이로드 "MissionID,PlayerID,Time,IsVirtual"
+    private func playPayload(time: Date) -> String? {
+        guard let missionID = mission?.id else { return nil }
+        let timeStr = Self.playRecordFormatter.string(from: time)
+        let virtual = isVirtualMode ? "1" : "0"
+        return "\(missionID),\(playerID),\(timeStr),\(virtual)"
+    }
+
+    /// 서버 기록은 best-effort — 네트워크 실패가 게임 흐름을 막지 않음.
+    private func recordPlay(action: PlayRecordAction, time: Date) {
+        guard let payload = playPayload(time: time) else { return }
+        let ds = dataSource
+        Task.detached {
+            switch action {
+            case .start:  _ = try? await ds.recordPlayStart(playJSON: payload)
+            case .finish: _ = try? await ds.recordPlayFinish(playJSON: payload)
+            case .fail:   _ = try? await ds.recordPlayFail(playJSON: payload)
+            }
+        }
+    }
+
+    private enum PlayRecordAction { case start, finish, fail }
 
     // MARK: - 초기화 (기존: setupPlay)
 
@@ -104,6 +140,8 @@ final class GameEngine {
             missionStarted = !hasStart
             if !hasStart {
                 SoundService.shared.play(.gogogo)
+                // Start 아이템이 없으면 setup 시점에 바로 미션 시작 — 서버 기록.
+                recordPlay(action: .start, time: newPlay.startTime ?? Date())
             }
         } else {
             missionStarted = playState?.hasStarted ?? false
@@ -230,31 +268,39 @@ final class GameEngine {
 
     func handleMineBlast(item: MissionItem) throws {
         guard let missionID = mission?.id else { return }
+        // 레거시 mineBlast:1276 — 이미 endYN="Y" 면 중복 폭발 방지
+        guard dicItemEnd[item.itemID] != "Y" else { return }
 
-        // 1. Defence 파워업 확인
-        if let defenseCount = dicRnPTaken[ItemType.mineNoBomb.rawValue], defenseCount > 0 {
-            dicRnPTaken[ItemType.mineNoBomb.rawValue] = defenseCount - 1
-            let rnp = ItemRnPInPlay(
-                missionID: missionID, playerID: playerID,
-                itemType: ItemType.mineNoBomb.rawValue, ableCnt: defenseCount - 1)
-            try powerUpRepo.update(rnp)
-            SoundService.shared.play(.itemGet)
-            enqueueAlert(ItemAcquiredAlert(
-                title: "A mine has exploded!",
-                message: "Mine did not damage using Defense item",
-                itemIconName: item.arIconName))
-            return
-        }
-
-        // 2. 지뢰 수집 처리
+        // 레거시 mineBlast:1277-1287 흐름: Defense 유무 무관하게
+        // (1) 진동 + (2) 지뢰 endYN="Y" 처리 + (3) 폭발음 s_explosion.mp3 항상 실행.
+        // 1. 진동
+        HapticService.shared.vibrate()
+        // 2. 지뢰 자체 endYN="Y" (지뢰는 항상 "처리됨" — Defense 사용해도 동일)
         dicItemEnd[item.itemID] = "Y"
         var minePlay = MissionItemInPlay(
             missionID: missionID, playerID: playerID, itemID: item.itemID)
         minePlay.endYN = "Y"
         minePlay.endTime = Date()
         try playRepo.updateItemInPlay(minePlay)
+        // 3. 폭발음 (Defense 사용해도 폭발음은 들림)
+        SoundService.shared.play(.explosion)
 
-        // 3. 최근 획득 아이템 되돌리기 (메모리 헬퍼 사용 — DB JOIN 불가)
+        // 4. Defence 파워업 확인 — 보유 시 ableCnt 차감 + 알림 후 종료 (데미지 없음)
+        if let defenseCount = dicRnPTaken[ItemType.mineNoBomb.rawValue], defenseCount > 0 {
+            dicRnPTaken[ItemType.mineNoBomb.rawValue] = defenseCount - 1
+            let rnp = ItemRnPInPlay(
+                missionID: missionID, playerID: playerID,
+                itemType: ItemType.mineNoBomb.rawValue, ableCnt: defenseCount - 1)
+            try powerUpRepo.update(rnp)
+            enqueueAlert(ItemAcquiredAlert(
+                title: "A mine has exploded!",
+                message: "Mine did not damage using Defense item",
+                itemIconName: item.arIconName))
+            updateCounters()
+            return
+        }
+
+        // 5. 최근 획득 아이템 되돌리기 (메모리 헬퍼 사용 — DB JOIN 불가)
         var lostItemTypeName: String?
         if let lostMissionItem = memoryLastAcquiredItem(excludeItemID: item.itemID) {
             dicItemEnd[lostMissionItem.itemID] = "N"
@@ -281,12 +327,12 @@ final class GameEngine {
         // 4. 타임아웃 중이면 취소
         if isTimeOutActive {
             isTimeOutActive = false
+            activeTimeoutStartID = nil
             lostItemTypeName = lostItemTypeName ?? "Run Start"
         }
 
         updateCounters()
-        SoundService.shared.play(.explosion)
-        HapticService.shared.vibrate()
+        // 진동/폭발음은 함수 시작에서 이미 실행됨 (Defense 유무 무관 — 레거시 일치)
 
         if let lostName = lostItemTypeName {
             enqueueAlert(ItemAcquiredAlert(
@@ -305,6 +351,26 @@ final class GameEngine {
 
     func acquireItem(_ item: MissionItem) throws {
         guard let missionID = mission?.id else { return }
+
+        // 레거시 ARViewController.m:637-653 — Run End 사전 검사.
+        // (1) 활성 Run Start 가 없으면 거부 (obtain_fail_message_0 "Run Start item has not been acquired.")
+        // (2) 활성은 있지만 짝(relationItemID) 이 다르면 거부 (obtain_fail_message_1)
+        if item.itemType == .timeoutEnd {
+            if !isTimeOutActive {
+                enqueueAlert(ItemAcquiredAlert(
+                    title: NSLocalizedString("obtain_fail", comment: ""),
+                    message: NSLocalizedString("obtain_fail_message_0", comment: ""),
+                    itemIconName: item.arIconName))
+                return
+            }
+            if let activeID = activeTimeoutStartID, item.relationItemID != activeID {
+                enqueueAlert(ItemAcquiredAlert(
+                    title: NSLocalizedString("obtain_fail", comment: ""),
+                    message: NSLocalizedString("obtain_fail_message_1", comment: ""),
+                    itemIconName: item.arIconName))
+                return
+            }
+        }
 
         dicItemEnd[item.itemID] = "Y"
         var itemPlay = MissionItemInPlay(
@@ -347,6 +413,7 @@ final class GameEngine {
             let play = MissionInPlay(missionID: missionID, playerID: playerID, startYN: "Y", startTime: Date())
             try playRepo.updateMissionInPlay(play)
             SoundService.shared.play(.gogogo)
+            recordPlay(action: .start, time: missionStartTime ?? Date())
         }
 
         // Run Start -> 타임아웃 시작
@@ -355,11 +422,15 @@ final class GameEngine {
             if let endItem = items.first(where: { $0.itemType == .timeoutEnd && $0.relationItemID == item.itemID }) {
                 timeOutLimitTime = endItem.effectiveTime
                 isTimeOutActive = true
+                activeTimeoutStartID = item.itemID
             }
         }
 
-        // Run End -> 타임아웃 종료
-        if item.itemType == .timeoutEnd { isTimeOutActive = false }
+        // Run End -> 타임아웃 종료. 짝 Run Start 도 endYN="Y" 로 마무리 (레거시 :679-682).
+        if item.itemType == .timeoutEnd {
+            isTimeOutActive = false
+            activeTimeoutStartID = nil
+        }
 
         // End 아이템 -> 미션 완료 확인. 어느 경우든 게임 타이머는 중지(레거시 동작).
         // 메모리 기반 검사 (DB SQL 은 JOIN 이라 빈 결과). dicItemEnd[end.itemID] 도 위에서 "Y" 됐으니
@@ -370,6 +441,7 @@ final class GameEngine {
                 missionCompleted = true
                 isMissionEnd = true
                 SoundService.shared.play(.gameFinish)
+                recordPlay(action: .finish, time: Date())
             }
         }
 
@@ -385,6 +457,24 @@ final class GameEngine {
         // 사용자가 무엇을 추가로 얻었는지 인지하게 함 (레거시는 알림 2단계인데
         // SwiftUI overlay 단일 슬롯이라 한 번에 표시).
         setAcquiredAlert(for: item, bonus: randomBonus)
+    }
+
+    // MARK: - Mine 자동 폭발 감지
+
+    /// 레거시 [`MissionPlay.m:1463-1473`](Classes/MissionPlay.m#L1463-L1473) — CLLocationManager 위치 갱신
+    /// 콜백에서 missionStarted 일 때 모든 mine 의 rangeAR 안 진입 검사하여 자동 폭발.
+    /// Map 화면 / AR 화면 모두에서 동일하게 발동되어야 함.
+    /// - Parameter playerLocation: 현재 플레이어 GPS 위치
+    func detectMineProximity(playerLocation: CLLocation) {
+        guard missionStarted, !missionCompleted else { return }
+        for item in items {
+            guard item.itemType == .mine,
+                  dicItemEnd[item.itemID] != "Y" else { continue }
+            if playerLocation.distance(from: item.location) <= Double(item.rangeAR) {
+                try? handleMineBlast(item: item)
+                return  // 한 위치 갱신에 하나의 mine 만
+            }
+        }
     }
 
     // MARK: - 알림 큐
@@ -520,10 +610,20 @@ final class GameEngine {
             return hasRadarMine
         }
 
+        // 레거시 MissionPlay.m:901 은 black 도 mine 처럼 별도 MKCircle overlay 로만 표현.
+        // 핀 아이콘 자체는 Map 에 그리지 않고 다크존 영역(검은 반투명 원)만 보이게 한다.
+        if item.itemType == .black {
+            return false
+        }
+
         // F-7: 미획득 다크존(black) 안에 있는 아이템은 지도에서 숨김.
-        // 레거시 MissionPlay.m:2128-2157 의 black 원 내 아이콘 nil 처리 포팅.
-        // start 와 black 자신은 예외.
-        if item.itemType != .start, item.itemType != .black, isInsideUnacquiredDarkZone(item) {
+        // 레거시 MissionPlay.m:2128-2134 의 분기 — _tmpItem 자신이 endYN!="Y" 일 때만 검사.
+        // 즉 **이미 획득한 아이템은 다크존 안에 있어도 가려지지 않음** (회색 핀으로 정상 표시).
+        // start 와 black 자신도 예외.
+        if item.itemType != .start,
+           item.itemType != .black,
+           dicItemEnd[item.itemID] != "Y",
+           isInsideUnacquiredDarkZone(item) {
             return false
         }
 

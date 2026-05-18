@@ -29,10 +29,7 @@ struct MissionPlayView: View {
                 // 모든 획득은 AR 화면에서만 (흔들기 / AR 아이콘 탭 / mine 자동 폭발).
                 ForEach(engine.items.filter { engine.shouldShowOnMap($0) }, id: \.itemID) { item in
                     Annotation(item.itemType.displayLabel, coordinate: item.coordinate) {
-                        Image(item.mapIconName)
-                            .resizable()
-                            .frame(width: 36, height: 36)
-                            .grayscale(engine.dicItemEnd[item.itemID] == "Y" ? 1.0 : 0.0)
+                        PulseMapPin(item: item, engine: engine)
                     }
                 }
 
@@ -47,6 +44,7 @@ struct MissionPlayView: View {
             VStack(spacing: 0) {
                 LegacyTopChrome(
                     timeString: timeString,
+                    isRunActive: engine.isTimeOutActive,
                     isTimeOutWarning: engine.isTimeOutActive && engine.remainingRunTime < 10,
                     onExit: {
                         engine.stopTimer()
@@ -120,12 +118,15 @@ struct MissionPlayView: View {
                 playerLocation: playerLoc)
             fitCameraToItems()
         }
-        // setup 시점에 위치 픽스를 못 받았으면(권한 다이얼로그 지연 등) 늦게 도착할 때 재적용.
+        // 위치 갱신 시: virtual offset 재적용 + mine 자동 폭발 감지 (Map 화면에서도 동작).
+        // 레거시 MissionPlay.m:1463-1473 의 locationManager:didUpdateToLocation: 포팅.
         .onChange(of: appState.locationService.currentLocation) { _, newLoc in
-            guard newLoc != nil, isVirtualMode, !engine.virtualOffsetApplied else { return }
-            if engine.reapplyVirtualOffsetIfNeeded() {
+            guard let newLoc else { return }
+            if isVirtualMode, !engine.virtualOffsetApplied,
+               engine.reapplyVirtualOffsetIfNeeded() {
                 fitCameraToItems()
             }
+            engine.detectMineProximity(playerLocation: newLoc)
         }
     }
 
@@ -212,8 +213,10 @@ struct MissionPlayView: View {
         return item.itemType == .black
     }
 
+    /// 레거시 MissionPlay.m:2015-2018 — black 의 circleView.fillColor 는 [UIColor blackColor] alpha 0.3.
+    /// mine 은 RGBA(255,0,0) alpha 0.4 (radar 보유 시).
     private func circleColor(for item: MissionItem) -> Color {
-        item.itemType == .black ? .purple : .red
+        item.itemType == .black ? .black : .red
     }
 }
 
@@ -221,6 +224,9 @@ struct MissionPlayView: View {
 
 private struct LegacyTopChrome: View {
     let timeString: String         // "HHMMSS" 6자리
+    /// Run Start 활성 중 — flipCounter 배경을 빨간색으로 (레거시 RGBA(255,0,51,1))
+    let isRunActive: Bool
+    /// 10초 미만 — 텍스트 깜박임 같은 추가 경고용 (현재는 사운드만)
     let isTimeOutWarning: Bool
     let onExit: () -> Void
     let onRecenter: () -> Void
@@ -272,16 +278,21 @@ private struct LegacyTopChrome: View {
         )
     }
 
+    /// 레거시 MissionPlay.m:622-627 — Run Start 획득 시 SBTickerView 의 backColor 가
+    /// 즉시 RGBA(255,0,51,1) 빨간색으로 전환되고 일반 playTimeView 는 숨김.
+    /// Swift 포트는 단일 flipCounter 의 배경만 분기 (Run 활성 시 빨강, 평상시 검정).
     private var flipCounter: some View {
         HStack(spacing: 2) {
             ForEach(Array(timeString.enumerated()), id: \.offset) { _, ch in
                 Text(String(ch))
                     .font(.system(size: 22, weight: .bold, design: .monospaced))
-                    .foregroundColor(isTimeOutWarning ? .red : .white)
+                    .foregroundColor(.white)
                     .frame(width: 18, height: 30)
                     .background(
                         RoundedRectangle(cornerRadius: 3)
-                            .fill(Color.black)
+                            .fill(isRunActive
+                                  ? Color(red: 1.0, green: 0.0, blue: 0.2)  // RGBA(255,0,51,1)
+                                  : Color.black)
                             .overlay(
                                 Rectangle()
                                     .fill(Color.white.opacity(0.18))
@@ -420,3 +431,42 @@ struct ItemAcquiredPopup: View {
         .environment(AppState.shared)
 }
 #endif
+
+// MARK: - Map 핀 (Run End 맥동 애니메이션 지원)
+
+/// 레거시 [`MissionPlay.m:2197-2218`](Classes/MissionPlay.m#L2197-L2218) — Run End 핀이 활성 타임어택 중에는
+/// `CABasicAnimation` scale 1.5x ↔ 1.0x, 0.35초 autoreverses, 무한 반복으로 맥동.
+/// 활성 타임어택 종료 시 (Run End 획득 / mine 폭발 / 시간 초과) 즉시 1.0x 로 복귀.
+private struct PulseMapPin: View {
+    let item: MissionItem
+    let engine: GameEngine
+    @State private var scale: CGFloat = 1.0
+
+    private var shouldPulse: Bool {
+        item.itemType == .timeoutEnd && engine.isTimeOutActive
+    }
+
+    var body: some View {
+        Image(item.mapIconName)
+            .resizable()
+            .frame(width: 36, height: 36)
+            .grayscale(engine.dicItemEnd[item.itemID] == "Y" ? 1.0 : 0.0)
+            .scaleEffect(scale)
+            .onAppear { applyAnimation() }
+            .onChange(of: shouldPulse) { _, _ in applyAnimation() }
+    }
+
+    private func applyAnimation() {
+        if shouldPulse {
+            // 1.0 으로 set 후 즉시 1.5 로 변경하면서 repeatForever autoreverses 트리거.
+            scale = 1.0
+            withAnimation(.easeInOut(duration: 0.35).repeatForever(autoreverses: true)) {
+                scale = 1.5
+            }
+        } else {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                scale = 1.0
+            }
+        }
+    }
+}

@@ -90,6 +90,27 @@ struct Mission: Identifiable, Codable, Hashable {
         return f
     }()
 
+    private static let dateTimeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+        f.locale = Locale(identifier: "en_US_POSIX")
+        return f
+    }()
+
+    private static let iso8601Formatter: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
+
+    /// 서버는 ISO8601("...+00:00"), 단순 ISO("yyyy-MM-dd'T'HH:mm:ss"),
+    /// 또는 "yyyy-MM-dd"(레거시/Mock) 모두 사용. 세 포맷 모두 수용.
+    private static func parseDate(_ str: String) -> Date? {
+        iso8601Formatter.date(from: str)
+            ?? dateTimeFormatter.date(from: str)
+            ?? dateFormatter.date(from: str)
+    }
+
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(String.self, forKey: .id)
@@ -100,14 +121,15 @@ struct Mission: Identifiable, Codable, Hashable {
 
         // Date 필드 — 서버/Mock 모두 문자열로 올 수 있음
         if let str = try? container.decodeIfPresent(String.self, forKey: .startTime) {
-            startTime = Self.dateFormatter.date(from: str)
+            startTime = Self.parseDate(str)
         } else {
             startTime = try? container.decodeIfPresent(Date.self, forKey: .startTime)
         }
 
+        // RunLimitTime: 신규 서버는 Int 초 (900 등), 레거시 mock 은 "HH:mm:ss" 문자열.
+        // Date? 타입 유지 — 정수는 일단 무시(별도 정수 필드 도입 시 갱신).
         if let str = try? container.decodeIfPresent(String.self, forKey: .runLimitTime) {
-            // "HH:mm:ss" 형식은 시간 문자열이므로 그대로 nil 처리 (별도 파싱 필요 시 추가)
-            runLimitTime = Self.dateFormatter.date(from: str)
+            runLimitTime = Self.parseDate(str)
         } else {
             runLimitTime = try? container.decodeIfPresent(Date.self, forKey: .runLimitTime)
         }
@@ -118,12 +140,19 @@ struct Mission: Identifiable, Codable, Hashable {
         items = try container.decodeIfPresent([MissionItem].self, forKey: .items) ?? []
 
         if let str = try? container.decodeIfPresent(String.self, forKey: .writeDate) {
-            writeDate = Self.dateFormatter.date(from: str) ?? Date()
+            writeDate = Self.parseDate(str) ?? Date()
         } else {
             writeDate = (try? container.decodeIfPresent(Date.self, forKey: .writeDate)) ?? Date()
         }
 
-        isVirtual = try container.decodeIfPresent(PlayMode.self, forKey: .isVirtual) ?? .real
+        // Virtual: 신규 서버 TR=500은 Bool, TR=200은 Int — 둘 다 수용
+        if let intVal = try? container.decodeIfPresent(Int.self, forKey: .isVirtual) {
+            isVirtual = PlayMode(rawValue: intVal) ?? .real
+        } else if let boolVal = try? container.decodeIfPresent(Bool.self, forKey: .isVirtual) {
+            isVirtual = boolVal ? .virtual : .real
+        } else {
+            isVirtual = .real
+        }
         seq = try container.decodeIfPresent(Int.self, forKey: .seq) ?? 0
         lang = try container.decodeIfPresent(String.self, forKey: .lang) ?? ""
         playCnt = try container.decodeIfPresent(Int.self, forKey: .playCnt) ?? 0

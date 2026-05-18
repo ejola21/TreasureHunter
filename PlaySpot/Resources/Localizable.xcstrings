@@ -3373,7 +3373,6 @@
       }
     },
     "obtain_fail" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3390,7 +3389,6 @@
       }
     },
     "obtain_fail_message_0" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3407,7 +3405,6 @@
       }
     },
     "obtain_fail_message_1" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {

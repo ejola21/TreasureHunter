@@ -8,6 +8,26 @@ struct LocalDataSource: MissionDataSource {
         try loadJSON("mock_mission_list")
     }
 
+    func fetchPublishedMissions(cursor: Int, lang: String, latitude: Double, longitude: Double) async throws -> [Mission] {
+        try loadJSON("mock_mission_list")
+    }
+
+    func submitReview(missionID: String, userID: String, score: Float, reply: String) async throws -> Bool {
+        true
+    }
+
+    func register(email: String, passwordMD5: String) async throws -> Bool {
+        true
+    }
+
+    func uploadMission(missionJSON: String, itemsJSON: String, quizzesJSON: String) async throws -> Bool {
+        true
+    }
+
+    func recordPlayStart(playJSON: String) async throws -> Bool { true }
+    func recordPlayFinish(playJSON: String) async throws -> Bool { true }
+    func recordPlayFail(playJSON: String) async throws -> Bool { true }
+
     func fetchMissionDetail(missionID: String) async throws -> (Mission, [MissionItem], [ItemQuiz]) {
         // 미션 ID별 파일이 있으면 사용, 없으면 기본 파일 사용
         let mission: Mission
