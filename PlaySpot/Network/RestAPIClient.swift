@@ -59,7 +59,12 @@ actor RestAPIClient {
 
         // 401/403 자동 재로그인 1회 시도. Spring Security 는 invalid JWT 를 403 으로 응답하는
         // 경우가 있어 둘 다 토큰 만료로 간주한다 (저장된 자격증명이 있는 경우만).
-        if status == 401 || status == 403 {
+        //
+        // 단 /auth/login, /auth/register 는 인증 자체를 시도하는 엔드포인트이므로
+        // 401 = "사용자 자격증명 오류"로 해석. 자동 재로그인하면 다른 사용자(저장된 게스트)
+        // 자격증명으로 토큰을 갱신해버려 원본 호출 의도와 불일치.
+        let isAuthEndpoint = path.hasPrefix("/api/v1/auth/")
+        if (status == 401 || status == 403) && !isAuthEndpoint {
             Self.log.info("\(status, privacy: .public) received on \(path, privacy: .public) — attempting auto re-login")
             if await tryReLogin() {
                 let retryReq = try await buildRequest(method: method, path: path, query: query, body: body)
