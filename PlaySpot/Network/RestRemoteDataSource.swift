@@ -80,11 +80,12 @@ struct RestRemoteDataSource: MissionDataSource {
 
     func fetchMissionDetail(missionID: String) async throws -> (Mission, [MissionItem], [ItemQuiz]) {
         let res: MissionDetailRes = try await client.get("/api/v1/missions/\(urlEncode(missionID))")
-        // MissionDetailQuiz 는 missionID/itemID 가 없는 슬림 구조. 모든 퀴즈가 동일 미션의
-        // 어느 한 Quiz 아이템에 속한다고 가정 (서버 응답 컨벤션) — itemID 매핑은 추후.
-        // 임시: ItemQuiz 의 itemID 를 0 으로 두고, GameEngine 의 그룹핑이 첫 Quiz 아이템에 합치도록 동작.
+        // 신규 API 의 quizzes 는 ItemID 가 생략된 슬림 구조 `{Seq, Quiz, Answer, Probability}`.
+        // 서버 컨벤션: 응답의 모든 quiz 는 items 안의 첫 Quiz/Quiz20 아이템에 속한다.
+        // (현재 mock/시드 미션은 모두 Quiz 아이템이 0 또는 1 개이므로 유효한 가정.)
+        let quizItemID = res.items.first { $0.itemType == .quiz || $0.itemType == .quiz20 }?.itemID ?? 0
         let quizzes = res.quizzes.map { q in
-            ItemQuiz(missionID: missionID, itemID: 0, seq: q.Seq,
+            ItemQuiz(missionID: missionID, itemID: quizItemID, seq: q.Seq,
                      quiz: q.Quiz, answer: q.Answer, probability: q.Probability ?? 100)
         }
         return (res.mission, res.items, quizzes)
