@@ -102,6 +102,10 @@ xcrun assetutil --info build/Build/Products/Debug-iphonesimulator/PlaySpot.app/A
 
 ## API 회귀 (신규 /api/v1/**)
 
+- 서버: `http://43.201.188.35:8080`
+- Swagger UI: <http://43.201.188.35:8080/swagger-ui/index.html>
+- OpenAPI JSON: <http://43.201.188.35:8080/api-docs>
+
 ```bash
 # 13 endpoints 스모크 (anonymous 차단 / register / login / 읽기 9개 / 쓰기 2개 / 401 우회) — 22 케이스
 bash scripts/smoke_new_api.sh

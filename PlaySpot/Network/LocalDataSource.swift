@@ -24,6 +24,20 @@ struct LocalDataSource: MissionDataSource {
         true
     }
 
+    // MARK: - Builder mock (단위 테스트 / preview 용)
+
+    func createMission(_ req: BuilderMissionReq) async throws -> String {
+        let f = DateFormatter()
+        f.dateFormat = "yyyyMMddHHmmss"
+        f.locale = Locale(identifier: "en_US_POSIX")
+        return "mock_\(f.string(from: Date()))"
+    }
+
+    func updateMission(missionID: String, _ req: BuilderMissionReq) async throws -> Bool { true }
+    func deleteMission(missionID: String) async throws -> Bool { true }
+    func uploadBadgeImage(pngData: Data) async throws -> String? { "mock-badge.png" }
+    func uploadFile(pngData: Data, fileName: String) async throws -> FileUploadRes? { nil }
+
     func recordPlayStart(missionID: String, playerID: String, startTime: Date, isVirtual: Bool) async throws -> Bool { true }
     func recordPlayFinish(missionID: String, playerID: String, startTime: Date, endTime: Date, isVirtual: Bool) async throws -> Bool { true }
     func recordPlayFail(missionID: String, playerID: String, startTime: Date, endTime: Date, isVirtual: Bool) async throws -> Bool { true }

@@ -3,6 +3,7 @@ import SwiftUI
 
 struct RegisterView: View {
     @State private var email = ""
+    @State private var nickname = ""
     @State private var password = ""
     @State private var confirmPassword = ""
     @State private var errorMessage: String?
@@ -19,6 +20,10 @@ struct RegisterView: View {
                     TextField("Email", text: $email)
                         .textFieldStyle(.roundedBorder)
                         .keyboardType(.emailAddress)
+                        .textInputAutocapitalization(.never)
+
+                    TextField("Nickname", text: $nickname)
+                        .textFieldStyle(.roundedBorder)
                         .textInputAutocapitalization(.never)
 
                     SecureField("Password", text: $password)
@@ -51,8 +56,16 @@ struct RegisterView: View {
         }
     }
 
+    private var trimmedNickname: String {
+        nickname.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
     private var isValid: Bool {
-        !email.isEmpty && !password.isEmpty && password == confirmPassword && email.contains("@")
+        !email.isEmpty &&
+        !password.isEmpty &&
+        password == confirmPassword &&
+        email.contains("@") &&
+        !trimmedNickname.isEmpty
     }
 
     private func register() async {
@@ -66,14 +79,19 @@ struct RegisterView: View {
             errorMessage = "Registration failed (이미 가입된 계정이거나 서버 오류)."
             return
         }
-        // 자동 로그인 — REST 백엔드면 토큰 발급. Legacy 면 SUCCESS 여부만 확인.
+        // 자동 로그인 — REST 백엔드면 토큰 발급.
         let loggedIn = (try? await dataSource.login(email: email, password: password)) ?? false
-        if loggedIn {
-            AppState.shared.userID = email
-            dismiss()
-        } else {
+        guard loggedIn else {
             errorMessage = "Auto-login failed. 직접 로그인해 주세요."
+            return
         }
+
+        AppState.shared.userID = email
+        // 닉네임 서버 반영 — PATCH 실패해도 로컬 캐시는 유지 (사용자 흐름 차단 X).
+        let nick = trimmedNickname
+        _ = try? await dataSource.updateUser(userID: email, patch: UserPatchReq(nickname: nick))
+        AppState.shared.userNickname = nick
+        dismiss()
     }
 }
 

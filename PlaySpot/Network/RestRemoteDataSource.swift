@@ -92,15 +92,33 @@ struct RestRemoteDataSource: MissionDataSource {
     func fetchReplies(missionID: String) async throws -> [MissionReply] {
         do {
             let rows: [ReplyRes] = try await client.get("/api/v1/missions/\(urlEncode(missionID))/replies")
-            // MissionReply 는 text 만 가짐 — Nickname/Score 정보는 일단 무시.
             return rows.compactMap { r in
                 guard let text = r.MReply, !text.isEmpty else { return nil }
-                return MissionReply(text: text)
+                let date = (r.WriteDate.flatMap { Self.parseReplyDate($0) })
+                return MissionReply(text: text, score: r.Score, nickname: r.Nickname, writeDate: date)
             }
         } catch {
             Self.log.error("fetchReplies: \(error.localizedDescription, privacy: .public)")
             return []
         }
+    }
+
+    /// 서버 `WriteDate` 포맷 — 현재 `"2026-05-18T09:55:40.000+00:00"` (ISO 8601 + 밀리초 + tz).
+    /// `"yyyy-MM-dd HH:mm:ss"` 도 대비해 fallback 체인 구성.
+    private static func parseReplyDate(_ s: String) -> Date? {
+        // 1) ISO 8601 + fractional seconds + tz
+        let iso = ISO8601DateFormatter()
+        iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let d = iso.date(from: s) { return d }
+        // 2) ISO 8601 without fractional
+        iso.formatOptions = [.withInternetDateTime]
+        if let d = iso.date(from: s) { return d }
+        // 3) "yyyy-MM-dd HH:mm:ss" KST
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = TimeZone(identifier: "Asia/Seoul")
+        f.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        return f.date(from: s)
     }
 
     func submitReview(missionID: String, userID: String, score: Float, reply: String) async throws -> Bool {
@@ -165,10 +183,89 @@ struct RestRemoteDataSource: MissionDataSource {
 
     // MARK: - 빌더
 
+    /// @deprecated — 3-string 페이로드는 legacy 호환용. 신규 코드는 createMission 사용.
     func uploadMission(missionJSON: String, itemsJSON: String, quizzesJSON: String) async throws -> Bool {
-        // 신규 스키마 합의 후 구현. 현재는 legacy 폴백.
-        Self.log.warning("uploadMission: not implemented for REST backend yet")
+        Self.log.warning("uploadMission: legacy 3-string payload not supported on REST backend — use createMission(_:) instead")
         return false
+    }
+
+    /// `POST /api/v1/missions` (plan_designer.md §5.2).
+    /// 서버 미준비 시 404/501 발생 → 호출자가 backend 토글(.legacy) 로 폴백 권장.
+    func createMission(_ req: BuilderMissionReq) async throws -> String {
+        do {
+            let res: BuilderMissionCreatedRes = try await client.send(.POST, "/api/v1/missions", body: req)
+            return res.missionId
+        } catch {
+            Self.log.error("createMission: \(error.localizedDescription, privacy: .public)")
+            throw error
+        }
+    }
+
+    /// `PATCH /api/v1/missions/{id}` — 전체 교체.
+    /// 실패 시 `APIError` rethrow — 호출자는 `error.isNotFound` / `isForbidden` / `isValidationError` 로 분기.
+    func updateMission(missionID: String, _ req: BuilderMissionReq) async throws -> Bool {
+        do {
+            try await client.send(.PATCH, "/api/v1/missions/\(urlEncode(missionID))", body: req)
+            return true
+        } catch {
+            Self.log.error("updateMission: \(error.localizedDescription, privacy: .public)")
+            throw error
+        }
+    }
+
+    /// `DELETE /api/v1/missions/{id}`.
+    /// 실패 시 `APIError` rethrow — `isNotFound` (이미 삭제됨) / `isForbidden` / `isNotDeletable` (Status=2) 분기.
+    func deleteMission(missionID: String) async throws -> Bool {
+        do {
+            try await client.send(.DELETE, "/api/v1/missions/\(urlEncode(missionID))")
+            return true
+        } catch {
+            Self.log.error("deleteMission: \(error.localizedDescription, privacy: .public)")
+            throw error
+        }
+    }
+
+    /// `POST /api/v1/badges` (multipart `file`).
+    /// 응답 fileName 을 받아서 호출자가 createMission/updateMission payload 의 `BadgeImageName` 에 사용.
+    /// 실패 시 nil 로 삼키지 않고 throw — 호출자가 PATCH 단계 진입 전에 차단할 수 있도록.
+    func uploadBadgeImage(pngData: Data) async throws -> String? {
+        do {
+            let res: BadgeUploadRes = try await client.uploadFile(
+                "/api/v1/badges",
+                fieldName: "file",
+                fileName: "badge-\(UUID().uuidString.prefix(8)).png",
+                mimeType: "image/png",
+                data: pngData
+            )
+            return res.fileName
+        } catch {
+            Self.log.error("uploadBadgeImage: \(error.localizedDescription, privacy: .public)")
+            throw error
+        }
+    }
+
+    /// `POST /api/v1/files/upload` (multipart `file`) — 일반 파일 업로드.
+    /// 파라미터명 `pngData` 는 historical — 실제로는 PNG/JPEG 등 어떤 바이너리든 가능.
+    /// MIME 타입은 fileName 확장자에서 추론. 실패 시 throw.
+    func uploadFile(pngData: Data, fileName: String) async throws -> FileUploadRes? {
+        let mime: String
+        let lower = fileName.lowercased()
+        if lower.hasSuffix(".jpg") || lower.hasSuffix(".jpeg") { mime = "image/jpeg" }
+        else if lower.hasSuffix(".webp") { mime = "image/webp" }
+        else { mime = "image/png" }   // 기본 + .png
+        do {
+            let res: FileUploadRes = try await client.uploadFile(
+                "/api/v1/files/upload",
+                fieldName: "file",
+                fileName: fileName,
+                mimeType: mime,
+                data: pngData
+            )
+            return res
+        } catch {
+            Self.log.error("uploadFile: \(error.localizedDescription, privacy: .public)")
+            throw error
+        }
     }
 
     // MARK: - 플레이 기록

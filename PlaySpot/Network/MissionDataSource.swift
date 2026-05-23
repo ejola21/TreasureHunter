@@ -28,8 +28,34 @@ protocol MissionDataSource {
     func login(email: String, password: String) async throws -> Bool
     /// TR=tr_user_reg — 회원가입. password 는 평문.
     func register(email: String, password: String) async throws -> Bool
-    /// TR=700 — 미션 빌더 업로드 (mission, items, quizzes JSON 문자열 묶음)
+    /// TR=700 — 미션 빌더 업로드 (mission, items, quizzes JSON 문자열 묶음).
+    /// @deprecated Legacy 호환. 신규 코드는 `createMission(_:)` / `updateMission(_:_:)` 사용.
     func uploadMission(missionJSON: String, itemsJSON: String, quizzesJSON: String) async throws -> Bool
+
+    // MARK: - 빌더 신규 API (POST/PATCH/DELETE /api/v1/missions)
+
+    /// `POST /api/v1/missions` — 미션 생성. 응답에서 서버 발급 MissionID 반환.
+    /// Legacy 백엔드에서는 내부에서 `}}` 구분자 페이로드로 변환 후 TR=700 호출.
+    func createMission(_ req: BuilderMissionReq) async throws -> String
+
+    /// `PATCH /api/v1/missions/{id}` — 미션 편집 (전체 교체).
+    /// Legacy 백엔드에서는 미지원 — `NotSupportedError` throw.
+    func updateMission(missionID: String, _ req: BuilderMissionReq) async throws -> Bool
+
+    /// `DELETE /api/v1/missions/{id}` — 미션 삭제. CASCADE 로 items/quizzes 도 함께 삭제.
+    /// Legacy 백엔드에서는 미지원 — `NotSupportedError` throw.
+    func deleteMission(missionID: String) async throws -> Bool
+
+    /// `POST /api/v1/badges` (multipart `file`) — 뱃지 이미지 업로드. 응답 fileName 반환.
+    /// 받은 fileName 은 호출자가 mission payload 의 `BadgeImageName` 에 담아 create/update 로 연결한다.
+    /// (서버에 `?missionId=...` 옵션도 있으나 어차피 PATCH 가 같은 작업을 하므로 미사용.)
+    /// Legacy 백엔드에서는 `/playspot/image_save.php` multipart `userfile` 호출.
+    func uploadBadgeImage(pngData: Data) async throws -> String?
+
+    /// `POST /api/v1/files/upload` (multipart `file`) — 일반 파일 업로드 (api_client.md §7).
+    /// 응답: `{id, fileName, fileUrl}`. fileUrl 은 S3 다이렉트라 화면 노출은 다운로드 전략 확정 대기.
+    /// Legacy/Local 백엔드는 미지원 — nil 반환.
+    func uploadFile(pngData: Data, fileName: String) async throws -> FileUploadRes?
     /// TR=c_mission_play_start / finish / fail — 플레이 기록 (legacy: 콤마 페이로드, rest: 구조화 인자)
     func recordPlayStart(missionID: String, playerID: String, startTime: Date, isVirtual: Bool) async throws -> Bool
     func recordPlayFinish(missionID: String, playerID: String, startTime: Date, endTime: Date, isVirtual: Bool) async throws -> Bool

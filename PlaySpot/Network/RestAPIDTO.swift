@@ -45,6 +45,7 @@ struct ReplyRes: Decodable {
     let Nickname: String?
     let Score: Double?
     let MReply: String?
+    let WriteDate: String?   // "yyyy-MM-dd HH:mm:ss" (KST) — 서버 R6.1 보강 필요
 }
 
 struct ReplyReq: Encodable {
@@ -104,7 +105,67 @@ struct PasswordChangeReq: Encodable {
 
 // MARK: - Badge / Mission upload (이미지/스키마는 후속)
 
+/// `POST /api/v1/files/upload` 응답 — 일반 파일 업로드 (api_client.md §7).
+/// `fileUrl` 은 S3 다이렉트 URL (현재 화면 노출은 보류 — 다운로드 전략 확정 대기).
+struct FileUploadRes: Decodable {
+    let id: Int?
+    let fileName: String
+    let fileUrl: String
+}
+
 struct BadgeUploadRes: Decodable {
     let fileName: String
     let url: String
+}
+
+// MARK: - Builder (POST /api/v1/missions 신규)
+
+/// `POST /api/v1/missions` / `PATCH /api/v1/missions/{id}` 요청 body.
+/// 서버 미준비 상태 — 합의 후 활성화 (plan_designer.md §5.2).
+struct BuilderMissionReq: Encodable {
+    let mission: BuilderMissionFields
+    let items: [BuilderItemFields]
+    let quizzes: [BuilderQuizFields]
+}
+
+struct BuilderMissionFields: Encodable {
+    let Title: String
+    let Description: String
+    let Place: String
+    let LimitTime: String      // "HH:MM:SS" — "00:00:00" = 무제한
+    let Status: Int
+    let Virtual: Int           // 0 / 1
+    let Lang: String
+    let BadgeImageName: String?
+    // MissionID / Designer / WriteDate 는 서버 발급 — 요청 body 에 포함하지 않음.
+}
+
+struct BuilderItemFields: Encodable {
+    let ItemID: Int
+    let Mandatory: Int         // 0 / 1
+    let ItemType: String       // "49" 등
+    let Latitude: Double
+    let Longitude: Double
+    let BlackCnt: Int
+    let BlackTime: Int
+    let RangeAR: Int
+    let ShowType: String       // "1"~"4"
+    let EffectiveRange: Int
+    let EffectiveTime: Int
+    let ItemGame: Int          // 0~3
+    let Info: String
+    let RelationItemID: Int
+}
+
+struct BuilderQuizFields: Encodable {
+    let ItemID: Int
+    let Seq: Int
+    let Quiz: String
+    let Answer: String
+    let Probability: Int
+}
+
+/// `POST /api/v1/missions` 응답.
+struct BuilderMissionCreatedRes: Decodable {
+    let missionId: String
 }

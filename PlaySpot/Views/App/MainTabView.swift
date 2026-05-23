@@ -29,10 +29,14 @@ struct MainTabView: View {
                 .tag(4)
         }
         .onChange(of: selectedTab) { _, newTab in
+            // DEBUG 빌드에서는 게스트도 모든 탭 진입 가능 — 빌더/UX 회귀 테스트용.
+            // 릴리스 빌드에서는 기존 정책 유지 (Design/MyInfo/Badge 는 로그인 필수).
+            #if !DEBUG
             if appState.isGuest && [1, 2, 3].contains(newTab) {
                 showLogin = true
                 selectedTab = 0
             }
+            #endif
         }
         .sheet(isPresented: $showLogin) {
             LoginView()

@@ -4,16 +4,35 @@
     " " : {
 
     },
+    ":" : {
+
+    },
     "(%@)" : {
 
     },
     "#%@" : {
 
     },
+    "#%@  ·  %@  ·  %@ m" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "#%1$@  ·  %2$@  ·  %3$@ m"
+          }
+        }
+      }
+    },
     "%@" : {
 
     },
     "%@ / 100" : {
+
+    },
+    "%@ m" : {
+
+    },
+    "💡" : {
 
     },
     "All" : {
@@ -120,6 +139,12 @@
           }
         }
       }
+    },
+    "AR 숨김" : {
+
+    },
+    "AR 화면에서 아이템이 표시되는 유효 반경." : {
+
     },
     "ar_clear1" : {
       "localizations" : {
@@ -941,6 +966,23 @@
         }
       }
     },
+    "data_check_message_4" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mission must have exactly one Start item."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start 아이템은 정확히 1개여야 합니다."
+          }
+        }
+      }
+    },
     "data_check_message_5" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -954,6 +996,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Run End 아이템을 터치하여 세부설정에 \n 들어가서 제한 시간을 설정하세요.\n 거리정보를 참고하여 적당한 시간을 설정하세요."
+          }
+        }
+      }
+    },
+    "data_check_message_6" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Run Start and Run End items must be paired."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Run Start 와 Run End 는 짝이 맞아야 합니다."
+          }
+        }
+      }
+    },
+    "data_check_message_7" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "At least one Mandatory item is required."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "필수 (Mandatory) 아이템이 최소 1개 필요합니다."
           }
         }
       }
@@ -1774,6 +1850,9 @@
         }
       }
     },
+    "English" : {
+
+    },
     "Exit" : {
 
     },
@@ -1827,9 +1906,6 @@
           }
         }
       }
-    },
-    "Hidden" : {
-
     },
     "Hint" : {
 
@@ -2140,6 +2216,9 @@
         }
       }
     },
+    "Item · Display · Visible Range" : {
+
+    },
     "item_message" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2413,6 +2492,9 @@
       }
     },
     "Map" : {
+
+    },
+    "MAP 숨김" : {
 
     },
     "mission_badge" : {
@@ -3200,9 +3282,6 @@
 
     },
     "No quiz available" : {
-
-    },
-    "Normal" : {
 
     },
     "obtain_badge" : {
@@ -4027,6 +4106,9 @@
         }
       }
     },
+    "Quiz 변형 (%@개)" : {
+
+    },
     "quiz_0" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -4409,9 +4491,6 @@
         }
       }
     },
-    "Stealth" : {
-
-    },
     "success" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -4501,9 +4580,6 @@
       }
     },
     "Tip" : {
-
-    },
-    "Transparent" : {
 
     },
     "user_id" : {
@@ -4676,13 +4752,151 @@
         }
       }
     },
+    "간단한 한 줄 후기를 적어주세요 (선택)" : {
+
+    },
+    "거리 (자동)" : {
+
+    },
+    "건너뛰기" : {
+
+    },
+    "공개" : {
+
+    },
+    "공개 설정" : {
+
+    },
+    "공개된 미션은 바로 삭제할 수 없어요. 먼저 ‘공개 해제’ 한 뒤 비공개 목록에서 삭제하세요." : {
+
+    },
+    "다크존 반경: %@ m" : {
+
+    },
+    "드래그 + 핀치로 영역 조정" : {
+
+    },
+    "랜덤 게임 (준비 중)" : {
+
+    },
+    "먼저 ‘공개 해제’를 눌러 비공개 상태로 되돌린 뒤, 비공개 목록에서 삭제하세요." : {
+
+    },
     "미션 완료!" : {
 
     },
-    "축하합니다! 모든 필수 아이템을 수집했습니다." : {
+    "미션을 끝내려면 꼭 얻어야 하는 아이템인지 정해요." : {
+
+    },
+    "뱃지 미설정" : {
+
+    },
+    "선택: %@ 점" : {
+
+    },
+    "설정된 제한" : {
+
+    },
+    "숨김없음" : {
+
+    },
+    "시간 초과" : {
+
+    },
+    "아이템 %@" : {
+
+    },
+    "아이템 획득 시 필요한 게임을 추가할 수 있어요." : {
+
+    },
+    "아이템: %@" : {
+
+    },
+    "아이템을 선택하세요" : {
+
+    },
+    "아이템을 얻은 순간 알림에 보여줄 문구를 적어요." : {
+
+    },
+    "없음" : {
+
+    },
+    "외 %@건" : {
+
+    },
+    "우측 상단 + 버튼으로 새 미션을 만들어보세요." : {
+
+    },
+    "이 미션은 어땠나요?" : {
+
+    },
+    "이 아이템 유형은 빌더에서 편집할 수 없습니다." : {
+
+    },
+    "이 아이템은 미션 완료에 영향을 주지 않아요." : {
+
+    },
+    "이 아이템은 미션 진행에 꼭 필요해 자동으로 필수 처리돼요." : {
+
+    },
+    "이미지를 불러올 수 없어요" : {
+
+    },
+    "자동 — 꺼짐" : {
+
+    },
+    "자동 — 켜짐" : {
+
+    },
+    "적용" : {
+
+    },
+    "제한 시간이 지나 미션이 종료되었습니다." : {
+
+    },
+    "지도 길게 눌러 배치 · 핀 드래그로 이동" : {
+
+    },
+    "지도·AR 화면에서 보일지 안 보일지 설정해요." : {
+
+    },
+    "최소 1개의 변형을 추가하세요 (필수)." : {
+
+    },
+    "취소" : {
+
+    },
+    "터치 게임 (준비 중)" : {
+
+    },
+    "페어 ID" : {
+
+    },
+    "폭발 반경: %@ m" : {
+
+    },
+    "플레이 시간 %@" : {
+
+    },
+    "플레이 제한 시간" : {
+
+    },
+    "필수 여부" : {
+
+    },
+    "필수: %@" : {
+
+    },
+    "한국어" : {
 
     },
     "확인" : {
+
+    },
+    "후기 남기기" : {
+
+    },
+    "흔들기 게임" : {
 
     }
   },

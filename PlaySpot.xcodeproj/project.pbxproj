@@ -7,12 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		034B110DA5E30B63C09B8DEC /* MissionRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9C96DA66481A4D1960A6B50 /* MissionRepository.swift */; };
+		066F43FAF4F14AF30593A4ED /* ItemForms.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E0D2711BC65C1708E73F66 /* ItemForms.swift */; };
 		07033B17DD685C4B5C045E71 /* s_quiz_fail.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 258B12C34E1E228F52D4D2A1 /* s_quiz_fail.mp3 */; };
 		0760BF3EBE0D373C74A9206D /* MissionInfoSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8C958405D264ADEAC822520 /* MissionInfoSheet.swift */; };
 		0B800ED621843689DD23C3E9 /* ARItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 089FAF53F535E321BCF80769 /* ARItemView.swift */; };
 		0C839945E66D088424D7CE63 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8ED7AFD6A7C22A847064A1DE /* APIClient.swift */; };
 		0E25FED46E35D68A4AF93B78 /* MyInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DB005CD2E93353C83233CC5 /* MyInfoView.swift */; };
+		150238117290BBE5C6A63309 /* MissionValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7566FC679BF1E12B447D70B /* MissionValidator.swift */; };
 		156FB80D0C0D3B373601AE36 /* MissionCompletePopup.swift in Sources */ = {isa = PBXBuildFile; fileRef = F71704CDB743985DF0202EA9 /* MissionCompletePopup.swift */; };
 		15E4B3CF6CA993C0685461D1 /* s_quiz_fail.wav in Resources */ = {isa = PBXBuildFile; fileRef = D748E4C581101D7A6C0C91FF /* s_quiz_fail.wav */; };
 		166D4762457B5B4AF65DAF51 /* PlaySpotUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 818F1AAA386BB9F168BE4CFF /* PlaySpotUITests.swift */; };
@@ -27,6 +28,7 @@
 		22FFC02EF887514BDD1ED275 /* StoreService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88921F754E81259528C4BAAB /* StoreService.swift */; };
 		23C02E6EB311048B04E50D82 /* GameEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5579015B32EC7CB96288CBB6 /* GameEngineTests.swift */; };
 		271FAF34D4E50D98487E9411 /* ARCoordinate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AC9BF4FEFFC55476FA27CC2 /* ARCoordinate.swift */; };
+		284A4C176090C4380CC39DC8 /* StarRatingPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D776F763DE12F48356C4735 /* StarRatingPicker.swift */; };
 		2B5526A95499EAC62026CAC5 /* StarRatingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 482C42B8FB4DF73B13D51B81 /* StarRatingView.swift */; };
 		30216934824E72F0D642CE35 /* s_game_touch.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 2E8F8BC1AAB57DB9CF044F85 /* s_game_touch.mp3 */; };
 		3115C684EDDFDBE82DA0C950 /* ARCoordinateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD4753AC80AD0E1725961C42 /* ARCoordinateTests.swift */; };
@@ -37,8 +39,10 @@
 		3E242496677B6C893813EFAF /* pickerData.plist in Resources */ = {isa = PBXBuildFile; fileRef = D5A0EC382FC83517A0D1F1BD /* pickerData.plist */; };
 		409FC9DDDF14361EF4EA0C02 /* ARGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D499C6A0F091F1627B891C81 /* ARGameView.swift */; };
 		413DDC8A86ED2BD5610D8FEE /* ShowType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00180C1DD978E3B4B92B8D27 /* ShowType.swift */; };
+		433841C30061A15EFAFAC2B3 /* BuilderMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E4B3D627AA036E8CB0B561F /* BuilderMapView.swift */; };
 		439718445EF9EF18C5475252 /* MissionSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFA3D1430EF12001F702794A /* MissionSetupView.swift */; };
 		44B348C635A6902418E20962 /* AuthBootstrap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 415D898AE0ED95DB95DDA904 /* AuthBootstrap.swift */; };
+		468799BD5020B0898E16766A /* MissionBuilderViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D05AFD9E9074DC14A022D73 /* MissionBuilderViewModel.swift */; };
 		48CB42BB6FF39316DCF338C9 /* s_game_touch.wav in Resources */ = {isa = PBXBuildFile; fileRef = 7B40A6BBF916881550856E77 /* s_game_touch.wav */; };
 		49472DD3ECF6115D844FE74F /* game_finish.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 7C73034A7A4DB24E9EA23018 /* game_finish.mp3 */; };
 		49DE5F922706D39A2B5D040B /* s_gogogo.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 02A6AFC3651B4D2DA5595EF2 /* s_gogogo.mp3 */; };
@@ -56,6 +60,7 @@
 		6FE7EC81EB587ED92C5DA7B0 /* ItemTypeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41C2A888A33E0B50A8AA7651 /* ItemTypeTests.swift */; };
 		711A03CA1856B9B160D7DDC2 /* ItemQuiz.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9838A785372AA23E944F985 /* ItemQuiz.swift */; };
 		736A4A89CFA1C59DEAE75870 /* s_timer.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 8EB0BDA1C2469FE219DFD47B /* s_timer.mp3 */; };
+		74E8D045F84664DB9F88DC1E /* ReplyOptimisticCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = E141E3EC3D216DC9B232C456 /* ReplyOptimisticCache.swift */; };
 		7738844D8200CD39630ADBE1 /* MockData in Resources */ = {isa = PBXBuildFile; fileRef = 3D6A887A120E0F6357187D22 /* MockData */; };
 		77EF478655F4AE917401A778 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45E2BA76A217F9A96F53E51E /* MainTabView.swift */; };
 		785241DBB0B8EDBD67910566 /* PowerUpRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 189A146C45A34CBC01A8A82D /* PowerUpRepository.swift */; };
@@ -64,25 +69,27 @@
 		7E3D92291E5D24048325FEE4 /* s_explosion.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 31DAD5CFB136326EB0D8B898 /* s_explosion.mp3 */; };
 		7EE11F13404A455370081105 /* ItemType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 308CABAC9544EA0B0AB52C1B /* ItemType.swift */; };
 		7F9A67D9CBA45E62BF1CFA42 /* MissionItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0068203B2EAC7C5835258EF0 /* MissionItem.swift */; };
+		8082F876A6562FD9FDC47008 /* QuizVariantsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EC368688072B7FA4388AA8C /* QuizVariantsView.swift */; };
 		818B80FFE3A64699DDCDCACF /* QuizView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BCF982EEC5A582DD7C25BCB /* QuizView.swift */; };
+		83B8B832EC8D7F8EF7D1BD43 /* MissionBuilderMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4B233E7ED5BED955E388291 /* MissionBuilderMapView.swift */; };
 		85E2129940464CD86ACAC59B /* BadgeListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D124128FECDFB8797C9FDE0 /* BadgeListView.swift */; };
+		89E21D41D7CDC0BB04253C7A /* MissionTimeoutPopup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9641C7FE03A5EDB4E4E6C5FA /* MissionTimeoutPopup.swift */; };
 		8AF2D86C67E6B4EF623ACD55 /* MissionDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C05C8C9B1842FEFC736FFC3 /* MissionDTO.swift */; };
 		8DE3855FD67D06D3C5EDC101 /* s_timeover.wav in Resources */ = {isa = PBXBuildFile; fileRef = F4AE26BEA5A4F3520C2DD221 /* s_timeover.wav */; };
 		92E981FF811500E003E00500 /* LocalDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = D33A54B4E3EA63D69D4D7E0B /* LocalDataSource.swift */; };
 		93CF5B3226A22B9A5B670185 /* MissionDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F464E42E47FE2CE625871CA /* MissionDataSource.swift */; };
-		98C667730A371B39D46FD077 /* MissionItemRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED74BD136D34262EEFDD8E5D /* MissionItemRepository.swift */; };
 		99C5CE3067E01B95800FE78E /* HapticService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88E758E62595361F6884FABD /* HapticService.swift */; };
 		9A4209EB30B5FDED7AD41B06 /* GameStatusBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6F2C205BF8E2C4A972F1EDE /* GameStatusBar.swift */; };
 		9C134C00078466C9347930E9 /* ShowTypeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12F3723271E05C4EF5B0C3AA /* ShowTypeTests.swift */; };
 		9CC84B68A1463DE10F9AEB77 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8039E1810795BEC70931D21 /* ContentView.swift */; };
 		9EBF04546946BA9CDB7A3460 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 99B5AC099509E2D1270A0479 /* Localizable.xcstrings */; };
 		A19E9C0B8D0DD5FCEEA95C7E /* PlayStateRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 314B8A19465433D0C2830B5C /* PlayStateRepository.swift */; };
-		A3DE65950976627394D0EF3D /* QuizRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAF55C06206671F7FE53731C /* QuizRepository.swift */; };
 		A839AAD0BC882F519A0C1D24 /* GameTimerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB1EFB762C3121B0DFFBB807 /* GameTimerView.swift */; };
 		A88B1C8CBC117C0E316787D3 /* s_applause.wav in Resources */ = {isa = PBXBuildFile; fileRef = 5B4CF74EFA9EDD90E8877A7B /* s_applause.wav */; };
 		B1FDFE937F32BE50ABA6A2F2 /* quiz_wronganswer.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 3AFD2698DB7854B05C1AA529 /* quiz_wronganswer.mp3 */; };
 		B3C8AF60D825DA46A1F67CF9 /* treasure.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = 056BDA1FB2CD20902764436D /* treasure.sqlite */; };
 		B544F05AB5452C7E4CAA466F /* APIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F7D26478D666E848ACCCE4D /* APIClientTests.swift */; };
+		B642D2CE3AA8A3300062D7C4 /* ImageCropView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F12AAA60860721022CCC3EF /* ImageCropView.swift */; };
 		BC5AD9A87B3521A09D05103D /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3C485AFB537C76412B59894 /* SettingsView.swift */; };
 		BC6F722D20DB18CD28456F6C /* APIError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A6E5C27FC06144AC42D63F6 /* APIError.swift */; };
 		BCD269C57658FC2D981AB1B4 /* MissionDTOTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AA7D7C4ACCBF79DBA67807D /* MissionDTOTests.swift */; };
@@ -147,6 +154,7 @@
 		089FAF53F535E321BCF80769 /* ARItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARItemView.swift; sourceTree = "<group>"; };
 		0AC9BF4FEFFC55476FA27CC2 /* ARCoordinate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARCoordinate.swift; sourceTree = "<group>"; };
 		0B4254F256596101C5379853 /* MissionDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissionDetailView.swift; sourceTree = "<group>"; };
+		0D776F763DE12F48356C4735 /* StarRatingPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StarRatingPicker.swift; sourceTree = "<group>"; };
 		0F464E42E47FE2CE625871CA /* MissionDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissionDataSource.swift; sourceTree = "<group>"; };
 		12F3723271E05C4EF5B0C3AA /* ShowTypeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowTypeTests.swift; sourceTree = "<group>"; };
 		15649B0528101C89E68109B8 /* ItemRnPInPlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemRnPInPlay.swift; sourceTree = "<group>"; };
@@ -171,6 +179,7 @@
 		365204DEDA0DBDCC94838422 /* GameTooltipView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameTooltipView.swift; sourceTree = "<group>"; };
 		3AFD2698DB7854B05C1AA529 /* quiz_wronganswer.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = quiz_wronganswer.mp3; sourceTree = "<group>"; };
 		3CD515E188746E482A1E6A93 /* MissionRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissionRowView.swift; sourceTree = "<group>"; };
+		3D05AFD9E9074DC14A022D73 /* MissionBuilderViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissionBuilderViewModel.swift; sourceTree = "<group>"; };
 		3D6A887A120E0F6357187D22 /* MockData */ = {isa = PBXFileReference; lastKnownFileType = folder; name = MockData; path = PlaySpot/Resources/MockData; sourceTree = SOURCE_ROOT; };
 		41244BC9C6E7390EC7D480F0 /* TimerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerManager.swift; sourceTree = "<group>"; };
 		415D898AE0ED95DB95DDA904 /* AuthBootstrap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthBootstrap.swift; sourceTree = "<group>"; };
@@ -188,12 +197,14 @@
 		5C05C8C9B1842FEFC736FFC3 /* MissionDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissionDTO.swift; sourceTree = "<group>"; };
 		5CE535F374B63FC754E8EC03 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
 		5D45C89FAF557F79B798EF21 /* s_timer.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = s_timer.wav; sourceTree = "<group>"; };
+		5EC368688072B7FA4388AA8C /* QuizVariantsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizVariantsView.swift; sourceTree = "<group>"; };
 		5F7D26478D666E848ACCCE4D /* APIClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClientTests.swift; sourceTree = "<group>"; };
 		61E135BBB5CA1E8A84804703 /* PlaySpotApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaySpotApp.swift; sourceTree = "<group>"; };
 		6895D39880F8A3338A6256AF /* s_winsomething.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = s_winsomething.wav; sourceTree = "<group>"; };
 		6A0DCC3C012E4FAEFB4A8E36 /* quiz_rightanswer.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = quiz_rightanswer.mp3; sourceTree = "<group>"; };
 		6BCDAD785A1CEEC0685D9145 /* MissionBuilderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissionBuilderView.swift; sourceTree = "<group>"; };
 		6DD0AA2F8A00B981E2219480 /* s_yougotit.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = s_yougotit.mp3; sourceTree = "<group>"; };
+		6F12AAA60860721022CCC3EF /* ImageCropView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageCropView.swift; sourceTree = "<group>"; };
 		730A1CCBBE112C0E6AAA0620 /* RestRemoteDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestRemoteDataSource.swift; sourceTree = "<group>"; };
 		78338D8050B47799E624E253 /* s_applause.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = s_applause.mp3; sourceTree = "<group>"; };
 		7B40A6BBF916881550856E77 /* s_game_touch.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = s_game_touch.wav; sourceTree = "<group>"; };
@@ -212,9 +223,11 @@
 		8ED7AFD6A7C22A847064A1DE /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		8F84668ECAA3CFA15E855C0D /* RegisterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegisterView.swift; sourceTree = "<group>"; };
 		93C9192858F504AE00BDC3C3 /* MiniGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiniGameView.swift; sourceTree = "<group>"; };
+		9641C7FE03A5EDB4E4E6C5FA /* MissionTimeoutPopup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissionTimeoutPopup.swift; sourceTree = "<group>"; };
 		99B5AC099509E2D1270A0479 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		9B947E0389557BD8E5CC747D /* ItemInteraction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemInteraction.swift; sourceTree = "<group>"; };
 		9D17C0C9FC95129AA33435BD /* AuthSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthSession.swift; sourceTree = "<group>"; };
+		9E4B3D627AA036E8CB0B561F /* BuilderMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuilderMapView.swift; sourceTree = "<group>"; };
 		A572D7166BDBC334016D79FD /* s_timeover.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = s_timeover.mp3; sourceTree = "<group>"; };
 		A72D50FC4430B717C1926B86 /* APIEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIEndpoint.swift; sourceTree = "<group>"; };
 		A9838A785372AA23E944F985 /* ItemQuiz.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemQuiz.swift; sourceTree = "<group>"; };
@@ -223,7 +236,6 @@
 		AFA3D1430EF12001F702794A /* MissionSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissionSetupView.swift; sourceTree = "<group>"; };
 		B290ECB6079B2D6A2DAD0170 /* s_gogogo.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = s_gogogo.wav; sourceTree = "<group>"; };
 		B6BE82AB4844EA4B93CA7CA6 /* s_explosion.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = s_explosion.wav; sourceTree = "<group>"; };
-		BAF55C06206671F7FE53731C /* QuizRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizRepository.swift; sourceTree = "<group>"; };
 		C7B7D78653287F7940B27313 /* VirtualModeManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VirtualModeManagerTests.swift; sourceTree = "<group>"; };
 		C8039E1810795BEC70931D21 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		C87D824F1D39228746E86F64 /* LoadingHUD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingHUD.swift; sourceTree = "<group>"; };
@@ -237,19 +249,21 @@
 		D5A0EC382FC83517A0D1F1BD /* pickerData.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = pickerData.plist; sourceTree = "<group>"; };
 		D6F1735B69BE51FD21AB52EF /* ItemPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemPickerView.swift; sourceTree = "<group>"; };
 		D748E4C581101D7A6C0C91FF /* s_quiz_fail.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = s_quiz_fail.wav; sourceTree = "<group>"; };
-		D9C96DA66481A4D1960A6B50 /* MissionRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissionRepository.swift; sourceTree = "<group>"; };
 		E0BFB4603CD0C36E8D3B0F05 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
+		E141E3EC3D216DC9B232C456 /* ReplyOptimisticCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReplyOptimisticCache.swift; sourceTree = "<group>"; };
 		E17D11796545ACCFFF55265F /* PlaySpotTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = PlaySpotTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E3377AFEB808A04AE608AC62 /* s_radar.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = s_radar.mp3; sourceTree = "<group>"; };
+		E4B233E7ED5BED955E388291 /* MissionBuilderMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissionBuilderMapView.swift; sourceTree = "<group>"; };
 		E6E39DF6D7102377CC13A5BB /* StartGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartGameView.swift; sourceTree = "<group>"; };
 		E6F2C205BF8E2C4A972F1EDE /* GameStatusBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStatusBar.swift; sourceTree = "<group>"; };
 		EAB7CBEC9D262438E8CDF913 /* RestAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestAPIClient.swift; sourceTree = "<group>"; };
 		EB7134F508E3E90C02D52E67 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
-		ED74BD136D34262EEFDD8E5D /* MissionItemRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissionItemRepository.swift; sourceTree = "<group>"; };
 		EECD7D286E9ED9A89912CB4C /* MissionInPlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissionInPlay.swift; sourceTree = "<group>"; };
+		F1E0D2711BC65C1708E73F66 /* ItemForms.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemForms.swift; sourceTree = "<group>"; };
 		F2C7C4ACA54F86DAF8914ACC /* ARRadarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARRadarView.swift; sourceTree = "<group>"; };
 		F4AE26BEA5A4F3520C2DD221 /* s_timeover.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = s_timeover.wav; sourceTree = "<group>"; };
 		F71704CDB743985DF0202EA9 /* MissionCompletePopup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissionCompletePopup.swift; sourceTree = "<group>"; };
+		F7566FC679BF1E12B447D70B /* MissionValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissionValidator.swift; sourceTree = "<group>"; };
 		F807497F3C95A94088574F59 /* MissionItemInPlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissionItemInPlay.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -279,6 +293,7 @@
 				D33A54B4E3EA63D69D4D7E0B /* LocalDataSource.swift */,
 				0F464E42E47FE2CE625871CA /* MissionDataSource.swift */,
 				5C05C8C9B1842FEFC736FFC3 /* MissionDTO.swift */,
+				E141E3EC3D216DC9B232C456 /* ReplyOptimisticCache.swift */,
 				EAB7CBEC9D262438E8CDF913 /* RestAPIClient.swift */,
 				236B63C529183B9B94FD3E4A /* RestAPIDTO.swift */,
 				730A1CCBBE112C0E6AAA0620 /* RestRemoteDataSource.swift */,
@@ -346,10 +361,14 @@
 		36B3BA69D7A58974BE043A7E /* MissionBuilder */ = {
 			isa = PBXGroup;
 			children = (
+				9E4B3D627AA036E8CB0B561F /* BuilderMapView.swift */,
 				CE3FAF00D6995D13A8193817 /* ItemDetailView.swift */,
+				F1E0D2711BC65C1708E73F66 /* ItemForms.swift */,
 				D6F1735B69BE51FD21AB52EF /* ItemPickerView.swift */,
+				E4B233E7ED5BED955E388291 /* MissionBuilderMapView.swift */,
 				6BCDAD785A1CEEC0685D9145 /* MissionBuilderView.swift */,
 				AFA3D1430EF12001F702794A /* MissionSetupView.swift */,
+				5EC368688072B7FA4388AA8C /* QuizVariantsView.swift */,
 			);
 			path = MissionBuilder;
 			sourceTree = "<group>";
@@ -418,11 +437,8 @@
 			isa = PBXGroup;
 			children = (
 				CC776C66B5E1E5E18A95BDF4 /* DatabaseManager.swift */,
-				ED74BD136D34262EEFDD8E5D /* MissionItemRepository.swift */,
-				D9C96DA66481A4D1960A6B50 /* MissionRepository.swift */,
 				314B8A19465433D0C2830B5C /* PlayStateRepository.swift */,
 				189A146C45A34CBC01A8A82D /* PowerUpRepository.swift */,
-				BAF55C06206671F7FE53731C /* QuizRepository.swift */,
 			);
 			path = Database;
 			sourceTree = "<group>";
@@ -507,6 +523,8 @@
 			children = (
 				2F69A526C979A9C465073FEC /* GameEngine.swift */,
 				9B947E0389557BD8E5CC747D /* ItemInteraction.swift */,
+				3D05AFD9E9074DC14A022D73 /* MissionBuilderViewModel.swift */,
+				F7566FC679BF1E12B447D70B /* MissionValidator.swift */,
 				41244BC9C6E7390EC7D480F0 /* TimerManager.swift */,
 				263170C3CA18AEBEDFEAFB81 /* VirtualModeManager.swift */,
 			);
@@ -522,6 +540,7 @@
 				F71704CDB743985DF0202EA9 /* MissionCompletePopup.swift */,
 				C8C958405D264ADEAC822520 /* MissionInfoSheet.swift */,
 				1A3F74342A1BA5F7F71C53E0 /* MissionPlayView.swift */,
+				9641C7FE03A5EDB4E4E6C5FA /* MissionTimeoutPopup.swift */,
 				5BCF982EEC5A582DD7C25BCB /* QuizView.swift */,
 				E6E39DF6D7102377CC13A5BB /* StartGameView.swift */,
 			);
@@ -548,7 +567,9 @@
 			children = (
 				525FF08FF7C335DD2A0390E8 /* FlipCounterView.swift */,
 				365204DEDA0DBDCC94838422 /* GameTooltipView.swift */,
+				6F12AAA60860721022CCC3EF /* ImageCropView.swift */,
 				C87D824F1D39228746E86F64 /* LoadingHUD.swift */,
+				0D776F763DE12F48356C4735 /* StarRatingPicker.swift */,
 				482C42B8FB4DF73B13D51B81 /* StarRatingView.swift */,
 			);
 			path = Components;
@@ -720,6 +741,7 @@
 				44B348C635A6902418E20962 /* AuthBootstrap.swift in Sources */,
 				1F54B92A9F3284F3D434F76E /* AuthSession.swift in Sources */,
 				85E2129940464CD86ACAC59B /* BadgeListView.swift in Sources */,
+				433841C30061A15EFAFAC2B3 /* BuilderMapView.swift in Sources */,
 				9CC84B68A1463DE10F9AEB77 /* ContentView.swift in Sources */,
 				59B1DA2AD5F072D9B6B37F45 /* DatabaseManager.swift in Sources */,
 				79E162BC19AF507CA96018AA /* FlipCounterView.swift in Sources */,
@@ -730,7 +752,9 @@
 				55DAC18036A044129439A227 /* GameTooltipView.swift in Sources */,
 				99C5CE3067E01B95800FE78E /* HapticService.swift in Sources */,
 				1ECF1BFD0DC3F390689D2B24 /* ImageCacheService.swift in Sources */,
+				B642D2CE3AA8A3300062D7C4 /* ImageCropView.swift in Sources */,
 				F46506ACC128D7B940B618EC /* ItemDetailView.swift in Sources */,
+				066F43FAF4F14AF30593A4ED /* ItemForms.swift in Sources */,
 				D9B4388538C23510E8C81F30 /* ItemInteraction.swift in Sources */,
 				E1334B5E959885CCBC8BBC00 /* ItemPickerView.swift in Sources */,
 				711A03CA1856B9B160D7DDC2 /* ItemQuiz.swift in Sources */,
@@ -745,7 +769,9 @@
 				77EF478655F4AE917401A778 /* MainTabView.swift in Sources */,
 				BF823A93BDD837E605CAE4FE /* MiniGameView.swift in Sources */,
 				F2287640A618E2DD2FE15C13 /* Mission.swift in Sources */,
+				83B8B832EC8D7F8EF7D1BD43 /* MissionBuilderMapView.swift in Sources */,
 				3C67CEDBFA96735A31D6F6E7 /* MissionBuilderView.swift in Sources */,
+				468799BD5020B0898E16766A /* MissionBuilderViewModel.swift in Sources */,
 				156FB80D0C0D3B373601AE36 /* MissionCompletePopup.swift in Sources */,
 				8AF2D86C67E6B4EF623ACD55 /* MissionDTO.swift in Sources */,
 				93CF5B3226A22B9A5B670185 /* MissionDataSource.swift in Sources */,
@@ -754,28 +780,30 @@
 				0760BF3EBE0D373C74A9206D /* MissionInfoSheet.swift in Sources */,
 				7F9A67D9CBA45E62BF1CFA42 /* MissionItem.swift in Sources */,
 				D42A9BEDE77444529D81710F /* MissionItemInPlay.swift in Sources */,
-				98C667730A371B39D46FD077 /* MissionItemRepository.swift in Sources */,
 				21CB24644CAC6049D91879B2 /* MissionListView.swift in Sources */,
 				596C7F0A2D327A0B58575119 /* MissionPlayView.swift in Sources */,
 				1EF0004F925F76438B2162C0 /* MissionReply.swift in Sources */,
-				034B110DA5E30B63C09B8DEC /* MissionRepository.swift in Sources */,
 				576823883C6293D9A01F7C04 /* MissionRowView.swift in Sources */,
 				439718445EF9EF18C5475252 /* MissionSetupView.swift in Sources */,
+				89E21D41D7CDC0BB04253C7A /* MissionTimeoutPopup.swift in Sources */,
+				150238117290BBE5C6A63309 /* MissionValidator.swift in Sources */,
 				DF47BD95824B2765F797CDEA /* MotionService.swift in Sources */,
 				0E25FED46E35D68A4AF93B78 /* MyInfoView.swift in Sources */,
 				38E1E5D36BA152DB057FB052 /* PlaySpotApp.swift in Sources */,
 				A19E9C0B8D0DD5FCEEA95C7E /* PlayStateRepository.swift in Sources */,
 				785241DBB0B8EDBD67910566 /* PowerUpRepository.swift in Sources */,
-				A3DE65950976627394D0EF3D /* QuizRepository.swift in Sources */,
+				8082F876A6562FD9FDC47008 /* QuizVariantsView.swift in Sources */,
 				818B80FFE3A64699DDCDCACF /* QuizView.swift in Sources */,
 				DCA5D1A88520AB2359057DE5 /* RankingEntry.swift in Sources */,
 				18BD9FF2C677D133DD020646 /* RegisterView.swift in Sources */,
+				74E8D045F84664DB9F88DC1E /* ReplyOptimisticCache.swift in Sources */,
 				FD9D5CE05A250FD8D2619B33 /* RestAPIClient.swift in Sources */,
 				CE4CE9C7121B76E51F558FE5 /* RestAPIDTO.swift in Sources */,
 				F49520018C16830A1F84F349 /* RestRemoteDataSource.swift in Sources */,
 				BC5AD9A87B3521A09D05103D /* SettingsView.swift in Sources */,
 				413DDC8A86ED2BD5610D8FEE /* ShowType.swift in Sources */,
 				C19E30F2CBD262A2FF803779 /* SoundService.swift in Sources */,
+				284A4C176090C4380CC39DC8 /* StarRatingPicker.swift in Sources */,
 				2B5526A95499EAC62026CAC5 /* StarRatingView.swift in Sources */,
 				E00027CE4475F3AE74724E72 /* StartGameView.swift in Sources */,
 				22FFC02EF887514BDD1ED275 /* StoreService.swift in Sources */,

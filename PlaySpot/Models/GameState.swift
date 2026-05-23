@@ -1,11 +1,15 @@
 // Models/GameState.swift
 import Foundation
 
+/// 미션 공개 상태.
+/// - `unpublished` (0): 비공개 — Missions 탭(공개 목록)에 노출되지 않음. 본인 디자인 목록에만 보임.
+/// - `published`   (2): 공개 — Missions 탭에 노출.
+///
+/// 과거 값 `1`(TESTED) / `3`(FIRST_DESIGN) 은 폐기됨. 서버에서 1·3 이 내려오면
+/// 디코딩 측(Mission.swift)에서 `.unpublished` 로 흡수한다.
 enum MissionStatus: Int, Codable {
-    case designing = 0      // DESIGNING
-    case tested = 1         // TESTED
-    case serverUpload = 2   // SERVER_UPLOAD
-    case firstDesign = 3    // FIRST_DESIGN
+    case unpublished = 0
+    case published = 2
 }
 
 enum PlayMode: Int, Codable {

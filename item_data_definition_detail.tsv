@@ -1,0 +1,69 @@
+ItemType	Code	필드명	타입	기본값	범위/옵션	UI 컴포넌트	자동결정	검증	비고
+Start	49	itemID	Int	mission.items.count+1	1~	(자동)	자동 증가	unique	공통
+Start	49	itemType	String	"49"	—	(읽기전용)	—	—	공통
+Start	49	mandatory	Int	1	0/1	(읽기전용 Y)	자동 Y (itemType[0]=='4'||start)	—	자동 결정
+Start	49	latitude	Double	0	WGS84	지도 longTap/drag	좌표 입력	non-zero	공통
+Start	49	longitude	Double	0	WGS84	지도 longTap/drag	좌표 입력	non-zero	공통
+Start	49	showType	String	"4"	1~4	Picker	—	—	1=전체숨김 2=AR숨김 3=MAP숨김 4=일반
+Start	49	rangeAR	Int	30	5~500 (step 5)	Stepper	—	—	AR 가시 거리(m)
+Start	49	info	String	""	multiline	TextEditor	—	—	시작 안내문
+End	48	itemID/itemType/lat/lon	—	—	—	—	—	—	공통 (Start 와 동일)
+End	48	mandatory	Int	1	0/1	(읽기전용 Y)	자동 Y	—	—
+End	48	rangeAR	Int	30	5~500	Stepper	—	—	—
+End	48	info	String	""	multiline	TextEditor	—	—	종료 안내문
+Hint	51	mandatory	Int	0	0/1	Toggle	—	—	사용자 선택
+Hint	51	showType	String	"4"	1~4	Picker	—	—	—
+Hint	51	rangeAR	Int	30	5~500	Stepper	—	—	—
+Hint	51	itemGame	Int	0	0~3	Picker	—	—	0=즉시 1=Beginner(shake) 2=Normal(tap) 3=Senior
+Hint	51	info	String	""	multiline	TextEditor	—	non-empty 권장	힌트 텍스트
+Quiz	40	mandatory	Int	1	0/1	(읽기전용 Y)	자동 Y	—	—
+Quiz	40	showType	String	"4"	1~4	Picker	—	—	—
+Quiz	40	rangeAR	Int	30	5~500	Stepper	—	—	—
+Quiz	40	itemQuizzes	[ItemQuiz]	[]	N개	QuizVariantsView	—	count≥1	+Add Variant 버튼
+Quiz	40	itemQuizzes[].seq	Int	자동	1, 2, …	(자동)	max+1	unique within item	퀴즈 변형 시퀀스
+Quiz	40	itemQuizzes[].quiz	String	""	multiline	TextEditor	—	non-empty	퀴즈 질문
+Quiz	40	itemQuizzes[].answer	String	""	short text	TextField	—	non-empty	정답 (대소문자 무관)
+Quiz	40	itemQuizzes[].probability	Int	100	0~100	Stepper	—	—	DB 저장만. 런타임은 균등 randomElement() — rule_check.md E4-3
+Run Start	42	mandatory	Int	1	0/1	(읽기전용 Y)	자동 Y	—	—
+Run Start	42	showType	String	"4"	1~4	Picker	—	—	—
+Run Start	42	rangeAR	Int	30	5~500	Stepper	—	—	—
+Run Start	42	relationItemID	Int	0	—	(자동)	Run End 배치 시 양방향	pair exists	페어링 자동 설정
+Run Start	42	info	String	""	multiline	TextEditor	—	—	—
+Run End	43	mandatory	Int	1	0/1	(읽기전용 Y)	자동 Y	—	—
+Run End	43	showType	String	"4"	1~4	Picker	—	—	—
+Run End	43	rangeAR	Int	30	5~500	Stepper	—	—	—
+Run End	43	effectiveTime	Int	60	1~3600 (초)	DatePicker (HH:MM:SS)	—	>0	타임어택 제한 시간
+Run End	43	effectiveRange	Int	자동	—	(읽기전용)	두 좌표 거리 계산	—	자동 거리(m)
+Run End	43	relationItemID	Int	—	—	Picker (Run Start 목록)	자동 첫 Run Start	pair exists	페어링
+Run End	43	info	String	""	multiline	TextEditor	—	—	—
+Mine	55	mandatory	Int	0	—	(읽기전용 N)	자동 N	—	—
+Mine	55	rangeAR	Int	30	5~500	Stepper	—	—	폭발 반경 (m)
+Mine	55	blackCnt/blackTime	Int	5/300	—	(저장만)	—	—	런타임 미사용 (DB 저장)
+Dark	56	mandatory	Int	0	—	(읽기전용 N)	자동 N	—	—
+Dark	56	rangeAR	Int	30	5~500	Stepper	—	—	다크존 반경 (m)
+Defense	61	mandatory	Int	0	0/1	Toggle	—	—	사용자 선택
+Defense	61	showType	String	"4"	1~4	Picker	—	—	—
+Defense	61	rangeAR	Int	30	5~500	Stepper	—	—	—
+Defense	61	itemGame	Int	0	0~3	Picker	—	—	—
+Defense	61	info	String	""	multiline	TextEditor	—	—	—
+Gambling	50	mandatory	Int	0	0/1	Toggle	—	—	사용자 선택
+Gambling	50	showType	String	"4"	1~4	Picker	—	—	—
+Gambling	50	rangeAR	Int	30	5~500	Stepper	—	—	—
+Gambling	50	itemGame	Int	0	0~3	Picker	—	—	—
+Gambling	50	info	String	""	multiline	TextEditor	—	—	—
+Solution	52	mandatory	Int	0	—	(읽기전용 N)	자동 N	—	—
+Solution	52	rangeAR	Int	30	5~500	Stepper	—	—	—
+Solution	52	itemGame	Int	0	0~3	Picker	—	—	—
+Stealth Radar	65	mandatory	Int	0	0/1	Toggle	—	—	—
+Stealth Radar	65	showType	String	"4"	1~4	Picker	—	—	—
+Stealth Radar	65	rangeAR	Int	30	5~500	Stepper	—	—	—
+Stealth Radar	65	info	String	""	multiline	TextEditor	—	—	—
+Map Radar	66	(same as Stealth Radar)	—	—	—	—	—	—	—
+Mine Radar	68	(same as Stealth Radar)	—	—	—	—	—	—	—
+Coupon	59	mandatory	Int	0	0/1	Toggle	—	—	—
+Coupon	59	showType	String	"4"	1~4	Picker	—	—	—
+Coupon	59	rangeAR	Int	30	5~500	Stepper	—	—	—
+Coupon	59	itemGame	Int	0	0~3	Picker	—	—	—
+Coupon	59	info	String	""	multiline	TextEditor	—	—	쿠폰 코드/안내문
+Store	91	mandatory	Int	0	—	(읽기전용 N)	자동 N	—	—
+Store	91	rangeAR	Int	30	5~500	Stepper	—	—	—

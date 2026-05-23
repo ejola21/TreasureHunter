@@ -1,27 +1,32 @@
 // Views/Components/StarRatingView.swift
 import SwiftUI
 
+/// 읽기 전용 별점 표시 — 0.5 단위로 반쪽 별 지원.
+/// SF Symbols 사용 (asset PNG 의 흰색 별이 light 배경에서 안 보이던 문제 해결).
 struct StarRatingView: View {
     let rating: Double
     let maxStars: Int = 5
     var starSize: CGFloat = 16
+    var fillColor: Color = .yellow
 
     var body: some View {
         HStack(spacing: 2) {
             ForEach(0..<maxStars, id: \.self) { index in
-                Image(assetName(for: index))
+                Image(systemName: symbolName(for: index))
                     .resizable()
                     .scaledToFit()
                     .frame(width: starSize, height: starSize)
+                    .foregroundStyle(fillColor)
             }
         }
     }
 
-    /// 채워진 별=UI/star-gold32, 빈 별=UI/star-white32.
-    /// 0.5 이상이면 채워진 별로 표시(반쪽 별은 별도 자산 없음).
-    private func assetName(for index: Int) -> String {
-        let threshold = Double(index) + 1
-        return rating >= threshold - 0.5 ? "UI/star-gold32" : "UI/star-white32"
+    /// `index` 번째 별의 상태 — 채움 / 반쪽 / 비움.
+    private func symbolName(for index: Int) -> String {
+        let v = rating - Double(index)
+        if v >= 0.75 { return "star.fill" }
+        if v >= 0.25 { return "star.leadinghalf.filled" }
+        return "star"
     }
 }
 

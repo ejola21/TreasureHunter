@@ -43,6 +43,58 @@ actor RestAPIClient {
         _ = try await request(method: method, path: path, query: query, body: Optional<Empty>.none, decode: EmptyResponse.self)
     }
 
+    /// multipart/form-data 파일 업로드. 단일 파일 필드 전용.
+    /// `POST /api/v1/badges` / `/api/v1/files/upload` 등 이미지 업로드용. 401/403 자동 재로그인 동일하게 적용.
+    func uploadFile<T: Decodable>(
+        _ path: String,
+        fieldName: String,
+        fileName: String,
+        mimeType: String,
+        data: Data
+    ) async throws -> T {
+        let urlRequest = try await buildMultipartRequest(path: path, fieldName: fieldName, fileName: fileName, mimeType: mimeType, data: data)
+        let (resp, response) = try await perform(urlRequest)
+        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        if status == 401 || status == 403 {
+            Self.log.info("\(status, privacy: .public) on multipart \(path, privacy: .public) — auto re-login")
+            if await tryReLogin() {
+                let retry = try await buildMultipartRequest(path: path, fieldName: fieldName, fileName: fileName, mimeType: mimeType, data: data)
+                let (r2, resp2) = try await perform(retry)
+                return try decodeOrThrow(data: r2, response: resp2, type: T.self)
+            }
+        }
+        return try decodeOrThrow(data: resp, response: response, type: T.self)
+    }
+
+    private func buildMultipartRequest(
+        path: String,
+        fieldName: String,
+        fileName: String,
+        mimeType: String,
+        data: Data
+    ) async throws -> URLRequest {
+        let url = Self.baseURL.appendingPathComponent(path)
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.timeoutInterval = 30
+        req.setValue("application/json", forHTTPHeaderField: "Accept")
+        if let token = await AuthSession.shared.token {
+            req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+
+        let boundary = "----PlaySpot\(UUID().uuidString)"
+        req.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+
+        var body = Data()
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"\(fieldName)\"; filename=\"\(fileName)\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: \(mimeType)\r\n\r\n".data(using: .utf8)!)
+        body.append(data)
+        body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
+        req.httpBody = body
+        return req
+    }
+
     // MARK: - 핵심 — 단일 요청 + 401 인터셉터 + 자동 재로그인
 
     private func request<Body: Encodable, T: Decodable>(

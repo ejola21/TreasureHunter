@@ -45,7 +45,7 @@ struct MissionPlayView: View {
                 LegacyTopChrome(
                     timeString: timeString,
                     isRunActive: engine.isTimeOutActive,
-                    isTimeOutWarning: engine.isTimeOutActive && engine.remainingRunTime < 10,
+                    isTimeOutWarning: isTimeWarning,
                     onExit: {
                         engine.stopTimer()
                         dismiss()
@@ -91,7 +91,46 @@ struct MissionPlayView: View {
         }
         .overlay {
             if engine.missionCompleted {
-                MissionCompletePopup {
+                MissionCompletePopup(
+                    onSubmit: { score, reply in
+                        // 별점이 1점 이상이면 서버 전송 (댓글은 빈 문자열 허용).
+                        // 호출 결과를 await 한 뒤 dismiss — 그래야 부모(MissionDetailView)
+                        // 의 fullScreenCover onDismiss 가 새 리뷰 반영된 뒤 발화한다.
+                        let mID = missionID
+                        let uID = appState.userID
+                        let nick = appState.userNickname
+                        Task {
+                            _ = try? await AppConfig.dataSource.submitReview(
+                                missionID: mID,
+                                userID: uID,
+                                score: Float(score),
+                                reply: reply
+                            )
+                            // 서버 GET /replies 가 아직 Nickname/WriteDate 를 안 돌려주는 동안
+                            // (api_designer.md R6.1) 사용자가 본 후기에 본인 닉/시각이 보이도록
+                            // 옵티미스틱 캐시에 저장. MissionDetailView 의 refreshAfterPlay() 가 이를 사용.
+                            await MainActor.run {
+                                ReplyOptimisticCache.shared.append(
+                                    missionID: mID,
+                                    reply: MissionReply(text: reply, score: Double(score),
+                                                        nickname: nick.isEmpty ? nil : nick,
+                                                        writeDate: Date())
+                                )
+                                engine.stopTimer()
+                                dismiss()
+                            }
+                        }
+                    },
+                    onSkip: {
+                        engine.stopTimer()
+                        dismiss()
+                    }
+                )
+            }
+        }
+        .overlay {
+            if engine.missionTimedOut {
+                MissionTimeoutPopup(elapsedText: TimerFormatter.format(engine.elapsedTime)) {
                     engine.stopTimer()
                     dismiss()
                 }
@@ -133,14 +172,25 @@ struct MissionPlayView: View {
     private var timeString: String {
         let seconds: Int
         if engine.isTimeOutActive {
+            // Run Start↔End 타임어택 구간 — 남은 시간
             seconds = max(0, Int(engine.remainingRunTime))
+        } else if engine.missionLimitSeconds > 0 {
+            // 미션 전체 제한 시간 — 남은 시간 카운트다운
+            seconds = max(0, Int(engine.remainingMissionTime))
         } else {
+            // 제한 없음 — 경과 시간
             seconds = Int(engine.elapsedTime)
         }
         let h = seconds / 3600
         let m = (seconds % 3600) / 60
         let s = seconds % 60
         return String(format: "%02d%02d%02d", h, m, s)
+    }
+
+    /// 시간 표시를 빨강 경고로 — Run 구간 또는 미션 제한 시간이 10초 미만일 때.
+    private var isTimeWarning: Bool {
+        (engine.isTimeOutActive && engine.remainingRunTime < 10)
+            || (engine.missionLimitSeconds > 0 && !engine.isTimeOutActive && engine.remainingMissionTime < 10)
     }
 
     private var missionInfoText: String {

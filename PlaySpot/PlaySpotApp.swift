@@ -36,6 +36,13 @@ final class AppState {
         set { UserDefaults.standard.set(newValue, forKey: "gUserID") }
     }
 
+    /// 사용자가 회원가입/프로필 화면에서 등록한 닉네임. 게스트는 빈 문자열.
+    /// 댓글 작성 시 newly-submitted review 의 author 로도 사용.
+    var userNickname: String {
+        get { UserDefaults.standard.string(forKey: "gUserNickname") ?? "" }
+        set { UserDefaults.standard.set(newValue, forKey: "gUserNickname") }
+    }
+
     var guestUserID: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMddhhmmssSSS"

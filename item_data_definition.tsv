@@ -1,0 +1,17 @@
+ItemType	Code	Macro	mandatory	showType	rangeAR	info	itemGame	effectiveTime	effectiveRange	relationItemID	itemQuizzes	blackCnt/Time	비고
+Start (시작)	49	I_START	자동 Y	✓	✓ (def 30)	✓	—	—	—	—	—	—	미션당 1개 필수
+End (종료)	48	I_END	자동 Y	—	✓	✓	—	—	—	—	—	—	미션당 1개 필수
+Hint (힌트)	51	I_SIMPLE	switch	✓	✓	✓	✓ (0~3)	—	—	—	—	—	itemGame≠0 → 미니게임
+Quiz (퀴즈)	40	I_QUIZ	자동 Y	✓	✓	—	—	—	—	—	✓ (≥1)	—	itemQuizzes 인라인 N개 변형
+Run Start (타임 시작)	42	I_TIMEOUT_S	자동 Y	✓	✓	✓	—	—	—	자동 페어링	—	—	배치 시 Run End 자동 생성
+Run End (타임 종료)	43	I_TIMEOUT_E	자동 Y	✓	✓	✓	—	✓ (HH:MM:SS)	자동 거리계산 (R/O)	자동 페어링	—	—	effectiveRange = 두 좌표 거리
+Mine (지뢰)	55	I_MINE	자동 N	—	✓	—	—	—	—	—	—	저장만 (런타임 미사용)	rangeAR 만 의미
+Dark (다크존)	56	I_BLACK	자동 N	—	✓	—	—	—	—	—	—	—	rangeAR 만 의미
+Defense (방어)	61	I_MINE_NOBOMB	switch	✓	✓	✓	✓ (0~3)	—	—	—	—	—	mineNoBomb
+Gambling (랜덤)	50	I_RANDOM	switch	✓	✓	✓	✓ (0~3)	—	—	—	—	—	random
+Solution (솔루션)	52	I_SOLUTION	자동 N	—	✓	—	✓ (0~3)	—	—	—	—	—	itemGame 만 추가
+Stealth Radar (스텔스 레이더)	65	I_RADAR_AR	switch	✓	✓	✓	—	—	—	—	—	—	radarAR
+Map Radar (맵 레이더)	66	I_RADAR_MAP	switch	✓	✓	✓	—	—	—	—	—	—	radarMap
+Mine Radar (지뢰 레이더)	68	I_RADAR_MINE	switch	✓	✓	✓	—	—	—	—	—	—	radarMine
+Coupon (쿠폰)	59	I_COUPON	switch	✓	✓	✓	✓ (0~3)	—	—	—	—	—	itemGame 가능
+Store (상점)	91	I_STORE	자동 N	—	✓	—	—	—	—	—	—	—	rangeAR 만

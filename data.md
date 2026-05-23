@@ -197,4 +197,14 @@ MissionListView → LocalDataSource.fetchMissionList()
             → mock_mission_<id>.json (메타)
             + mock_items_<id>.json (아이템)
             + mock_quizzes_<id>.json (퀴즈, 없으면 빈 배열)
-```
+
+
+
+1. ios 
+SwiftUI 보통 HStack에 Picker(...).pickerStyle(.wheel)을 여러 개 
+
+2. web
+Vue 2.7 + Vant Picker
+
+3. android
+Android-PickerView

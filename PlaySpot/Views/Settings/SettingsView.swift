@@ -4,6 +4,7 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(AppState.self) var appState
     @State private var showTutorial = false
+    @State private var showLogin = false
     @State private var selectedBackend: APIBackend = AppConfig.backend
 
     var body: some View {
@@ -12,7 +13,9 @@ struct SettingsView: View {
                 Section("Account") {
                     LabeledContent("User ID", value: appState.userID)
 
-                    if !appState.isGuest {
+                    if appState.isGuest {
+                        Button("Login") { showLogin = true }
+                    } else {
                         Button("Logout") {
                             // 신규 API: 토큰 + 자격증명 폐기. 게스트 사용자로 되돌림.
                             Task { await AuthSession.shared.reset() }
@@ -69,6 +72,9 @@ struct SettingsView: View {
             .navigationTitle("Settings")
             .sheet(isPresented: $showTutorial) {
                 TutorialPagerView()
+            }
+            .sheet(isPresented: $showLogin) {
+                LoginView()
             }
         }
     }

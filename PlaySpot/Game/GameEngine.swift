@@ -32,6 +32,13 @@ final class GameEngine {
     var elapsedTime: TimeInterval = 0
     var remainingRunTime: TimeInterval = 0
 
+    /// 미션 전체 제한 시간 (초). 0 = 무제한. mission.limitTime 에서 설정.
+    var missionLimitSeconds: Int = 0
+    /// 미션 제한 시간 기준 남은 시간 (초). 제한 없으면 의미 없음.
+    var remainingMissionTime: TimeInterval = 0
+    /// 미션 제한 시간 초과 여부 — true 면 UI 가 종료 팝업을 띄운다.
+    var missionTimedOut = false
+
     var mineCount = 0
     var mandatoryRemaining = 0
     var hiddenOnMapCount = 0
@@ -200,6 +207,9 @@ final class GameEngine {
 
         self.mission = loadedMission
         self.items = loadedMission.items
+        self.missionLimitSeconds = loadedMission.limitTime
+        self.missionTimedOut = false
+        self.remainingMissionTime = Double(loadedMission.limitTime)
 
         // 진단: 각 아이템의 itemType 디코딩 결과 출력 (mine/black/Defense 구별 검증).
         for item in loadedMission.items {
@@ -256,6 +266,18 @@ final class GameEngine {
     private func tick() {
         guard missionStarted, let startTime = missionStartTime else { return }
         elapsedTime = Date().timeIntervalSince(startTime)
+
+        // 미션 전체 제한 시간 (0 = 무제한). 초과 시 미션 종료 처리.
+        if missionLimitSeconds > 0, !missionTimedOut, !missionCompleted {
+            remainingMissionTime = Double(missionLimitSeconds) - elapsedTime
+            if remainingMissionTime <= 0 {
+                remainingMissionTime = 0
+                missionTimedOut = true
+                stopTimer()
+                SoundService.shared.play(.timeOver)
+                recordPlay(action: .fail, time: Date())
+            }
+        }
 
         if isTimeOutActive, let timeoutStart = timeOutStartTime {
             remainingRunTime = Double(timeOutLimitTime) - Date().timeIntervalSince(timeoutStart)
@@ -629,6 +651,13 @@ final class GameEngine {
             return false
         }
 
+        // 획득한 아이템은 showType(.mapOnly 등) 와 무관하게 지도에 회색 핀으로 표시.
+        // (위 mine/black 분기에서 이미 걸러진 타입은 여기 도달하지 않음.)
+        // 사용자 피드백: 갬블링으로 자동 획득된 Hint(MAP 숨김) 가 안 보였던 버그 수정.
+        if dicItemEnd[item.itemID] == "Y" {
+            return true
+        }
+
         return item.showType.isVisibleOnMap(hasRadarMap: hasRadarMap, hasRadarAll: hasRadarAll)
     }
 
@@ -688,6 +717,12 @@ final class GameEngine {
         case .mineNoBomb:
             let msg = item.info.isEmpty ? "Mine damage can be avoided using this Defence item." : item.info
             enqueueAlert(ItemAcquiredAlert(title: "Defence Item acquired!", message: msg, itemIconName: icon))
+
+        case .coupon:
+            // 쿠폰 획득 — `info` 필드의 쿠폰 코드/안내문을 알림으로 표시.
+            // 레거시 MissionPlay.m 엔 처리 없었음 (placeholder). 신규에서 명시 구현.
+            let msg = item.info.isEmpty ? "Coupon acquired. Check details with the designer." : item.info
+            enqueueAlert(ItemAcquiredAlert(title: "Coupon acquired!", message: msg, itemIconName: icon))
 
         case .random:
             // 레거시 ARViewController.m:1015-1023 — Gambling 알림 후 lucky 알림 순차 표시.
