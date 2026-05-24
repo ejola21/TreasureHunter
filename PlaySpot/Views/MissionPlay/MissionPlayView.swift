@@ -436,7 +436,7 @@ struct ItemAcquiredPopup: View {
                     Image(alert.itemIconName)
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 48, height: 48)
+                        .frame(width: 72, height: 72)
 
                     Text(alert.title)
                         .font(.system(size: 17, weight: .bold))
@@ -499,7 +499,7 @@ private struct PulseMapPin: View {
     var body: some View {
         Image(item.mapIconName)
             .resizable()
-            .frame(width: 36, height: 36)
+            .frame(width: 54, height: 54)
             .grayscale(engine.dicItemEnd[item.itemID] == "Y" ? 1.0 : 0.0)
             .scaleEffect(scale)
             .onAppear { applyAnimation() }

@@ -70,7 +70,7 @@ struct ItemPickerView: View {
         HStack(spacing: 12) {
             if let type = selectedType {
                 Image(type.mapIcon(mandatory: false))
-                    .resizable().frame(width: 32, height: 32)
+                    .resizable().frame(width: 48, height: 48)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(type.displayLabel).font(.headline)
                     Text("#\(type.rawValue)  ·  \(Self.label(for: showType))  ·  \(rangeAR) m")

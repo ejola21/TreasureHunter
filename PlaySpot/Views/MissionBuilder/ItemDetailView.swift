@@ -22,7 +22,7 @@ struct ItemDetailView: View {
             Section("아이템 정보") {
                 HStack(alignment: .top, spacing: 12) {
                     Image(item.itemType.mapIcon(mandatory: item.isMandatory))
-                        .resizable().frame(width: 36, height: 36)
+                        .resizable().frame(width: 54, height: 54)
                     VStack(alignment: .leading, spacing: 6) {
                         Text(item.itemType.displayLabel).font(.headline)
                         Text(item.itemType.detailGuide.effect)

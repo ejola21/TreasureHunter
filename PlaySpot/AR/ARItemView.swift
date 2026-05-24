@@ -17,7 +17,7 @@ struct ARItemView: View {
             Image(item.arIconName)
                 .resizable()
                 .scaledToFit()
-                .frame(width: 72, height: 72)
+                .frame(width: 108, height: 108)
                 .opacity(isAcquired ? 0.4 : 1.0)
 
             if item.isMandatory {
