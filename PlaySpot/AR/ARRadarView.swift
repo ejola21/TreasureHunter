@@ -2,47 +2,62 @@
 import SwiftUI
 import CoreLocation
 
-/// 기존 ARViewController.m의 radar (radianPanel/radianCenter/radianItem/radianPhone) 재현.
-/// radar_body(319x61) 위에 cross/phone/item을 겹쳐 표시.
-/// phone은 디바이스 방위각, item은 가장 가까운 필수 아이템 방위각에 따라 회전.
+/// 레거시 radianPanel/radianCenter/radianItem/radianPhone 의 candy 재해석.
+/// Phase 4 redesign — 기존 radar_body(319×61) 갈색 PNG 띠 대신 64px 원형 candy 디스크 사용.
+/// cross/myway/item PNG (방위각 회전) 는 보존 — 이 위에 그려진다.
 struct ARRadarView: View {
     let items: [MissionItem]
-    let itemStatuses: [Int: String]   // itemID -> "Y"/"N"
+    let itemStatuses: [Int: String]
     let locationService: LocationService
-    /// F-4 (b): nearest 아이템이 Stealth/Hidden + 레이더 없음 상태일 때 화살표 숨김.
-    /// 레거시 ARViewController.m:1635-1636 의 `[radianItem removeFromSuperview];
-    /// [radianPhone removeFromSuperview];` 와 동일.
+    /// nearest 아이템이 Stealth/Hidden + 레이더 없음 상태일 때 화살표 숨김.
     var suppressArrows: Bool = false
+
+    private let discSize: CGFloat = 64
 
     var body: some View {
         ZStack {
-            // 1) 배경 패널 (가로 띠형)
-            Image("Radar/radar_body")
-                .resizable()
-                .frame(width: 319, height: 61)
+            // Candy 디스크 — green radial + 흰 보더 + 내부 다크 stroke + 동심원 2개 + 십자선.
+            ZStack {
+                Circle().fill(RadialGradient.radarDisc)
+                Circle().stroke(Color.white, lineWidth: 2)
+                Circle().inset(by: 2).stroke(Color.black.opacity(0.35), lineWidth: 1.5)
+                Circle().inset(by: discSize * 0.18).stroke(Color.white.opacity(0.35), lineWidth: 1)
+                Circle().inset(by: discSize * 0.32).stroke(Color.white.opacity(0.30), lineWidth: 1)
 
-            // 2) 중심 크로스헤어
-            Image("Radar/radar_cross")
-                .frame(width: 61, height: 61)
+                // 십자선 (40% opacity)
+                Path { p in
+                    p.move(to: CGPoint(x: 0, y: discSize / 2))
+                    p.addLine(to: CGPoint(x: discSize, y: discSize / 2))
+                    p.move(to: CGPoint(x: discSize / 2, y: 0))
+                    p.addLine(to: CGPoint(x: discSize / 2, y: discSize))
+                }
+                .stroke(Color.white.opacity(0.4), lineWidth: 1)
+            }
+            .frame(width: discSize, height: discSize)
 
             if !suppressArrows {
-                // 3) 디바이스 방향 (radar_myway) — 화면 헤딩에 따라 회전
-                //    레거시 anchorPoint=(0.5, 1.0) → SwiftUI anchor: .bottom
+                // 디바이스 방향 (radar_myway PNG 회전 보존)
                 Image("Radar/radar_myway")
-                    .frame(width: 33, height: 28)
+                    .frame(width: 28, height: 24)
                     .rotationEffect(.radians(deviceBearingRadians), anchor: .bottom)
-                    .offset(y: -14)  // 이미지 높이의 절반만큼 위로 올려 anchor가 중심에 오도록
+                    .offset(y: -12)
 
-                // 4) 최근접 필수 아이템 방향 (radar_item)
+                // 최근접 필수 아이템 방향 (radar_item PNG 회전 보존)
                 if let itemBearing = nearestMandatoryBearing {
                     Image("Radar/radar_item")
-                        .frame(width: 11, height: 25)
+                        .frame(width: 9, height: 21)
                         .rotationEffect(.radians(itemBearing), anchor: .bottom)
-                        .offset(y: -12.5)
+                        .offset(y: -10.5)
                 }
             }
+
+            // 중앙 hub (bee yellow)
+            Circle().fill(Color.duoBee)
+                .frame(width: 7, height: 7)
+                .overlay(Circle().stroke(Color.duoEel2, lineWidth: 1.2))
+                .shadow(color: Color.duoBee.opacity(0.7), radius: 3)
         }
-        .frame(width: 319, height: 61)
+        .frame(width: discSize, height: discSize)
     }
 
     /// 디바이스 진북 방위각(라디안). heading 없으면 0.

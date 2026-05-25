@@ -170,14 +170,15 @@ struct ARGameView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.leading, 16)
 
-                // 중앙 — 기존 ARRadarView (레거시 컴파스/needle) 그대로 사용. 시야각 미세 조정만.
+                // 중앙 — candy 64×64 radial 디스크 + 회전 화살표 (방위각 로직 보존).
                 ARRadarView(
                     items: items,
                     itemStatuses: itemStatuses,
                     locationService: locationService,
                     suppressArrows: nearestItemIsHiddenByShowType
                 )
-                .frame(width: 100, height: 60)
+                .frame(width: 64, height: 64)
+                .shadow(color: Color.black.opacity(0.35), radius: 6, x: 0, y: 3)
 
                 // 우측 정보 (유효 반경)
                 VStack(alignment: .trailing, spacing: 2) {
