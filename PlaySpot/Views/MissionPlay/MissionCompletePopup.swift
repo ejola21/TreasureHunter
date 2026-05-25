@@ -1,11 +1,8 @@
 // Views/MissionPlay/MissionCompletePopup.swift
+// Phase 4 — Candy 모달. 트로피 아이콘 + 별점 + 후기 + 건너뛰기/제출 CandyButton.
 import SwiftUI
 
-/// 미션 완료 후 리뷰 입력 팝업 — 별점(1~5) + 간단한 댓글 + 제출/건너뛰기.
-/// 사용자가 별점을 선택하지 않거나 비워두고 닫아도 닫을 수 있다 (건너뛰기).
 struct MissionCompletePopup: View {
-    /// 별점(0 = 미선택) 과 댓글 텍스트를 전달. score==0 / reply==빈문자열 도 호출자 판단으로 처리.
-    /// 닫기는 무조건 onClose 로 통일 — 호출자가 submit 처리 후 직접 dismiss.
     let onSubmit: (_ score: Int, _ reply: String) -> Void
     let onSkip: () -> Void
 
@@ -15,22 +12,27 @@ struct MissionCompletePopup: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.45)
-                .ignoresSafeArea()
+            Color.black.opacity(0.55).ignoresSafeArea()
                 .onTapGesture { isReplyFocused = false }
 
-            VStack(spacing: 16) {
-                Image("Auth/loginbg_icon")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: 220, maxHeight: 70)
+            VStack(spacing: 14) {
+                ZStack {
+                    Circle().fill(Color.duoBeeBg)
+                        .frame(width: 80, height: 80)
+                    Image(systemName: "trophy.fill")
+                        .font(.system(size: 40, weight: .bold))
+                        .foregroundColor(.duoBee)
+                }
+                .shadow(color: Color.duoBee.opacity(0.4), radius: 12)
 
+                DuoKicker(text: "Mission Cleared")
                 Text("미션 완료!")
-                    .font(.title2.bold())
+                    .font(.duoDisplay(size: 26))
+                    .foregroundColor(.duoEel2)
 
                 Text("이 미션은 어땠나요?")
-                    .font(.callout)
-                    .foregroundColor(.secondary)
+                    .font(.duoBody(size: 14))
+                    .foregroundColor(.duoWolf2)
 
                 StarRatingPicker(rating: $rating)
                     .padding(.vertical, 4)
@@ -38,50 +40,51 @@ struct MissionCompletePopup: View {
                 ZStack(alignment: .topLeading) {
                     if replyText.isEmpty {
                         Text("간단한 한 줄 후기를 적어주세요 (선택)")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .padding(.horizontal, 10)
+                            .font(.duoBody(size: 12))
+                            .foregroundColor(.duoHare)
+                            .padding(.horizontal, 12)
                             .padding(.vertical, 10)
                     }
                     TextEditor(text: $replyText)
                         .scrollContentBackground(.hidden)
                         .frame(height: 70)
-                        .padding(4)
+                        .padding(6)
                         .focused($isReplyFocused)
                 }
-                .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.gray.opacity(0.3)))
+                .background(
+                    RoundedRectangle(cornerRadius: 8).fill(Color.duoSnow)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8).stroke(Color.duoSwan2, lineWidth: 1.5)
+                )
 
-                HStack(spacing: 12) {
-                    Button(action: onSkip) {
-                        Text("건너뛰기")
-                            .font(.callout)
-                            .foregroundColor(.secondary)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(Color.gray.opacity(0.15))
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
-                    }
-                    Button {
+                HStack(spacing: 10) {
+                    Button("건너뛰기", action: onSkip)
+                        .buttonStyle(CandyButtonStyle(tint: .white, shadowColor: .duoSwan2))
+                        .overlay(
+                            Text("건너뛰기")
+                                .font(.duoDisplay(size: 14))
+                                .kerning(0.84)
+                                .textCase(.uppercase)
+                                .foregroundColor(.duoWolf)
+                        )
+
+                    Button("후기 남기기") {
                         onSubmit(rating, replyText.trimmingCharacters(in: .whitespacesAndNewlines))
-                    } label: {
-                        Text("후기 남기기")
-                            .font(.callout.bold())
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(rating > 0 ? Color.orange : Color.orange.opacity(0.4))
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
+                    .buttonStyle(rating > 0 ? .orange : CandyButtonStyle(tint: .duoFox.opacity(0.4), shadowColor: .duoFoxDeep.opacity(0.4)))
                     .disabled(rating == 0)
                 }
                 .padding(.top, 4)
             }
             .padding(20)
             .background(
-                Image("UI/popup1")
-                    .resizable(capInsets: EdgeInsets(top: 30, leading: 30, bottom: 30, trailing: 30),
-                              resizingMode: .stretch)
+                RoundedRectangle(cornerRadius: 18).fill(Color.white)
             )
+            .overlay(
+                RoundedRectangle(cornerRadius: 18).stroke(Color.duoSwan2, lineWidth: 2)
+            )
+            .shadow(color: Color.black.opacity(0.25), radius: 18, x: 0, y: 8)
             .frame(maxWidth: 340)
             .padding(.horizontal, 20)
         }

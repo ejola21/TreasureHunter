@@ -50,34 +50,39 @@ struct ARGameView: View {
                 }
             }
 
-            // 레거시 크롬: 상단 Map 버튼 + flip counter / 하단 레이더 + 상태바
+            // Candy 크롬: 상단 hudTeal 그라데이션 (MAP + digit clock) / 하단 hudDark (라벨 + radar)
             VStack {
                 HStack(spacing: 8) {
                     Button {
                         onMapTapped?()
                     } label: {
                         HStack(spacing: 4) {
-                            Image("UI/button_map")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(height: 24)
-                            Text("Map")
-                                .font(.headline)
-                                .foregroundColor(.white)
+                            Image(systemName: "map.fill")
+                                .font(.system(size: 14, weight: .bold))
+                            Text("MAP")
+                                .font(.duoDisplay(size: 12))
+                                .kerning(0.6)
                         }
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(Color.black.opacity(0.55))
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 12)
+                        .frame(height: 36)
+                        .background(RoundedRectangle(cornerRadius: 10).fill(Color.hudDarkEnd))
+                        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.white.opacity(0.2), lineWidth: 1.5))
                     }
 
                     Spacer(minLength: 4)
 
-                    flipCounter
-                        .padding(.trailing, 8)
+                    DigitClock(
+                        seconds: arSeconds,
+                        style: .light,
+                        digitFontSize: 16,
+                        digitWidth: 16,
+                        digitHeight: 26
+                    )
                 }
                 .padding(.horizontal, 12)
-                .padding(.top, 12)
+                .padding(.vertical, 10)
+                .background(LinearGradient.hudTeal.ignoresSafeArea(edges: .top))
 
                 Spacer()
 
@@ -133,85 +138,59 @@ struct ARGameView: View {
         onItemTapped?(item)
     }
 
-    // MARK: - 플립 카운터 (MissionPlayView와 동일 룩)
+    // MARK: - 디지트 시계 / 레이더 바 (Phase 4 candy)
 
-    /// 레거시 MissionPlay.m:622-627 — Run Start 획득 즉시 SBTickerView backColor 가
-    /// RGBA(255,0,51,1) 빨강으로 전환되고 일반 playTimeView 는 숨김.
-    private var flipCounter: some View {
-        HStack(spacing: 2) {
-            ForEach(Array(timeString.enumerated()), id: \.offset) { _, ch in
-                Text(String(ch))
-                    .font(.system(size: 22, weight: .bold, design: .monospaced))
-                    .foregroundColor(.white)
-                    .frame(width: 18, height: 30)
-                    .background(
-                        RoundedRectangle(cornerRadius: 3)
-                            .fill(engine.isTimeOutActive
-                                  ? Color(red: 1.0, green: 0.0, blue: 0.2)
-                                  : Color.black)
-                            .overlay(
-                                Rectangle()
-                                    .fill(Color.white.opacity(0.18))
-                                    .frame(height: 1)
-                            )
-                    )
-            }
-        }
-    }
-
-    private var timeString: String {
-        let seconds: Int
+    /// DigitClock 으로 전달할 초 단위 시간.
+    private var arSeconds: Int {
         if engine.isTimeOutActive {
-            seconds = max(0, Int(engine.remainingRunTime))
+            return max(0, Int(engine.remainingRunTime))
         } else {
-            seconds = Int(engine.elapsedTime)
+            return Int(engine.elapsedTime)
         }
-        let h = seconds / 3600
-        let m = (seconds % 3600) / 60
-        let s = seconds % 60
-        return String(format: "%02d%02d%02d", h, m, s)
     }
 
     private var isTimeOutWarning: Bool {
         engine.isTimeOutActive && engine.remainingRunTime < 10
     }
 
-    /// 레거시 radar_body(319x61)는 화면 전폭을 차지. Hint/유효 반경 라벨을 그 위에 겹쳐 표시.
+    /// 하단 HUD — hudDark 그라데이션 + 좌 라벨(Hint·거리) + 중앙 레이더(ARRadarView 기존 위젯 유지) + 우 라벨(유효 반경).
     private var radarBar: some View {
-        GeometryReader { geo in
-            let scale = geo.size.width / 319.0
-            let radarHeight = 61.0 * scale
+        ZStack {
+            LinearGradient.hudDark
+                .frame(height: 88)
 
-            ZStack {
-                Color.black.opacity(0.55)
+            HStack(alignment: .center, spacing: 0) {
+                // 좌측 정보 (방향 / 거리)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(nearestItemInfoText)
+                        .font(.duoDisplay(size: 13))
+                        .foregroundColor(.duoBee)
+                        .shadow(color: .black.opacity(0.4), radius: 2)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.leading, 16)
 
+                // 중앙 — 기존 ARRadarView (레거시 컴파스/needle) 그대로 사용. 시야각 미세 조정만.
                 ARRadarView(
                     items: items,
                     itemStatuses: itemStatuses,
                     locationService: locationService,
                     suppressArrows: nearestItemIsHiddenByShowType
                 )
-                .frame(width: 319, height: 61)
-                .scaleEffect(scale)
+                .frame(width: 100, height: 60)
 
-                HStack {
-                    Text(nearestItemInfoText)
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.white)
-                        .shadow(color: .black, radius: 2)
-
-                    Spacer()
-
+                // 우측 정보 (유효 반경)
+                VStack(alignment: .trailing, spacing: 2) {
                     Text(effectiveRangeText)
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.white)
-                        .shadow(color: .black, radius: 2)
+                        .font(.duoDisplay(size: 13))
+                        .foregroundColor(.duoMacaw)
+                        .shadow(color: .black.opacity(0.4), radius: 2)
                 }
-                .padding(.horizontal, 12)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .padding(.trailing, 16)
             }
-            .frame(width: geo.size.width, height: radarHeight)
+            .frame(height: 88)
         }
-        .frame(height: UIScreen.main.bounds.width * 61.0 / 319.0)
     }
 
     /// 좌하단 라벨 — 레거시 ar_infoView 포팅 ([`ARViewController.m:1615-1653`](Classes/ARViewController.m#L1615-L1653)).

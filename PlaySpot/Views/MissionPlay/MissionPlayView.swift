@@ -274,83 +274,75 @@ struct MissionPlayView: View {
 
 private struct LegacyTopChrome: View {
     let timeString: String         // "HHMMSS" 6자리
-    /// Run Start 활성 중 — flipCounter 배경을 빨간색으로 (레거시 RGBA(255,0,51,1))
-    let isRunActive: Bool
-    /// 10초 미만 — 텍스트 깜박임 같은 추가 경고용 (현재는 사운드만)
+    let isRunActive: Bool          // Run Start 활성 중 — 디지트 카드를 빨간색
     let isTimeOutWarning: Bool
     let onExit: () -> Void
     let onRecenter: () -> Void
     let onInfo: () -> Void
 
+    /// "HHMMSS" 6자리 → 초 단위 정수.
+    private var seconds: Int {
+        guard timeString.count == 6 else { return 0 }
+        let h = Int(timeString.prefix(2)) ?? 0
+        let m = Int(timeString.dropFirst(2).prefix(2)) ?? 0
+        let s = Int(timeString.suffix(2)) ?? 0
+        return h * 3600 + m * 60 + s
+    }
+
     var body: some View {
         HStack(spacing: 8) {
+            // EXIT — 작은 빨강 CandyButton 스타일
             Button(action: onExit) {
-                Text("Exit")
-                    .font(.system(size: 15, weight: .semibold))
+                Text("EXIT")
+                    .font(.duoDisplay(size: 12))
+                    .kerning(0.72)
                     .foregroundColor(.white)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 8)
-                    .background(
-                        RoundedRectangle(cornerRadius: 6)
-                            .stroke(Color.white.opacity(0.9), lineWidth: 1)
-                            .background(RoundedRectangle(cornerRadius: 6).fill(Color.black.opacity(0.25)))
-                    )
+                    .padding(.horizontal, 12)
+                    .frame(height: 36)
+                    .background(RoundedRectangle(cornerRadius: 10).fill(Color.duoCardinal))
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.white.opacity(0.2), lineWidth: 1.5))
             }
 
             Spacer(minLength: 4)
 
-            flipCounter
+            DigitClock(
+                seconds: seconds,
+                style: isRunActive ? .dark : .light,
+                digitFontSize: 16,
+                digitWidth: 16,
+                digitHeight: 26
+            )
+            .background(
+                isRunActive
+                    ? RoundedRectangle(cornerRadius: 6).fill(Color.duoCardinal).padding(-3)
+                    : nil
+            )
 
             Spacer(minLength: 4)
 
+            // Recenter (locate) — 36×36 흰 사각 + locate 아이콘
             Button(action: onRecenter) {
-                Image("UI/button_now")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(height: 34)
+                Image(systemName: "location.fill")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.duoEel2)
+                    .frame(width: 36, height: 36)
+                    .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.white.opacity(0.4), lineWidth: 1.5))
             }
 
+            // Info — 36×36 macaw 사각 + i
             Button(action: onInfo) {
-                Image("UI/button_info")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(height: 34)
+                Image(systemName: "info")
+                    .font(.system(size: 16, weight: .heavy))
+                    .foregroundColor(.white)
+                    .frame(width: 36, height: 36)
+                    .background(RoundedRectangle(cornerRadius: 10).fill(Color.duoMacaw))
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.white.opacity(0.25), lineWidth: 1.5))
             }
         }
         .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .background(
-            LinearGradient(
-                colors: [Color(red: 0.18, green: 0.45, blue: 0.50),
-                         Color(red: 0.10, green: 0.30, blue: 0.34)],
-                startPoint: .top, endPoint: .bottom)
-            .ignoresSafeArea(edges: .top)
-        )
-    }
-
-    /// 레거시 MissionPlay.m:622-627 — Run Start 획득 시 SBTickerView 의 backColor 가
-    /// 즉시 RGBA(255,0,51,1) 빨간색으로 전환되고 일반 playTimeView 는 숨김.
-    /// Swift 포트는 단일 flipCounter 의 배경만 분기 (Run 활성 시 빨강, 평상시 검정).
-    private var flipCounter: some View {
-        HStack(spacing: 2) {
-            ForEach(Array(timeString.enumerated()), id: \.offset) { _, ch in
-                Text(String(ch))
-                    .font(.system(size: 22, weight: .bold, design: .monospaced))
-                    .foregroundColor(.white)
-                    .frame(width: 18, height: 30)
-                    .background(
-                        RoundedRectangle(cornerRadius: 3)
-                            .fill(isRunActive
-                                  ? Color(red: 1.0, green: 0.0, blue: 0.2)  // RGBA(255,0,51,1)
-                                  : Color.black)
-                            .overlay(
-                                Rectangle()
-                                    .fill(Color.white.opacity(0.18))
-                                    .frame(height: 1)
-                            )
-                    )
-            }
-        }
+        .padding(.vertical, 10)
+        .background(LinearGradient.hudTeal.ignoresSafeArea(edges: .top))
     }
 }
 
@@ -365,33 +357,43 @@ private struct LegacyBottomBar: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            // 보라색/짙은 색 배경 바
-            VStack(spacing: 0) {
-                HStack(spacing: 0) {
-                    counter(label: "지뢰", value: mineCount, valueColor: .red)
-                    counter(label: "남은필수", value: mandatoryRemaining, valueColor: Color(red: 1.0, green: 0.50, blue: 0.30))
-                    Spacer().frame(width: 72) // 카메라 버튼 자리
-                    counter(label: "Hide Map", value: hiddenCount, valueColor: .white)
-                    counter(label: "Stealth", value: stealthCount, valueColor: .white)
-                }
-                .padding(.horizontal, 4)
-                .frame(height: 60)
+            // 티얼 그라데이션 바 (5 column segments + 카메라 자리)
+            HStack(spacing: 0) {
+                counter(label: "지뢰", value: mineCount, valueColor: .duoCardinal)
+                counter(label: "남은필수", value: mandatoryRemaining, valueColor: .duoBee)
+                Spacer().frame(width: 72) // 카메라 버튼 자리
+                counter(label: "Hidden", value: hiddenCount, valueColor: .white)
+                counter(label: "Stealth", value: stealthCount, valueColor: .white)
             }
-            .background(
-                LinearGradient(
-                    colors: [Color(red: 0.20, green: 0.20, blue: 0.28),
-                             Color(red: 0.08, green: 0.08, blue: 0.12)],
-                    startPoint: .top, endPoint: .bottom)
-                .ignoresSafeArea(edges: .bottom)
-            )
+            .padding(.horizontal, 4)
+            .frame(height: 66)
+            .background(LinearGradient.hudTeal.ignoresSafeArea(edges: .bottom))
 
-            // 카메라 버튼 — 바 위로 절반 정도 띄움
+            // 플로팅 카메라 버튼 — 62px 원형, radial 그라데이션, 1.5px 흰 보더 + 4px 아래 섀도.
             Button(action: onCamera) {
-                Image("UI/playAR_button")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 68, height: 68)
-                    .shadow(color: .black.opacity(0.4), radius: 3, y: 2)
+                ZStack {
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                colors: [Color.radarGreenLight, Color.radarGreenDark],
+                                center: .center, startRadius: 4, endRadius: 32
+                            )
+                        )
+                        .frame(width: 62, height: 62)
+                        .overlay(Circle().stroke(Color.white, lineWidth: 1.5))
+                    Image(systemName: "camera.fill")
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundColor(.white)
+                    // 카메라 본체 옆 노란 점 (flash 표시)
+                    Circle().fill(Color.duoBee).frame(width: 7, height: 7)
+                        .offset(x: 16, y: -10)
+                }
+                .background(
+                    Circle()
+                        .fill(Color.hudDarkEnd)
+                        .frame(width: 62, height: 62)
+                        .offset(y: 4)
+                )
             }
             .offset(y: -22)
         }
@@ -399,79 +401,20 @@ private struct LegacyBottomBar: View {
 
     private func counter(label: String, value: Int, valueColor: Color) -> some View {
         VStack(spacing: 2) {
-            Text(label)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(.white)
+            Text(label.uppercased())
+                .font(.duoDisplay(size: 10))
+                .kerning(0.5)
+                .foregroundColor(.white.opacity(0.85))
             Text(String(format: "%03d", value))
-                .font(.system(size: 16, weight: .bold, design: .monospaced))
+                .font(.duoDisplay(size: 18))
                 .foregroundColor(valueColor)
         }
         .frame(maxWidth: .infinity)
     }
 }
 
-// MARK: - 아이템 획득 팝업 (모든 타입 공통)
-
-struct ItemAcquiredPopup: View {
-    let alert: ItemAcquiredAlert
-    let onOK: () -> Void
-
-    var body: some View {
-        ZStack {
-            Color.black.opacity(0.45).ignoresSafeArea()
-
-            VStack(spacing: 0) {
-                // 로고
-                Image("Game/logo_noshadow")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(height: 44)
-                    .padding(.top, 20)
-                    .padding(.bottom, 12)
-
-                Divider().background(Color.gray.opacity(0.3))
-
-                // 아이콘 + 제목
-                HStack(spacing: 12) {
-                    Image(alert.itemIconName)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 72, height: 72)
-
-                    Text(alert.title)
-                        .font(.system(size: 17, weight: .bold))
-                        .foregroundColor(.black)
-                }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 16)
-
-                // 메시지
-                Text(alert.message)
-                    .font(.system(size: 14))
-                    .foregroundColor(.gray)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 20)
-
-                Divider().background(Color.gray.opacity(0.3))
-
-                // OK 버튼
-                Button(action: onOK) {
-                    Text("OK")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(Color.orange)
-                }
-            }
-            .background(Color.white)
-            .clipShape(RoundedRectangle(cornerRadius: 14))
-            .padding(.horizontal, 40)
-            .shadow(color: .black.opacity(0.25), radius: 12, y: 4)
-        }
-    }
-}
+// MARK: - 아이템 획득 팝업
+// ItemAcquiredPopup 은 Views/MissionPlay/ItemAcquiredPopup.swift 로 분리 (Phase 4 candy 디자인).
 
 #if DEBUG
 // MissionPlayView는 Map/Location 의존이라 Canvas에서 지도는 비어 보일 수 있음.

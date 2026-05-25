@@ -1,119 +1,125 @@
 // Views/Settings/SettingsView.swift
+// Phase 3 — Duolingo candy 스타일 재디자인.
+// 기존 로직 (API Backend 토글 / 401 시뮬 / Logout / Tutorial) 은 모두 보존.
 import SwiftUI
 
 struct SettingsView: View {
     @Environment(AppState.self) var appState
     @State private var showTutorial = false
+    @State private var showHelp = false
     @State private var showLogin = false
     @State private var selectedBackend: APIBackend = AppConfig.backend
+    @State private var showLogoutConfirm = false
+    #if DEBUG
+    @State private var showDesignSystemPreview = false
+    #endif
+
+    private let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+    private let appBuild   = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
 
     var body: some View {
-        NavigationStack {
-            List {
-                Section("Account") {
-                    LabeledContent("User ID", value: appState.userID)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                Text("Settings")
+                    .font(.duoDisplay(size: 28))
+                    .foregroundColor(.duoEel2)
+                    .padding(.top, 4)
 
+                FormGroup(title: "ACCOUNT") {
+                    FormRow(label: "User ID", value: appState.userID, muted: true)
                     if appState.isGuest {
-                        Button("Login") { showLogin = true }
+                        FormRow(label: "Login", link: true, isLast: true) { showLogin = true }
                     } else {
-                        Button("Logout") {
-                            // 신규 API: 토큰 + 자격증명 폐기. 게스트 사용자로 되돌림.
-                            Task { await AuthSession.shared.reset() }
-                            appState.userID = appState.guestUserID
-                        }
-                        .foregroundColor(.red)
+                        FormRow(label: "Logout", link: true, isLast: true) { showLogoutConfirm = true }
                     }
                 }
 
-                Section("API Backend") {
-                    Picker("Backend", selection: $selectedBackend) {
-                        ForEach(APIBackend.allCases) { backend in
-                            Text(backend.displayName).tag(backend)
-                        }
+                FormGroup(title: "API BACKEND",
+                          subtitle: "REST 로 전환 시 다음 호출부터 /api/v1/** 사용. 재로그인 필요.") {
+                    HStack {
+                        Text("Backend")
+                            .font(.duoBody(size: 15, weight: .semibold))
+                            .foregroundColor(.duoEel)
+                        Spacer()
+                        SegBtnPair(
+                            selection: $selectedBackend,
+                            options: [(.legacy, "Legacy"), (.rest, "REST")]
+                        )
+                        .frame(width: 180)
                     }
-                    .pickerStyle(.segmented)
-                    .onChange(of: selectedBackend) { _, new in
-                        AppConfig.backend = new
-                        // 백엔드 변경 시 토큰/자격증명 폐기 — 다른 백엔드의 토큰은 무의미.
-                        Task { await AuthSession.shared.reset() }
-                    }
-                    Text("REST 로 전환 시 다음 호출부터 /api/v1/** 사용. 재로그인 필요.")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                    .padding(14)
+                }
+                .onChange(of: selectedBackend) { _, new in
+                    AppConfig.backend = new
+                    Task { await AuthSession.shared.reset() }
                 }
 
                 #if DEBUG
-                Section("Debug — 401 자동 재로그인 검증") {
-                    Button("Simulate 401: token 손상 + fetch 시도") {
+                FormGroup(title: "DEBUG — 401 자동 재로그인 검증",
+                          subtitle: "Console 로그에서 'auto re-login' 출력 확인.") {
+                    FormRow(label: "Simulate 401: token 손상 + fetch 시도",
+                            link: true, isLast: true) {
                         Task {
-                            // 토큰을 손상시켜 다음 호출이 401 받도록 유도
                             await AuthSession.shared.setToken("invalid_test_token")
-                            // fetchMissionList 호출 → 401 → 자동 재로그인 → 재시도
                             _ = try? await AppConfig.dataSource.fetchMissionList(cursor: 0, lang: "ko")
                         }
                     }
-                    Text("Console 로그에서 'auto re-login' 출력 확인.")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
                 }
                 #endif
 
-                Section("Tutorial") {
-                    Button("How to Play") {
+                FormGroup(title: "GUIDE · 가이드") {
+                    FormRow(label: "Tutorial · 튜토리얼", link: true) {
                         showTutorial = true
+                    }
+                    FormRow(label: "Help · 아이템 도움말", link: true, isLast: true) {
+                        showHelp = true
                     }
                 }
 
-                Section("About") {
-                    LabeledContent("Version", value: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0")
-                    LabeledContent("Build", value: Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1")
+                FormGroup(title: "ABOUT") {
+                    FormRow(label: "Version", value: appVersion, muted: true)
+                    FormRow(label: "Build", value: appBuild, muted: true, isLast: true)
                 }
+
+                #if DEBUG
+                FormGroup(title: "REDESIGN — PHASE 1/2 PREVIEW") {
+                    FormRow(label: "Design System Catalog", link: true, isLast: true) {
+                        showDesignSystemPreview = true
+                    }
+                }
+                #endif
+
+                Spacer(minLength: 24)
             }
-            .navigationTitle("Settings")
-            .sheet(isPresented: $showTutorial) {
-                TutorialPagerView()
-            }
-            .sheet(isPresented: $showLogin) {
-                LoginView()
+            .padding(.horizontal, 16)
+            .padding(.bottom, 24)
+        }
+        .background(Color.duoSnow.ignoresSafeArea())
+        .sheet(isPresented: $showTutorial) {
+            TutorialView()
+        }
+        .sheet(isPresented: $showHelp) {
+            NavigationStack { HelpRoot() }
+        }
+        .sheet(isPresented: $showLogin) {
+            LoginView()
+        }
+        .alert("로그아웃 하시겠어요?", isPresented: $showLogoutConfirm) {
+            Button("취소", role: .cancel) {}
+            Button("로그아웃", role: .destructive) {
+                Task { await AuthSession.shared.reset() }
+                appState.userID = appState.guestUserID
             }
         }
-    }
-}
-
-private struct TutorialPagerView: View {
-    @Environment(\.dismiss) private var dismiss
-
-    // 레거시 Setting.m 의 nameArray 순서 유지: tutorial1 → tutorial0 → tutorial2
-    private var pages: [String] {
-        let lang = Locale.current.language.languageCode?.identifier ?? "en"
-        let suffix = lang == "ko" ? "" : "_en"
-        return [
-            "Tutorial/tutorial1\(suffix)",
-            "Tutorial/tutorial0\(suffix)",
-            "Tutorial/tutorial2\(suffix)"
-        ]
-    }
-
-    var body: some View {
-        NavigationStack {
-            TabView {
-                ForEach(pages, id: \.self) { name in
-                    Image(name)
-                        .resizable()
-                        .scaledToFit()
-                        .padding()
-                }
-            }
-            .tabViewStyle(.page)
-            .indexViewStyle(.page(backgroundDisplayMode: .always))
-            .navigationTitle("Tutorial")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Close") { dismiss() }
-                }
+        #if DEBUG
+        .sheet(isPresented: $showDesignSystemPreview) {
+            NavigationStack {
+                PSDesignSystemPreview()
+                    .navigationTitle("Design System")
+                    .navigationBarTitleDisplayMode(.inline)
             }
         }
+        #endif
     }
 }
 

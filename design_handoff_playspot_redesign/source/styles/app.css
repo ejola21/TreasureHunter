@@ -1,0 +1,441 @@
+/* PlaySpot — additional component styles on top of Duolingo tokens */
+
+* { box-sizing: border-box; }
+
+/* ────────────────────────────────────────────────────────────
+   THEME TOKENS — these are what the working color theme reads.
+   App.jsx overrides them on the root based on the Tweaks Accent.
+   ──────────────────────────────────────────────────────────── */
+:root {
+  --theme-primary:        #58CC02;
+  --theme-primary-deep:   #43A601;
+  --theme-primary-shadow: #5AA703;
+  --theme-primary-bg:     #D7FFB8;
+  --theme-primary-bg2:    #DFFF;
+  --theme-primary-text:   #375B0A;
+
+  --theme-fg:     #2D3339;
+  --theme-bg:     #F7F7F7;
+  --theme-card:   #FFFFFF;
+  --theme-border: #EBEBEB;
+  --theme-muted:  #AFAFAF;
+
+  /* Headline font (Jalnan default; user can swap to Nunito Black via tweaks) */
+  --theme-display-font: "Jalnan 2", "Nunito", "DIN Round", system-ui, sans-serif;
+}
+
+/* Dark theme — applied when [data-theme="dark"] is set on the wrapper */
+[data-theme="dark"] {
+  --theme-fg:     #F5F5F7;
+  --theme-bg:     #1C1C1E;
+  --theme-card:   #2C2C2E;
+  --theme-border: #3A3A3C;
+  --theme-muted:  #8E8E93;
+}
+
+body {
+  margin: 0;
+  background: #1f1a16;
+  font-family: var(--font-body);
+  color: var(--color-fg);
+  overflow: hidden;
+}
+
+/* iPhone screen content baseline */
+.ps-screen {
+  width: 100%;
+  height: 100%;
+  background: var(--theme-bg);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  font-family: var(--font-body);
+  color: var(--theme-fg);
+}
+
+.ps-screen.dark { background: #1d1612; color: #fff; }
+
+/* Mock status bar — small thin bar at top of fake iOS screens */
+.ps-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 22px 6px;
+  font-family: -apple-system, "SF Pro", system-ui;
+  font-weight: 600;
+  font-size: 14px;
+  color: #1c1c1c;
+  background: transparent;
+  position: relative;
+  z-index: 5;
+}
+.ps-status.on-dark { color: #fff; }
+.ps-status .ps-time { letter-spacing: -0.01em; }
+.ps-status .ps-icons { display: flex; gap: 4px; align-items: center; }
+
+/* Candy button — fully styled, sized for screens */
+.ps-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: var(--ls-cap);
+  text-transform: uppercase;
+  border-radius: var(--r-lg);
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform .08s, box-shadow .08s;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  padding: 0 18px;
+  height: 48px;
+  font-size: 14px;
+}
+.ps-btn:active { transform: translateY(4px); box-shadow: 0 0 0 0 transparent !important; }
+
+.ps-btn--primary { background: var(--theme-primary); color: #fff; box-shadow: 0 4px 0 0 var(--theme-primary-shadow); }
+.ps-btn--blue    { background: var(--duo-macaw);     color: #fff; box-shadow: var(--shadow-button-blue); }
+.ps-btn--red     { background: var(--duo-cardinal);  color: #fff; box-shadow: 0 4px 0 0 #d33; }
+.ps-btn--orange  { background: var(--duo-fox);       color: #fff; box-shadow: 0 4px 0 0 var(--duo-fox-deep); }
+.ps-btn--purple  { background: var(--duo-beetle);    color: #fff; box-shadow: 0 4px 0 0 var(--duo-beetle-deep); }
+.ps-btn--ghost   { background: #fff; color: var(--duo-wolf); border-color: var(--duo-swan-2); box-shadow: var(--shadow-card); }
+.ps-btn--ghost-dark { background: rgba(255,255,255,0.08); color: #fff; border-color: rgba(255,255,255,0.16); box-shadow: 0 2px 0 0 rgba(0,0,0,0.25); }
+
+.ps-btn--sm { height: 36px; font-size: 12px; padding: 0 14px; border-radius: 10px; }
+.ps-btn--xs { height: 28px; font-size: 11px; padding: 0 10px; border-radius: 8px; }
+.ps-btn--icon { width: 44px; padding: 0; }
+
+/* Card primitive */
+.ps-card {
+  background: #fff;
+  border: 2px solid var(--duo-swan-2);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+}
+
+/* Chunky pill chip */
+.ps-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: var(--r-pill);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Tabs */
+.ps-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 10px 14px 12px;
+  background: var(--theme-card);
+  border-bottom: 2px solid var(--duo-swan);
+}
+.ps-tab {
+  flex: 1;
+  height: 44px;
+  border-radius: 12px;
+  border: 2px solid var(--duo-swan-2);
+  background: #fff;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--duo-hare);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  text-align: center; line-height: 1.05;
+  padding: 0 4px;
+}
+.ps-tab.active {
+  color: var(--theme-primary-deep);
+  background: var(--theme-primary-bg);
+  border-color: var(--theme-primary);
+  box-shadow: 0 2px 0 0 var(--theme-primary);
+}
+
+/* Bottom nav (5 tabs) */
+.ps-nav {
+  display: flex; align-items: center;
+  background: var(--theme-card);
+  border-top: 2px solid var(--theme-border);
+  padding: 8px 6px 10px;
+  flex: none;
+}
+.ps-nav .ps-nav-item {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  border-radius: 10px;
+  padding: 6px 0 4px;
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--duo-hare);
+  border: 2px solid transparent;
+}
+.ps-nav .ps-nav-item.active {
+  background: var(--theme-primary-bg);
+  border-color: var(--theme-primary);
+  color: var(--theme-primary-deep);
+}
+  color: var(--duo-macaw-deep);
+}
+
+/* Speech bubble for tutorial */
+.ps-bubble {
+  position: relative;
+  background: #fff;
+  border: 2px solid var(--duo-swan-2);
+  border-radius: 16px;
+  padding: 12px 14px;
+  box-shadow: var(--shadow-card);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--duo-eel-2);
+  line-height: 1.35;
+}
+.ps-bubble::after {
+  content: "";
+  position: absolute;
+  width: 14px; height: 14px;
+  background: #fff;
+  border-right: 2px solid var(--duo-swan-2);
+  border-bottom: 2px solid var(--duo-swan-2);
+}
+.ps-bubble.dn::after { left: 32px; bottom: -8px; transform: rotate(45deg); }
+.ps-bubble.up::after { left: 32px; top: -8px; transform: rotate(225deg); }
+.ps-bubble.right::after { right: -8px; top: 50%; transform: translateY(-50%) rotate(-45deg); }
+
+/* Marquee/chunky display headings */
+.ps-display {
+  font-family: var(--font-display);
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  color: var(--duo-eel-2);
+}
+
+/* Timer "flip-card" digit */
+.ps-digit {
+  width: 26px; height: 36px;
+  background: #fff;
+  border: 1.5px solid #d8d8d8;
+  border-radius: 6px;
+  box-shadow: none;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 22px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--duo-eel-2);
+  line-height: 1;
+}
+.ps-digit.dark {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.22);
+  box-shadow: none;
+  color: #fff;
+}
+
+/* Map background (procedural, no real map) */
+.ps-map {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(circle at 30% 40%, #cfe2c2 0%, #d4e6c6 25%, transparent 50%),
+    radial-gradient(circle at 70% 70%, #cfe2c2 0%, transparent 50%),
+    linear-gradient(180deg, #e4eed7 0%, #d8e6c6 100%);
+}
+.ps-map.dim::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.06);
+}
+
+/* Roads on map */
+.ps-road {
+  position: absolute;
+  background: #ffffff;
+  box-shadow: 0 0 0 1px #d9d3c4 inset;
+}
+
+/* Building blob on map */
+.ps-building {
+  position: absolute;
+  background: #f4ecdd;
+  border: 1px solid #ddd0b3;
+  border-radius: 4px;
+}
+
+/* AR camera background */
+.ps-ar-bg {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 30%, #6fa356 0%, #3a6629 35%, #1b3815 90%);
+}
+.ps-ar-bg.dark-room {
+  background:
+    radial-gradient(ellipse at 50% 50%, #4a2622 0%, #2a1310 50%, #160807 100%);
+}
+
+/* Confetti / star sprinkles */
+.ps-sparkle {
+  position: absolute;
+  width: 16px; height: 16px;
+  pointer-events: none;
+}
+
+/* Utility */
+.ps-row { display: flex; align-items: center; }
+.ps-col { display: flex; flex-direction: column; }
+.ps-grow { flex: 1; }
+.ps-mono { font-family: var(--font-mono); }
+.ps-cap { font-family: var(--font-display); font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* Bouncy press animation */
+@keyframes ps-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.ps-bob { animation: ps-bob 2.2s var(--ease-pop) infinite; }
+
+@keyframes ps-pulse-ring {
+  0% { transform: scale(0.6); opacity: 0.55; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+.ps-pulse-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 3px solid var(--duo-macaw);
+  animation: ps-pulse-ring 1.8s ease-out infinite;
+}
+
+@keyframes ps-spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+.ps-spin { animation: ps-spin 6s linear infinite; }
+
+/* AR floating item pin — toned-down energetic animation */
+.ps-ar-pin {
+  pointer-events: none;
+  width: 56px; height: 70px;
+}
+.ps-ar-pin-bob {
+  animation: ps-ar-float 2.2s cubic-bezier(.34,1.56,.64,1) infinite;
+  animation-duration: calc(2.2s / max(var(--ps-speed, 1), 0.01));
+  transform-origin: 50% 100%;
+}
+.ps-ar-pin-sway {
+  animation: ps-ar-sway 2.8s ease-in-out infinite;
+  animation-duration: calc(2.8s / max(var(--ps-speed, 1), 0.01));
+  transform-origin: 50% 100%;
+}
+.ps-ar-pin-pop {
+  animation: ps-ar-pop 2.2s ease-in-out infinite;
+  animation-duration: calc(2.2s / max(var(--ps-speed, 1), 0.01));
+  filter: drop-shadow(0 5px 4px rgba(0,0,0,0.3));
+}
+.ps-ar-pin-halo {
+  position: absolute;
+  left: 50%; top: 100%;
+  width: 90px; height: 22px;
+  margin-left: -45px;
+  margin-top: -11px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255,200,0,0.5) 0%, rgba(255,150,0,0.22) 45%, transparent 75%);
+  animation: ps-ar-halo 2.2s ease-in-out infinite;
+  animation-duration: calc(2.2s / max(var(--ps-speed, 1), 0.01));
+}
+.ps-ar-pin-ring {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 88px; height: 88px;
+  margin-left: -44px; margin-top: -44px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg,
+    rgba(255,200,0,0) 0deg,
+    rgba(255,200,0,0.35) 80deg,
+    rgba(255,160,0,0.55) 140deg,
+    rgba(255,200,0,0.35) 200deg,
+    rgba(255,200,0,0) 260deg
+  );
+  -webkit-mask: radial-gradient(circle, transparent 34px, #000 36px, #000 42px, transparent 44px);
+          mask: radial-gradient(circle, transparent 34px, #000 36px, #000 42px, transparent 44px);
+  animation: ps-ar-spin 3.6s linear infinite;
+  animation-duration: calc(3.6s / max(var(--ps-speed, 1), 0.01));
+}
+.ps-ar-pin-pulse {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 56px; height: 56px;
+  margin-left: -28px; margin-top: -28px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,200,0,0.85);
+  box-shadow: 0 0 8px rgba(255,200,0,0.45);
+  animation: ps-ar-pulse 2.4s ease-out infinite;
+  animation-duration: calc(2.4s / max(var(--ps-speed, 1), 0.01));
+  opacity: 0;
+}
+.ps-ar-pin-spark {
+  position: absolute;
+  width: 3px; height: 3px;
+  border-radius: 50%;
+  background: #FFC800;
+  box-shadow: 0 0 5px currentColor;
+  animation: ps-ar-spark 2.2s ease-out infinite;
+  animation-duration: calc(2.2s / max(var(--ps-speed, 1), 0.01));
+  opacity: 0;
+}
+@keyframes ps-ar-float {
+  0%, 100% { transform: translateY(0)     scale(1); }
+  50%      { transform: translateY(-12px) scale(1.04); }
+}
+@keyframes ps-ar-sway {
+  0%, 100% { transform: rotate(-5deg); }
+  50%      { transform: rotate(5deg); }
+}
+@keyframes ps-ar-pop {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.08); }
+}
+@keyframes ps-ar-halo {
+  0%, 100% { transform: scale(0.85); opacity: 0.45; }
+  50%      { transform: scale(1.1);  opacity: 0.75; }
+}
+@keyframes ps-ar-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes ps-ar-pulse {
+  0%   { transform: scale(0.7); opacity: 0.7; }
+  100% { transform: scale(2.0); opacity: 0; }
+}
+@keyframes ps-ar-spark {
+  0%   { transform: translate(0, 0)      scale(0)   rotate(0deg);   opacity: 0; }
+  20%  { transform: translate(1px, -8px) scale(1)   rotate(60deg);  opacity: 0.9; }
+  100% { transform: translate(3px, -34px) scale(0.3) rotate(240deg); opacity: 0; }
+}
+
+/* Mascot off (via Tweaks) — hides all FoxMascot SVGs */
+
+/* Mascot off (via Tweaks) — hides all FoxMascot SVGs */
+
+/* Mascot off (via Tweaks) — hides all FoxMascot SVGs */
+
+/* Mascot off (via Tweaks) — hides all FoxMascot SVGs */
+[data-mascot="off"] svg[viewBox="0 0 100 100"] { display: none; }
+
+/* Animation speed multiplier (--ps-speed: 0..2 from Tweaks) */
+.ps-bob { animation-duration: calc(2.2s / max(var(--ps-speed, 1), 0.01)) !important; }
+.ps-spin { animation-duration: calc(6s / max(var(--ps-speed, 1), 0.01)) !important; }
+.ps-pulse-ring { animation-duration: calc(1.8s / max(var(--ps-speed, 1), 0.01)) !important; }
+
+/* Make canvas scrollbars subtle */
+.ps-canvas-bg { position: fixed; inset: 0; background: #1f1a16; z-index: -1; }

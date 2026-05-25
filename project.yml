@@ -44,6 +44,8 @@ targets:
         buildPhase: resources
       - path: PlaySpot/Resources/Localizable.xcstrings
         buildPhase: resources
+      - path: PlaySpot/Resources/Fonts/Jalnan2.ttf
+        buildPhase: resources
     dependencies:
       - package: GRDB
     settings:

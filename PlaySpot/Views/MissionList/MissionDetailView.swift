@@ -1,8 +1,9 @@
 // Views/MissionList/MissionDetailView.swift
+// Phase 4 — Candy 디자인. 영웅 카드 + InfoRow + 핀 프리뷰 + PLAY CandyButton + Mode Sheet 오버레이.
+// 데이터 fetch / replies 로직 보존.
 import SwiftUI
 
 /// fullScreenCover(item:) 에 전달되는 플레이 설정.
-/// isVirtual 을 item 안에 함께 포장해 playVirtual/@State 타이밍 레이스를 원천 제거.
 private struct PlayConfig: Identifiable {
     let mission: Mission
     let isVirtual: Bool
@@ -11,17 +12,15 @@ private struct PlayConfig: Identifiable {
 
 struct MissionDetailView: View {
     let mission: Mission
-    /// 댓글(리뷰) 섹션 표시 여부. 빌더의 "테스트" 진입 시에는 false (댓글 없이 동일 화면).
     var showReplies: Bool = true
     @State private var replies: [MissionReply] = []
-    @State private var liveMission: Mission?      // 플레이 종료 후 평균 별점 갱신용 (nil = 초기 mission 사용).
+    @State private var liveMission: Mission?
     @State private var playConfig: PlayConfig?
+    @State private var showModeSheet = false
     private let dataSource: MissionDataSource = AppConfig.dataSource
 
-    /// 현재 화면이 표시할 미션 — 플레이 후 새로 fetch 한 값이 있으면 그것을, 없으면 초기값.
     private var displayMission: Mission { liveMission ?? mission }
 
-    /// 댓글 일시 표시용 포맷터 (예: "5/23 13:45").
     static let dateFmt: DateFormatter = {
         let f = DateFormatter()
         f.locale = Locale.current
@@ -29,103 +28,47 @@ struct MissionDetailView: View {
         return f
     }()
 
+    static let writeFmt: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = "yyyy/MM/dd"
+        return f
+    }()
+
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                // 배지 이미지 — Mission.badgeImageName 으로 URL 구성.
-                AsyncImage(url: displayMission.badgeImageURL) { image in
-                    image.resizable().scaledToFit()
-                } placeholder: {
-                    Rectangle().fill(Color.gray.opacity(0.2))
+            VStack(alignment: .leading, spacing: 20) {
+                heroCard
+                infoRowsCard
+                if !displayMission.items.isEmpty {
+                    itemsPreviewCard
                 }
-                .frame(height: 200)
-                .frame(maxWidth: .infinity)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-
-                // 미션 정보
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(displayMission.title).font(.title2.bold())
-                    Text(mission.place).foregroundColor(.secondary)
-                    Text(displayMission.description).font(.body)
-
-                    HStack {
-                        StarRatingView(rating: displayMission.recommendAvg)
-                        Text("(\(displayMission.recommendCnt))")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-
-                    // 랭킹 정보
-                    if !mission.shortUser1.isEmpty {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Rankings").font(.headline)
-                            rankRow(rank: 1, user: mission.shortUser1, record: mission.shortRecord1)
-                            rankRow(rank: 2, user: mission.shortUser2, record: mission.shortRecord2)
-                            rankRow(rank: 3, user: mission.shortUser3, record: mission.shortRecord3)
-                        }
-                    }
-                }
-                .padding(.horizontal)
-
-                // 플레이 버튼 — 댓글 섹션 위에 배치 (사용자 요청).
-                VStack(spacing: 12) {
-                    Button {
-                        playConfig = PlayConfig(mission: mission, isVirtual: false)
-                    } label: {
-                        Label("Real Play", systemImage: "location.fill")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.borderedProminent)
-
-                    if mission.isVirtual == .virtual {
-                        Button {
-                            playConfig = PlayConfig(mission: mission, isVirtual: true)
-                        } label: {
-                            Label("Virtual Play", systemImage: "globe")
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(.bordered)
-                    }
-                }
-                .padding(.horizontal)
-
-                // 댓글 — 각 행에 작성자 별점 표시.
+                rankingsCard
                 if showReplies && !replies.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Reviews").font(.headline)
-                        ForEach(replies) { reply in
-                            VStack(alignment: .leading, spacing: 6) {
-                                HStack(spacing: 8) {
-                                    StarRatingView(rating: reply.score ?? 0, starSize: 14)
-                                    if let nick = reply.nickname, !nick.isEmpty {
-                                        Text(nick)
-                                            .font(.caption.bold())
-                                            .foregroundColor(.primary)
-                                    }
-                                    Spacer()
-                                    if let d = reply.writeDate {
-                                        Text(Self.dateFmt.string(from: d))
-                                            .font(.caption2)
-                                            .foregroundColor(.secondary)
-                                    }
-                                }
-                                Text(reply.text).font(.body)
-                            }
-                            .padding(10)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Color.gray.opacity(0.1))
-                            .cornerRadius(8)
-                        }
-                    }
-                    .padding(.horizontal)
+                    reviewsCard
                 }
+                Spacer(minLength: 24)
             }
-            .padding(.vertical)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 16)
+        }
+        .background(Color.duoSnow.ignoresSafeArea())
+        .safeAreaInset(edge: .bottom) {
+            playButton
+                .padding(.horizontal, 16)
+                .padding(.bottom, 12)
+                .background(Color.duoSnow.opacity(0.95))
         }
         .navigationTitle(displayMission.title)
         .navigationBarTitleDisplayMode(.inline)
+        .overlay {
+            if showModeSheet {
+                modeSheet
+                    .transition(.opacity)
+                    .zIndex(10)
+            }
+        }
         .fullScreenCover(item: $playConfig, onDismiss: {
-            // 플레이 종료(또는 후기 제출) 후 — 댓글 / 평균 별점 새로 fetch.
             Task { await refreshAfterPlay() }
         }) { config in
             MissionPlayView(
@@ -144,7 +87,278 @@ struct MissionDetailView: View {
         }
     }
 
-    /// 플레이 종료 후 호출 — 후기 목록 + 평균 별점/리뷰 카운트가 반영된 미션 상세를 다시 받는다.
+    // MARK: - 영웅 카드
+
+    private var heroCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 12) {
+                AsyncImage(url: displayMission.badgeImageURL) { image in
+                    image.resizable().scaledToFill()
+                } placeholder: {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 12).fill(Color.duoMacawBg)
+                        Image(systemName: "rosette")
+                            .font(.system(size: 28, weight: .bold))
+                            .foregroundColor(.duoMacawDeep)
+                    }
+                }
+                .frame(width: 64, height: 64)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.duoMacawBorder, lineWidth: 2))
+
+                VStack(alignment: .leading, spacing: 4) {
+                    DuoKicker(text: "By \(displayMission.designer.uppercased())", color: .duoMacawDeep)
+                    Text(displayMission.title)
+                        .font(.duoDisplay(size: 18))
+                        .foregroundColor(.duoEel2)
+                        .lineLimit(2)
+                    HStack(spacing: 6) {
+                        StarRatingView(rating: displayMission.recommendAvg, starSize: 12)
+                        Text("(\(displayMission.recommendCnt))")
+                            .font(.duoBody(size: 11))
+                            .foregroundColor(.duoHare)
+                    }
+                }
+                Spacer()
+            }
+
+            if !displayMission.description.isEmpty {
+                Text(displayMission.description)
+                    .font(.duoBody(size: 13))
+                    .foregroundColor(.duoWolf2)
+            }
+
+            HStack(spacing: 6) {
+                DuoChip.green("\(displayMission.playCnt) PLAYS")
+                if displayMission.failCnt > 0 {
+                    DuoChip.red("\(displayMission.failCnt) FAILS")
+                }
+            }
+        }
+        .padding(14)
+        .background(RoundedRectangle(cornerRadius: 14).fill(Color.duoMacawBg))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.duoMacawBorder, lineWidth: 2))
+    }
+
+    // MARK: - InfoRow Card
+
+    private var infoRowsCard: some View {
+        VStack(spacing: 0) {
+            infoRow(icon: "mappin.and.ellipse", tint: .duoMacaw, label: "Place", value: displayMission.place)
+            divider
+            infoRow(icon: "list.bullet.rectangle", tint: .duoGreen500,
+                    label: "Items", value: "\(displayMission.items.count) items")
+            divider
+            infoRow(icon: "clock.fill", tint: .duoFox,
+                    label: "Time Limit",
+                    value: displayMission.limitTime > 0
+                        ? formatTime(displayMission.limitTime)
+                        : "무제한")
+            divider
+            infoRow(icon: "calendar", tint: .duoBeetle,
+                    label: "Created", value: Self.writeFmt.string(from: displayMission.writeDate))
+        }
+        .background(RoundedRectangle(cornerRadius: 14).fill(Color.white))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.duoSwan2, lineWidth: 2))
+    }
+
+    private func infoRow(icon: String, tint: Color, label: String, value: String) -> some View {
+        HStack(spacing: 12) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 8).fill(tint.opacity(0.18))
+                    .frame(width: 32, height: 32)
+                Image(systemName: icon)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(tint)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(label)
+                    .font(.duoDisplay(size: 10))
+                    .kerning(0.6)
+                    .foregroundColor(.duoHare)
+                Text(value)
+                    .font(.duoBody(size: 14, weight: .semibold))
+                    .foregroundColor(.duoEel2)
+                    .lineLimit(2)
+            }
+            Spacer()
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+    }
+
+    private var divider: some View {
+        Rectangle().fill(Color.duoSwan).frame(height: 1).padding(.leading, 58)
+    }
+
+    // MARK: - 핀 프리뷰
+
+    private var itemsPreviewCard: some View {
+        let preview = Array(displayMission.items.prefix(6))
+        return VStack(alignment: .leading, spacing: 10) {
+            DuoKicker(text: "Items in Mission")
+            HStack(spacing: 12) {
+                ForEach(preview, id: \.itemID) { item in
+                    ItemPin(item.itemType, size: 36, active: item.isMandatory)
+                }
+                if displayMission.items.count > 6 {
+                    Text("+\(displayMission.items.count - 6)")
+                        .font(.duoDisplay(size: 14))
+                        .foregroundColor(.duoHare)
+                }
+                Spacer()
+            }
+        }
+        .padding(14)
+        .background(RoundedRectangle(cornerRadius: 14).fill(Color.white))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.duoSwan2, lineWidth: 2))
+    }
+
+    // MARK: - 랭킹
+
+    private var rankingsCard: some View {
+        Group {
+            if !mission.shortUser1.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    DuoKicker(text: "Rankings")
+                    rankRow(rank: 1, user: mission.shortUser1, record: mission.shortRecord1)
+                    if !mission.shortUser2.isEmpty {
+                        rankRow(rank: 2, user: mission.shortUser2, record: mission.shortRecord2)
+                    }
+                    if !mission.shortUser3.isEmpty {
+                        rankRow(rank: 3, user: mission.shortUser3, record: mission.shortRecord3)
+                    }
+                }
+                .padding(14)
+                .background(RoundedRectangle(cornerRadius: 14).fill(Color.white))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.duoSwan2, lineWidth: 2))
+            } else {
+                EmptyView()
+            }
+        }
+    }
+
+    private func rankRow(rank: Int, user: String, record: String) -> some View {
+        HStack(spacing: 10) {
+            Text("#\(rank)")
+                .font(.duoDisplay(size: 14))
+                .foregroundColor(rank == 1 ? .duoBee : .duoHare)
+                .frame(width: 28, alignment: .leading)
+            Text(user)
+                .font(.duoBody(size: 13, weight: .semibold))
+                .foregroundColor(.duoEel)
+            Spacer()
+            Text(record)
+                .font(.duoDisplay(size: 12))
+                .foregroundColor(.duoWolf2)
+        }
+    }
+
+    // MARK: - 리뷰
+
+    private var reviewsCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            DuoKicker(text: "Reviews")
+            ForEach(replies) { reply in
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 8) {
+                        StarRatingView(rating: reply.score ?? 0, starSize: 12)
+                        if let nick = reply.nickname, !nick.isEmpty {
+                            Text(nick)
+                                .font(.duoDisplay(size: 11))
+                                .foregroundColor(.duoEel2)
+                        }
+                        Spacer()
+                        if let d = reply.writeDate {
+                            Text(Self.dateFmt.string(from: d))
+                                .font(.duoBody(size: 10))
+                                .foregroundColor(.duoHare)
+                        }
+                    }
+                    Text(reply.text)
+                        .font(.duoBody(size: 13))
+                        .foregroundColor(.duoWolf2)
+                }
+                .padding(10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(RoundedRectangle(cornerRadius: 10).fill(Color.duoSnow))
+            }
+        }
+        .padding(14)
+        .background(RoundedRectangle(cornerRadius: 14).fill(Color.white))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.duoSwan2, lineWidth: 2))
+    }
+
+    // MARK: - PLAY 버튼 + Mode Sheet
+
+    private var playButton: some View {
+        Button("Play · 미션 시작") {
+            // 가상 모드를 지원하지 않으면 바로 Real 시작.
+            if mission.isVirtual == .virtual {
+                withAnimation(.easeOut(duration: 0.15)) { showModeSheet = true }
+            } else {
+                playConfig = PlayConfig(mission: mission, isVirtual: false)
+            }
+        }
+        .buttonStyle(.primary)
+    }
+
+    private var modeSheet: some View {
+        ZStack {
+            Color.black.opacity(0.55).ignoresSafeArea()
+                .onTapGesture { withAnimation { showModeSheet = false } }
+
+            VStack(spacing: 14) {
+                DuoKicker(text: "Choose Mode · 모드 선택")
+                Text("어떻게 플레이할까요?")
+                    .font(.duoDisplay(size: 20))
+                    .foregroundColor(.duoEel2)
+
+                HStack(spacing: 10) {
+                    modeButton(title: "Real", subtitle: "실제 GPS", tint: .duoGreen500, deep: .duoGreen800) {
+                        playConfig = PlayConfig(mission: mission, isVirtual: false)
+                        withAnimation { showModeSheet = false }
+                    }
+                    modeButton(title: "Virtual", subtitle: "가상 위치", tint: .duoBeetle, deep: .duoBeetleDeep) {
+                        playConfig = PlayConfig(mission: mission, isVirtual: true)
+                        withAnimation { showModeSheet = false }
+                    }
+                }
+
+                Button("취소", role: .cancel) {
+                    withAnimation { showModeSheet = false }
+                }
+                .font(.duoBody(size: 14, weight: .semibold))
+                .foregroundColor(.duoHare)
+                .padding(.top, 4)
+            }
+            .padding(20)
+            .frame(maxWidth: 320)
+            .background(RoundedRectangle(cornerRadius: 18).fill(Color.white))
+            .overlay(RoundedRectangle(cornerRadius: 18).stroke(Color.duoSwan2, lineWidth: 2))
+            .shadow(color: Color.black.opacity(0.3), radius: 18, x: 0, y: 8)
+        }
+    }
+
+    private func modeButton(title: String, subtitle: String, tint: Color, deep: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title.uppercased())
+                    .font(.duoDisplay(size: 14))
+                    .foregroundColor(.white)
+                Text(subtitle)
+                    .font(.duoBody(size: 11))
+                    .foregroundColor(.white.opacity(0.85))
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 14)
+            .background(RoundedRectangle(cornerRadius: 12).fill(tint))
+            .background(RoundedRectangle(cornerRadius: 12).fill(deep).offset(y: 4))
+        }
+        .buttonStyle(.plain)
+    }
+
     @MainActor
     private func refreshAfterPlay() async {
         if showReplies {
@@ -152,19 +366,16 @@ struct MissionDetailView: View {
                 replies = ReplyOptimisticCache.shared.merged(missionID: mission.id, with: fresh)
             }
         }
-        // 평균 별점/카운트는 fetchMissionDetail 응답의 Mission 으로 갱신.
         if let detail = try? await dataSource.fetchMissionDetail(missionID: mission.id) {
             liveMission = detail.0
         }
     }
 
-    private func rankRow(rank: Int, user: String, record: String) -> some View {
-        HStack {
-            Text("#\(rank)").font(.caption.bold()).frame(width: 24)
-            Text(user).font(.caption)
-            Spacer()
-            Text(record).font(.caption.monospaced())
-        }
+    private func formatTime(_ seconds: Int) -> String {
+        let h = seconds / 3600
+        let m = (seconds % 3600) / 60
+        let s = seconds % 60
+        return String(format: "%02d:%02d:%02d", h, m, s)
     }
 }
 

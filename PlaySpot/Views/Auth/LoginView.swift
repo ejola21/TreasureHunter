@@ -1,4 +1,5 @@
 // Views/Auth/LoginView.swift
+// Phase 7 — Candy 보정. 로직 (login/continueAsGuest) 은 보존.
 import SwiftUI
 
 struct LoginView: View {
@@ -11,48 +12,75 @@ struct LoginView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 20) {
-                Image("Auth/loginbg_icon")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: 280, maxHeight: 100)
-                    .padding(.top, 20)
+            ScrollView {
+                VStack(alignment: .center, spacing: 18) {
+                    Image("Auth/loginbg_icon")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxWidth: 240, maxHeight: 90)
+                        .padding(.top, 20)
 
-                VStack(spacing: 12) {
-                    TextField("Email", text: $email)
-                        .textFieldStyle(.roundedBorder)
-                        .keyboardType(.emailAddress)
-                        .textInputAutocapitalization(.never)
+                    DuoKicker(text: "Sign In · 로그인")
+                    Text("환영합니다!")
+                        .font(.duoDisplay(size: 24))
+                        .foregroundColor(.duoEel2)
 
-                    SecureField("Password", text: $password)
-                        .textFieldStyle(.roundedBorder)
+                    VStack(spacing: 0) {
+                        candyField(label: "Email", text: $email, isSecure: false,
+                                   keyboard: .emailAddress, autocap: .never, isLast: false)
+                        Rectangle().fill(Color.duoSwan).frame(height: 1).padding(.leading, 14)
+                        candyField(label: "Password", text: $password, isSecure: true,
+                                   keyboard: .default, autocap: .never, isLast: true)
+                    }
+                    .background(RoundedRectangle(cornerRadius: 14).fill(Color.white))
+                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.duoSwan2, lineWidth: 2))
+                    .padding(.horizontal, 16)
+
+                    if let error = errorMessage {
+                        HStack(spacing: 6) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                            Text(error)
+                        }
+                        .font(.duoBody(size: 12, weight: .semibold))
+                        .foregroundColor(.duoCardinalDeep)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Capsule().fill(Color.duoCardinalBg))
+                    }
+
+                    Button("Login") { Task { await login() } }
+                        .buttonStyle(.primary)
+                        .disabled(email.isEmpty || password.isEmpty || isLoading)
+                        .opacity((email.isEmpty || password.isEmpty || isLoading) ? 0.5 : 1.0)
+                        .padding(.horizontal, 16)
+
+                    HStack(spacing: 6) {
+                        Rectangle().fill(Color.duoSwan).frame(height: 1)
+                        Text("OR")
+                            .font(.duoDisplay(size: 10))
+                            .kerning(0.66)
+                            .foregroundColor(.duoHare)
+                        Rectangle().fill(Color.duoSwan).frame(height: 1)
+                    }
+                    .padding(.horizontal, 16)
+
+                    Button("Create Account · 회원가입") { showRegister = true }
+                        .buttonStyle(.blue)
+                        .padding(.horizontal, 16)
+
+                    Button("Continue as Guest · 게스트로 시작") {
+                        Task { await continueAsGuest() }
+                    }
+                    .font(.duoBody(size: 14, weight: .semibold))
+                    .foregroundColor(.duoHare)
+                    .disabled(isLoading)
+
+                    Spacer(minLength: 24)
                 }
-                .padding(.horizontal)
-
-                if let error = errorMessage {
-                    Text(error)
-                        .foregroundColor(.red)
-                        .font(.caption)
-                }
-
-                Button("Login") {
-                    Task { await login() }
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(email.isEmpty || password.isEmpty || isLoading)
-
-                Button("Create Account") {
-                    showRegister = true
-                }
-                .foregroundColor(.blue)
-
-                Button("Continue as Guest") {
-                    Task { await continueAsGuest() }
-                }
-                .foregroundColor(.secondary)
-                .disabled(isLoading)
+                .padding(.vertical, 16)
+                .frame(maxWidth: .infinity)
             }
-            .padding()
+            .background(Color.duoSnow.ignoresSafeArea())
             .sheet(isPresented: $showRegister) {
                 RegisterView()
             }
@@ -60,12 +88,32 @@ struct LoginView: View {
         }
     }
 
+    @ViewBuilder
+    private func candyField(label: String, text: Binding<String>,
+                            isSecure: Bool, keyboard: UIKeyboardType,
+                            autocap: TextInputAutocapitalization, isLast: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            DuoKicker(text: label)
+            Group {
+                if isSecure {
+                    SecureField(label, text: text)
+                } else {
+                    TextField(label, text: text)
+                        .keyboardType(keyboard)
+                        .textInputAutocapitalization(autocap)
+                }
+            }
+            .font(.duoBody(size: 15, weight: .semibold))
+            .foregroundColor(.duoEel2)
+        }
+        .padding(14)
+    }
+
     private func login() async {
         isLoading = true
         defer { isLoading = false }
 
-        // password 는 평문 전송 — 서버가 해싱 책임. HTTPS 가 전송 보호.
-        let dataSource = AppConfig.dataSource  // 토글 반영 위해 task 시점에 조회
+        let dataSource = AppConfig.dataSource
         do {
             let success = try await dataSource.login(email: email, password: password)
             if success {
@@ -79,9 +127,6 @@ struct LoginView: View {
         }
     }
 
-    /// Guest 자동 가입+로그인.
-    /// REST 백엔드: register → login 사이클로 JWT 발급. 자격증명은 AuthSession 에 영속.
-    /// Legacy 백엔드: 단순 게스트 ID 만 발급하고 dismiss.
     private func continueAsGuest() async {
         isLoading = true
         defer { isLoading = false }
@@ -90,7 +135,6 @@ struct LoginView: View {
         AppState.shared.userID = guestID
 
         if AppConfig.backend == .rest {
-            // 임의 평문 비밀번호 생성 → register → login. (서버 32자 제한 → dash 제거)
             let guestPW = UUID().uuidString.replacingOccurrences(of: "-", with: "")
             let ds = AppConfig.dataSource
             _ = try? await ds.register(email: guestID, password: guestPW)

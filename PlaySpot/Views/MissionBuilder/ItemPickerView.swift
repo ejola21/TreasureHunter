@@ -35,53 +35,77 @@ struct ItemPickerView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
+                toolbarHeader
                 header
-                Divider()
                 wheelRow
                 Spacer(minLength: 0)
             }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .principal) {
-                    Text("Item · Display · Visible Range")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
-                        onConfirm()
-                        dismiss()
-                    }
-                    .disabled(selectedType == nil)
-                }
-            }
+            .background(Color.duoSnow.ignoresSafeArea())
+            .navigationBarHidden(true)
             .onAppear {
                 if selectedType == nil { selectedType = .start }
             }
         }
     }
 
-    // MARK: - 헤더 — 선택 미리보기
+    // MARK: - 다크 toolbar (CANCEL / 라벨 / DONE)
+
+    private var toolbarHeader: some View {
+        HStack(spacing: 8) {
+            Button("CANCEL") { dismiss() }
+                .font(.duoDisplay(size: 11))
+                .kerning(0.66)
+                .foregroundColor(.white.opacity(0.85))
+
+            Spacer()
+
+            VStack(spacing: 0) {
+                Text("ITEM · DISPLAY · VISIBLE RANGE")
+                    .font(.duoDisplay(size: 9))
+                    .kerning(0.5)
+                    .foregroundColor(.white.opacity(0.75))
+            }
+
+            Spacer()
+
+            Button("DONE") {
+                onConfirm()
+                dismiss()
+            }
+            .font(.duoDisplay(size: 11))
+            .kerning(0.66)
+            .foregroundColor(selectedType == nil ? .white.opacity(0.4) : .duoBee)
+            .disabled(selectedType == nil)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(Color(hex: 0x3D3D3D))
+    }
+
+    // MARK: - 선택 미리보기 (candy 카드)
 
     private var header: some View {
         HStack(spacing: 12) {
             if let type = selectedType {
-                Image(type.mapIcon(mandatory: false))
-                    .resizable().frame(width: 48, height: 48)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(type.displayLabel).font(.headline)
-                    Text("#\(type.rawValue)  ·  \(Self.label(for: showType))  ·  \(rangeAR) m")
-                        .font(.caption).foregroundColor(.secondary)
+                ItemPin(type, size: 48)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(type.displayLabel)
+                        .font(.duoDisplay(size: 16))
+                        .foregroundColor(.duoEel2)
+                    HStack(spacing: 6) {
+                        DuoChip.blue(Self.label(for: showType))
+                        DuoChip.green("\(rangeAR) m")
+                    }
                 }
             } else {
-                Text("아이템을 선택하세요").foregroundColor(.secondary)
+                Text("아이템을 선택하세요")
+                    .font(.duoBody(size: 14, weight: .semibold))
+                    .foregroundColor(.duoHare)
             }
             Spacer()
         }
-        .padding(.horizontal).padding(.vertical, 8)
+        .padding(14)
+        .background(Color.white)
     }
 
     // MARK: - 3-컬럼 휠

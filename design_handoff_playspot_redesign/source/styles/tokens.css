@@ -1,0 +1,200 @@
+/* ─────────────────────────────────────────────────────────────
+   Duolingo Design Tokens
+   Colors, type, spacing, radius, shadows.
+   Source: "Duolingo - Unofficial Design Language (Community).fig"
+   Brand fonts (Feather Bold) substituted with Nunito Black —
+   Feather is proprietary. See README for substitution notes.
+   ───────────────────────────────────────────────────────────── */
+
+/* Fonts ----------------------------------------------------- */
+@font-face {
+  font-family: "Jalnan 2";
+  src: url("fonts/Jalnan2.ttf") format("truetype");
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap");
+
+:root {
+  /* ── Brand greens (eel / feather) ──
+     Values verified against the Figma JSX (rgb→hex):
+       primary fill  rgb(88,204,2)   = #58CC02
+       pill fill     rgb(90,205,5)   = #5ACD05
+       button shadow rgb(90,167,3)   = #5AA703
+       pill shadow   rgb(72,165,2)   = #48A502
+       pill border   rgb(67,166,1)   = #43A601
+       deepest text  rgb(55,91,10)   = #375B0A   */
+  --duo-green-100: #d7ffb8;       /* lightest tint */
+  --duo-green-200: #b7ff80;
+  --duo-green-300: #93e85c;
+  --duo-green-400: #8ee000;        /* highlight tone */
+  --duo-green-500: #58cc02;        /* PRIMARY — the iconic owl green */
+  --duo-green-550: #5acd05;        /* section pill fill / "secondary" button text */
+  --duo-green-700: #5aa703;        /* primary button bottom-shadow */
+  --duo-green-750: #48a502;        /* section pill bottom-shadow */
+  --duo-green-800: #43a601;        /* section pill border */
+  --duo-green-900: #375b0a;        /* deepest */
+
+  /* ── Neutrals (eel scale) ── */
+  --duo-white:       #ffffff;
+  --duo-snow:        #f7f7f7;        /* page bg tint */
+  --duo-polar:       #f0f0f0;        /* card hover bg */
+  --duo-swan:        #e5e5e5;        /* default card border / divider */
+  --duo-swan-2:      #ebebeb;        /* card border (button container) */
+  --duo-hare:        #afafaf;        /* placeholder / hint copy */
+  --duo-wolf:        #777777;
+  --duo-wolf-2:      #4b4b4b;        /* body copy */
+  --duo-eel:         #3c3c3c;        /* primary heading */
+  --duo-eel-2:       #2d3339;        /* heaviest text */
+
+  /* ── Accent colors (named per Duolingo internal palette) ──
+     Verified RGB values from the Figma JSX:
+       macaw         rgb(28,176,246)   = #1CB0F6
+       macaw-bg      rgb(210,239,253)  = #D2EFFD  (selected language tile bg)
+       macaw-border  rgb(119,208,250)  = #77D0FA  (selected tile border + shadow)
+       macaw-nav-bg  rgb(225,244,255)  = #E1F4FF  (bottom nav active tile bg)
+       macaw-nav-bd  rgb(145,215,246)  = #91D7F6  (bottom nav active tile border)   */
+  --duo-macaw:       #1cb0f6;        /* blue — selected / links / streak XP */
+  --duo-macaw-bg:    #d2effd;        /* selected list-item / chip light bg */
+  --duo-macaw-border:#77d0fa;        /* selected border + bottom shadow */
+  --duo-macaw-nav-bg:    #e1f4ff;    /* nav-tile selected bg (lighter variant) */
+  --duo-macaw-nav-border:#91d7f6;    /* nav-tile selected border */
+  --duo-macaw-deep:  #0084c2;        /* macaw active text */
+
+  --duo-cardinal:    #ff4b4b;        /* red — hearts / error */
+  --duo-cardinal-deep:#ea2b2b;
+
+  --duo-bee:         #ffc800;        /* yellow — streak flame inner / bee */
+  --duo-bee-deep:    #e6a900;
+
+  --duo-fox:         #ff9600;        /* orange — XP shield, streak outer */
+  --duo-fox-deep:    #e08600;
+
+  --duo-beetle:      #ce82ff;        /* purple — quests / new */
+  --duo-beetle-deep: #8c39c8;
+
+  --duo-humpback:    #2b70c9;        /* deep blue — leaderboard */
+
+  --duo-cardinal-bg: #ffdfe0;
+  --duo-fox-bg:      #ffe7ce;
+  --duo-bee-bg:      #fff4cb;
+
+  /* ── Semantic ── */
+  --color-fg:        var(--duo-eel);
+  --color-fg-muted:  var(--duo-wolf-2);
+  --color-fg-hint:   var(--duo-hare);
+  --color-bg:        var(--duo-white);
+  --color-bg-page:   var(--duo-snow);
+  --color-border:    var(--duo-swan);
+  --color-border-2:  var(--duo-swan-2);
+  --color-link:      var(--duo-macaw);
+  --color-success:   var(--duo-green-500);
+  --color-warning:   var(--duo-bee);
+  --color-danger:    var(--duo-cardinal);
+
+  /* ── Typography ── */
+  /* User-uploaded brand font: "Jalnan 2 TTF" (잘난체 2) — chunky display face
+     used in place of Feather Bold (Duolingo's proprietary). Good match for
+     Feather's heavy rounded character with full Hangul + Latin coverage.
+     Nunito remains the UI/body font. */
+  --font-display:    "Jalnan 2", "Nunito", "DIN Round", system-ui, sans-serif;
+  --font-body:       "Nunito", "Jalnan 2", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono:       ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Type scale (mobile-first; Duolingo is mobile-native) */
+  --fs-xs:    11px;     /* tiny labels */
+  --fs-sm:    13px;     /* section pill kicker, captions */
+  --fs-base:  14px;     /* secondary UI text */
+  --fs-md:    15px;     /* button label (uppercase) */
+  --fs-lg:    16px;     /* body */
+  --fs-xl:    18px;     /* large body / list item */
+  --fs-2xl:   19px;     /* section header */
+  --fs-3xl:   22px;     /* screen header */
+  --fs-4xl:   28px;     /* hero number / display */
+  --fs-5xl:   36px;     /* splash title */
+
+  --lh-tight: 1.1;
+  --lh-snug:  1.25;
+  --lh-base:  1.5;
+
+  /* Letter spacing — buttons get a tiny tracking bump */
+  --ls-cap:    0.06em;   /* uppercase button text */
+  --ls-loose:  0.01em;
+
+  /* ── Radius ── */
+  --r-xs:   6px;
+  --r-sm:   8px;
+  --r-md:   10px;
+  --r-lg:   12px;     /* buttons, cards */
+  --r-xl:   14px;     /* large cards (section pill) */
+  --r-2xl:  16px;     /* stat cards */
+  --r-pill: 9999px;   /* progress bars, chips */
+
+  /* ── Spacing ── */
+  --s-1:  4px;
+  --s-2:  8px;
+  --s-3:  12px;
+  --s-4:  16px;
+  --s-5:  20px;
+  --s-6:  24px;
+  --s-8:  32px;
+  --s-10: 40px;
+  --s-12: 48px;
+
+  /* ── Iconic candy-button shadow (no blur, pure offset) ── */
+  --shadow-button:       0 4px 0 0 var(--duo-green-700);
+  --shadow-button-sec:   0 2px 0 0 var(--duo-swan-2);
+  --shadow-button-blue:  0 4px 0 0 #1899d6;
+  --shadow-section:      0 4px 0 0 var(--duo-green-750);
+  --shadow-card:         0 2px 0 0 var(--duo-swan-2);
+  --shadow-card-active:  0 2px 0 0 var(--duo-macaw-border);
+  --shadow-elev:         0 4px 8px rgba(0,0,0,0.06);
+  --shadow-elev-lg:      0 8px 24px rgba(0,0,0,0.10);
+
+  /* Animations */
+  --ease-pop:    cubic-bezier(.34,1.56,.64,1);
+  --ease-snap:   cubic-bezier(.2,0,0,1);
+  --t-fast:      120ms;
+  --t-base:      220ms;
+}
+
+/* ── Element defaults ── */
+html, body {
+  font-family: var(--font-body);
+  font-size: var(--fs-lg);
+  color: var(--color-fg);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Headings — extra-bold, slightly tight */
+h1, .h1 { font-family: var(--font-display); font-weight: 900; font-size: var(--fs-5xl); line-height: var(--lh-tight); color: var(--duo-eel-2); letter-spacing: -0.01em; }
+h2, .h2 { font-family: var(--font-display); font-weight: 900; font-size: var(--fs-4xl); line-height: var(--lh-tight); color: var(--duo-eel-2); }
+h3, .h3 { font-family: var(--font-display); font-weight: 800; font-size: var(--fs-3xl); line-height: var(--lh-snug); color: var(--duo-eel); }
+h4, .h4 { font-family: var(--font-display); font-weight: 800; font-size: var(--fs-2xl); line-height: var(--lh-snug); color: var(--duo-eel); }
+h5, .h5 { font-family: var(--font-body); font-weight: 700; font-size: var(--fs-xl); color: var(--duo-wolf-2); }
+
+p   { font-size: var(--fs-lg); line-height: var(--lh-base); color: var(--duo-wolf-2); }
+small { font-size: var(--fs-sm); color: var(--duo-hare); }
+a   { color: var(--duo-macaw); text-decoration: none; font-weight: 700; }
+a:hover { color: var(--duo-macaw-deep); }
+
+/* All-caps button label (Feather/Nunito 800, +tracking) */
+.btn-label {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--fs-md);
+  letter-spacing: var(--ls-cap);
+  text-transform: uppercase;
+}
+
+/* Kicker labels (e.g. "SECTION 1, UNIT 1", "NEW WORD") */
+.kicker {
+  font-family: var(--font-body);
+  font-weight: 800;
+  font-size: var(--fs-sm);
+  letter-spacing: var(--ls-cap);
+  text-transform: uppercase;
+  color: var(--duo-hare);
+}

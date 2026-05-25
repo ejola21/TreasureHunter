@@ -1,90 +1,94 @@
 // Views/MyInfo/BadgeListView.swift
-// 레거시 Badge List 화면 재현: "Mission Badge" / "Play Badge" 두 섹션,
-// 청록색 헤더 + 3열 그리드. 미획득 슬롯은 empty02("?") 플레이스홀더.
+// Phase 3 — 티얼 헤더 + 3-col 그리드 (60×60 원형 뱃지).
+// Mission Badge: 실제 플레이한 미션의 뱃지. Play Badge: 플레이 카운트 마일스톤.
+// 디자인: README §11 Badge List v2
 import SwiftUI
 
 struct BadgeListView: View {
     @State private var playedMissions: [Mission] = []
     private let dataSource: MissionDataSource = AppConfig.dataSource
 
-    /// 레거시 res/img/play{N}.png 가 존재하는 마일스톤 목록 (= Badges/play{N}.imageset)
     private let playMilestones: [Int] = [1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 90, 100]
-    /// Mission Badge 섹션 최소 셀 수 (없으면 placeholder만 채워서 그리드 모양 유지)
     private let missionBadgeMinSlots: Int = 6
 
     private var totalPlayCount: Int { playedMissions.count }
 
     private let columns: [GridItem] = Array(repeating: GridItem(.flexible(), spacing: 12), count: 3)
 
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 16) {
-                    sectionCard(title: "Mission Badge") {
-                        LazyVGrid(columns: columns, spacing: 16) {
-                            ForEach(playedMissions) { mission in
-                                MissionBadgeCell(mission: mission)
-                            }
-                            // 미획득 자리 채우기
-                            ForEach(0..<placeholderMissionCount, id: \.self) { _ in
-                                PlaceholderBadgeCell()
-                            }
-                        }
-                        .padding(12)
-                    }
-
-                    sectionCard(title: "Play Badge") {
-                        LazyVGrid(columns: columns, spacing: 16) {
-                            ForEach(playMilestones, id: \.self) { milestone in
-                                PlayBadgeCell(milestone: milestone, earned: totalPlayCount >= milestone)
-                            }
-                        }
-                        .padding(12)
-                    }
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 16)
-            }
-            .background(Color(white: 0.95))
-            .navigationTitle("Badge List")
-            .navigationBarTitleDisplayMode(.inline)
-            .task {
-                do {
-                    playedMissions = try await dataSource.fetchMyPlayed(userID: AppState.shared.userID)
-                } catch {}
-            }
-        }
-    }
-
     private var placeholderMissionCount: Int {
         max(0, missionBadgeMinSlots - playedMissions.count)
     }
 
-    // MARK: - 섹션 카드 (흰 배경 + 청록 헤더)
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 16) {
+                Text("Badge List")
+                    .font(.duoDisplay(size: 22))
+                    .foregroundColor(.duoEel2)
+                    .padding(.top, 8)
 
-    private func sectionCard<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
+                badgeSection(title: "Mission Badge") {
+                    LazyVGrid(columns: columns, spacing: 16) {
+                        ForEach(playedMissions) { m in
+                            MissionBadgeCell(mission: m)
+                        }
+                        ForEach(0..<placeholderMissionCount, id: \.self) { _ in
+                            LockedBadgeCell()
+                        }
+                    }
+                    .padding(12)
+                }
+
+                badgeSection(title: "Play Badge") {
+                    LazyVGrid(columns: columns, spacing: 16) {
+                        ForEach(playMilestones, id: \.self) { ms in
+                            PlayBadgeCell(milestone: ms, earned: totalPlayCount >= ms)
+                        }
+                    }
+                    .padding(12)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 24)
+        }
+        .background(Color.duoSnow.ignoresSafeArea())
+        .task {
+            do {
+                playedMissions = try await dataSource.fetchMyPlayed(userID: AppState.shared.userID)
+            } catch {}
+        }
+    }
+
+    // MARK: - 섹션 (티얼 헤더 + 카드 내용)
+
+    private func badgeSection<C: View>(title: String, @ViewBuilder content: () -> C) -> some View {
         VStack(spacing: 0) {
             HStack {
                 Text(title)
-                    .font(.headline)
+                    .font(.duoDisplay(size: 16))
                     .foregroundColor(.white)
                 Spacer()
             }
             .padding(.horizontal, 14)
-            .padding(.vertical, 10)
-            .background(Color(red: 0.12, green: 0.62, blue: 0.65))
+            .padding(.vertical, 12)
+            .background(
+                Color(hex: 0x1C8A9F)
+                    .overlay(alignment: .bottom) {
+                        Rectangle().fill(Color.black.opacity(0.18)).frame(height: 3)
+                    }
+            )
 
             content()
         }
         .background(Color.white)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
-            RoundedRectangle(cornerRadius: 10).stroke(Color.black.opacity(0.06), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 12).stroke(Color.duoSwan2, lineWidth: 2)
         )
     }
 }
 
-// MARK: - 셀들
+// MARK: - 셀
 
 private struct MissionBadgeCell: View {
     let mission: Mission
@@ -101,14 +105,16 @@ private struct MissionBadgeCell: View {
                     Image("Badges/empty02").resizable().scaledToFit()
                 }
             }
-            .frame(width: 80, height: 80)
-            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .frame(width: 60, height: 60)
+            .clipShape(Circle())
+            .overlay(Circle().stroke(Color.duoEel.opacity(0.5), lineWidth: 2.5))
+            .shadow(color: Color.black.opacity(0.18), radius: 0, x: 0, y: 3)
 
             Text(mission.title)
-                .font(.caption)
+                .font(.duoBody(size: 11, weight: .semibold))
+                .foregroundColor(.duoEel2)
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
-                .foregroundColor(.black)
                 .frame(maxWidth: .infinity)
         }
     }
@@ -120,28 +126,47 @@ private struct PlayBadgeCell: View {
 
     var body: some View {
         VStack(spacing: 6) {
-            Image(earned ? "Badges/play\(milestone)" : "Badges/empty02")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 80, height: 80)
+            ZStack {
+                Circle()
+                    .fill(earned ? Color.duoGreen400 : Color.duoSwan)
+                    .overlay(Circle().stroke(earned ? Color.duoGreen800 : Color.duoHare, lineWidth: 2.5))
+                    .shadow(color: Color.black.opacity(earned ? 0.18 : 0), radius: 0, x: 0, y: earned ? 3 : 0)
+
+                if earned {
+                    VStack(spacing: 0) {
+                        Text("play").font(.duoDisplay(size: 8)).foregroundColor(.white)
+                        Text("\(milestone)").font(.duoDisplay(size: 14)).foregroundColor(.white)
+                    }
+                    .shadow(color: Color.duoGreen900.opacity(0.8), radius: 0, x: 0, y: 1)
+                } else {
+                    Text("?")
+                        .font(.duoDisplay(size: 18))
+                        .foregroundColor(.duoHare)
+                }
+            }
+            .frame(width: 60, height: 60)
 
             Text("\(milestone)")
-                .font(.caption)
-                .foregroundColor(earned ? .black : .gray)
+                .font(.duoBody(size: 11, weight: .semibold))
+                .foregroundColor(earned ? .duoEel2 : .duoHare)
         }
     }
 }
 
-private struct PlaceholderBadgeCell: View {
+private struct LockedBadgeCell: View {
     var body: some View {
         VStack(spacing: 6) {
-            Image("Badges/empty02")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 80, height: 80)
+            ZStack {
+                Circle()
+                    .fill(Color.duoSwan)
+                    .overlay(Circle().stroke(Color.duoHare, lineWidth: 2.5))
+                Text("?")
+                    .font(.duoDisplay(size: 22))
+                    .foregroundColor(.duoHare)
+            }
+            .frame(width: 60, height: 60)
 
-            Text(" ")
-                .font(.caption)
+            Text(" ").font(.duoBody(size: 11))
         }
     }
 }

@@ -1,10 +1,12 @@
 // Views/MissionList/MissionRowView.swift
+// Phase 3 — Candy 카드 스타일.
+// 좌측 64×64 뱃지 (AsyncImage + level badge), 우측 PLAYS/FAILS chip.
+// 디자인: README §1 Mission List
 import SwiftUI
 
 struct MissionRowView: View {
     let mission: Mission
 
-    /// 생성일자 표시용 — "2026/05/23" 형식.
     static let dateFmt: DateFormatter = {
         let f = DateFormatter()
         f.locale = Locale(identifier: "en_US_POSIX")
@@ -12,58 +14,90 @@ struct MissionRowView: View {
         return f
     }()
 
+    /// 미션 디자이너 ID 마지막 글자 기반으로 4가지 액센트 색상 분배 — 데코레이션용.
+    private var tint: (bg: Color, border: Color, deep: Color) {
+        let palette: [(Color, Color, Color)] = [
+            (.duoGreen100, .duoGreen500, .duoGreen800),
+            (.duoMacawBg,  .duoMacaw,    .duoMacawDeep),
+            (.duoFoxBg,    .duoFox,      .duoFoxDeep),
+            (Color(hex: 0xF1DCFF), .duoBeetle, .duoBeetleDeep)
+        ]
+        let hash = abs(mission.id.hashValue) % palette.count
+        return palette[hash]
+    }
+
     var body: some View {
         HStack(spacing: 12) {
-            // 배지 이미지 — Mission.badgeImageName 으로 정확한 URL 구성.
-            // 서버 응답에 fileName 이 없거나 미설정이면 placeholder.
-            // (다운로드 전략 확정 전까지 S3 직접 노출 보류 — badgeBaseURL 은 레거시 정적 경로.)
-            AsyncImage(url: mission.badgeImageURL) { image in
-                image.resizable().scaledToFill()
-            } placeholder: {
-                Image(systemName: "photo")
-                    .foregroundColor(.gray)
-            }
-            .frame(width: 60, height: 60)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+            // 뱃지 (64×64 카드 + 레벨 원)
+            badgeTile
+                .frame(width: 64, height: 64)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(mission.title)
-                    .font(.headline)
+                    .font(.duoDisplay(size: 15))
+                    .foregroundColor(.duoEel2)
                     .lineLimit(1)
 
                 Text(mission.place)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .font(.duoBody(size: 11))
+                    .foregroundColor(.duoWolf2)
+                    .lineLimit(1)
 
-                HStack(spacing: 8) {
-                    StarRatingView(rating: mission.recommendAvg, starSize: 12)
-
-                    Text("Play: \(mission.playCnt)")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-
-                    Text(Self.dateFmt.string(from: mission.writeDate))
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
+                HStack(spacing: 6) {
+                    StarRatingView(rating: mission.recommendAvg, starSize: 11)
+                    Text("Play: \(mission.playCnt)  ·  \(Self.dateFmt.string(from: mission.writeDate))")
+                        .font(.duoBody(size: 9, weight: .semibold))
+                        .foregroundColor(.duoMacaw)
+                        .lineLimit(1)
                 }
             }
 
             Spacer()
 
-            if mission.isVirtual == .virtual {
-                Image(systemName: "v.circle.fill")
-                    .foregroundColor(.blue)
-                    .font(.title3)
+            VStack(alignment: .trailing, spacing: 4) {
+                DuoChip.green("\(mission.playCnt) PLAYS")
+                if mission.failCnt > 0 {
+                    DuoChip.red("\(mission.failCnt) FAILS")
+                }
+                if mission.isVirtual == .virtual {
+                    DuoChip.blue("V")
+                }
             }
         }
-        .padding(.vertical, 4)
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: DuoRadius.xl).fill(Color.white)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: DuoRadius.xl).stroke(Color.duoSwan2, lineWidth: 2)
+        )
+    }
+
+    private var badgeTile: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: DuoRadius.lg).fill(tint.bg)
+                .overlay(
+                    RoundedRectangle(cornerRadius: DuoRadius.lg)
+                        .stroke(tint.border, lineWidth: 2)
+                )
+
+            AsyncImage(url: mission.badgeImageURL) { image in
+                image.resizable().scaledToFit().padding(6)
+            } placeholder: {
+                Image(systemName: "rosette")
+                    .font(.system(size: 28, weight: .bold))
+                    .foregroundColor(tint.deep)
+            }
+        }
     }
 }
 
 #if DEBUG
 #Preview("MissionRow") {
-    List {
+    VStack(spacing: 12) {
         MissionRowView(mission: .preview)
     }
+    .padding()
+    .background(Color.duoSnow)
 }
 #endif

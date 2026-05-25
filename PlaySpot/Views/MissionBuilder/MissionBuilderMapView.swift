@@ -57,11 +57,21 @@ struct MissionBuilderMapView: View {
                 bottomToolbar
             }
         }
-        .navigationTitle("아이템 배치")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .principal) {
+                VStack(spacing: 0) {
+                    Text("EDITING").font(.duoDisplay(size: 9))
+                        .kerning(0.6)
+                        .foregroundColor(.duoHare)
+                    Text("아이템 배치").font(.duoDisplay(size: 14))
+                        .foregroundColor(.duoEel2)
+                }
+            }
             ToolbarItem(placement: .confirmationAction) {
                 Button("완료") { dismiss() }
+                    .foregroundColor(.duoMacaw)
+                    .fontWeight(.heavy)
             }
         }
         // ── 아이템 배치 picker (3-컬럼 휠) — sheet medium detent 로 지도 절반이 보이게.
@@ -114,47 +124,53 @@ struct MissionBuilderMapView: View {
         return MKCoordinateRegion(center: center, span: span)
     }
 
-    // MARK: - 검증 배너
+    // MARK: - 검증 배너 (Candy)
 
     private var validationBanner: some View {
         VStack(alignment: .leading, spacing: 4) {
             ForEach(viewModel.validationErrors.prefix(3)) { err in
                 HStack(spacing: 6) {
                     Image(systemName: err.isBlocking ? "exclamationmark.triangle.fill" : "info.circle.fill")
-                        .foregroundColor(err.isBlocking ? .red : .orange)
+                        .foregroundColor(err.isBlocking ? .duoCardinalDeep : .duoFoxDeep)
                     Text(err.fallbackMessage)
-                        .font(.caption)
-                        .foregroundColor(err.isBlocking ? .red : .orange)
+                        .font(.duoBody(size: 12, weight: .semibold))
+                        .foregroundColor(err.isBlocking ? .duoCardinalDeep : .duoFoxDeep)
                 }
             }
             if viewModel.validationErrors.count > 3 {
                 Text("외 \(viewModel.validationErrors.count - 3)건")
-                    .font(.caption2).foregroundColor(.secondary)
+                    .font(.duoBody(size: 11))
+                    .foregroundColor(.duoHare)
             }
         }
-        .padding(8)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
-        .padding(.horizontal)
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 12).fill(Color.duoCardinalBg.opacity(0.95)))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.duoCardinal, lineWidth: 1.5))
+        .padding(.horizontal, 12)
     }
 
-    // MARK: - 하단 툴바
+    // MARK: - 하단 헬퍼 토스트 (Fox + 안내)
 
     private var bottomToolbar: some View {
-        HStack {
+        HStack(spacing: 10) {
+            FoxMascot(pose: .think, size: 36)
             VStack(alignment: .leading, spacing: 2) {
-                Text("아이템: \(viewModel.items.count)").font(.caption)
-                Text("필수: \(viewModel.items.filter { $0.isMandatory }.count)")
-                    .font(.caption2).foregroundColor(.secondary)
+                Text("꾹 눌러서 아이템 배치 · 탭으로 설정")
+                    .font(.duoDisplay(size: 12))
+                    .foregroundColor(.white)
+                Text("아이템 \(viewModel.items.count) · 필수 \(viewModel.items.filter { $0.isMandatory }.count)")
+                    .font(.duoBody(size: 10, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.7))
             }
             Spacer()
-            Text("지도 길게 눌러 배치 · 핀 드래그로 이동")
-                .font(.caption2).foregroundColor(.secondary)
         }
-        .padding(.horizontal)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(Color.duoEel2)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .padding(.horizontal, 12)
         .padding(.bottom, 12)
-        .padding(.top, 8)
-        .frame(maxWidth: .infinity)
-        .background(.ultraThinMaterial)
     }
 
     // MARK: - Sheet item binding (editingItemID)

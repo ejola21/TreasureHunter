@@ -1,52 +1,56 @@
 // Views/MissionPlay/MissionTimeoutPopup.swift
+// Phase 4 — Candy 모달. 빨간 타이머 아이콘 + 안내 + 확인 CandyButton.
 import SwiftUI
 
-/// 미션 제한 시간 초과 알림. 레거시 finishTimeAlert 대응.
-/// MissionCompletePopup 과 동일 카드 스타일 — 시간 초과로 미션이 종료됐음을 알린다.
 struct MissionTimeoutPopup: View {
     let elapsedText: String
     let onConfirm: () -> Void
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.45)
-                .ignoresSafeArea()
+            Color.black.opacity(0.55).ignoresSafeArea()
 
             VStack(spacing: 16) {
-                Image(systemName: "timer")
-                    .font(.system(size: 48))
-                    .foregroundColor(.red)
+                ZStack {
+                    Circle().fill(Color.duoCardinalBg)
+                        .frame(width: 80, height: 80)
+                    Image(systemName: "timer")
+                        .font(.system(size: 40, weight: .bold))
+                        .foregroundColor(.duoCardinal)
+                }
 
                 Text("시간 초과")
-                    .font(.title2.bold())
+                    .font(.duoDisplay(size: 24))
+                    .foregroundColor(.duoEel2)
 
                 Text("제한 시간이 지나 미션이 종료되었습니다.")
-                    .font(.body)
+                    .font(.duoBody(size: 14))
+                    .foregroundColor(.duoWolf2)
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal)
 
-                Text("플레이 시간 \(elapsedText)")
-                    .font(.callout.monospaced())
-                    .foregroundColor(.secondary)
-
-                Button(action: onConfirm) {
-                    Text("확인")
-                        .font(.title3.bold())
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(Color.orange)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                HStack(spacing: 6) {
+                    Image(systemName: "stopwatch.fill")
+                        .foregroundColor(.duoFox)
+                    Text("플레이 시간 \(elapsedText)")
+                        .font(.duoBody(size: 13, weight: .semibold))
+                        .foregroundColor(.duoWolf2)
                 }
-                .padding(.horizontal, 40)
-                .padding(.top, 8)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(Capsule().fill(Color.duoSnow))
+
+                Button("확인 · OK", action: onConfirm)
+                    .buttonStyle(.red)
+                    .padding(.top, 4)
             }
             .padding(24)
             .background(
-                Image("UI/popup1")
-                    .resizable(capInsets: EdgeInsets(top: 30, leading: 30, bottom: 30, trailing: 30),
-                              resizingMode: .stretch)
+                RoundedRectangle(cornerRadius: 18).fill(Color.white)
             )
+            .overlay(
+                RoundedRectangle(cornerRadius: 18).stroke(Color.duoSwan2, lineWidth: 2)
+            )
+            .shadow(color: Color.black.opacity(0.25), radius: 18, x: 0, y: 8)
             .frame(maxWidth: 320)
             .padding(.horizontal, 24)
         }
