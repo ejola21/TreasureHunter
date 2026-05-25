@@ -12,6 +12,7 @@ struct SettingsView: View {
     @State private var showLogoutConfirm = false
     #if DEBUG
     @State private var showDesignSystemPreview = false
+    @State private var showARSearchDemo = false
     #endif
 
     private let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
@@ -83,8 +84,11 @@ struct SettingsView: View {
 
                 #if DEBUG
                 FormGroup(title: "REDESIGN — PHASE 1/2 PREVIEW") {
-                    FormRow(label: "Design System Catalog", link: true, isLast: true) {
+                    FormRow(label: "Design System Catalog", link: true) {
                         showDesignSystemPreview = true
+                    }
+                    FormRow(label: "AR Search Demo", link: true, isLast: true) {
+                        showARSearchDemo = true
                     }
                 }
                 #endif
@@ -118,6 +122,9 @@ struct SettingsView: View {
                     .navigationTitle("Design System")
                     .navigationBarTitleDisplayMode(.inline)
             }
+        }
+        .fullScreenCover(isPresented: $showARSearchDemo) {
+            ARSearchView { showARSearchDemo = false }
         }
         #endif
     }
