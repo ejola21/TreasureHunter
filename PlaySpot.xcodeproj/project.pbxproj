@@ -73,6 +73,7 @@
 		6FE7EC81EB587ED92C5DA7B0 /* ItemTypeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41C2A888A33E0B50A8AA7651 /* ItemTypeTests.swift */; };
 		711A03CA1856B9B160D7DDC2 /* ItemQuiz.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9838A785372AA23E944F985 /* ItemQuiz.swift */; };
 		736A4A89CFA1C59DEAE75870 /* s_timer.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 8EB0BDA1C2469FE219DFD47B /* s_timer.mp3 */; };
+		73C478CC0E4CD567E6DE8E37 /* HUDComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBDC3C394E6C60C1BD70466D /* HUDComponents.swift */; };
 		74E8D045F84664DB9F88DC1E /* ReplyOptimisticCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = E141E3EC3D216DC9B232C456 /* ReplyOptimisticCache.swift */; };
 		7738844D8200CD39630ADBE1 /* MockData in Resources */ = {isa = PBXBuildFile; fileRef = 3D6A887A120E0F6357187D22 /* MockData */; };
 		77EF478655F4AE917401A778 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45E2BA76A217F9A96F53E51E /* MainTabView.swift */; };
@@ -281,6 +282,7 @@
 		C87D824F1D39228746E86F64 /* LoadingHUD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingHUD.swift; sourceTree = "<group>"; };
 		C8C958405D264ADEAC822520 /* MissionInfoSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissionInfoSheet.swift; sourceTree = "<group>"; };
 		CB1EFB762C3121B0DFFBB807 /* GameTimerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameTimerView.swift; sourceTree = "<group>"; };
+		CBDC3C394E6C60C1BD70466D /* HUDComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HUDComponents.swift; sourceTree = "<group>"; };
 		CC776C66B5E1E5E18A95BDF4 /* DatabaseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseManager.swift; sourceTree = "<group>"; };
 		CE3FAF00D6995D13A8193817 /* ItemDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemDetailView.swift; sourceTree = "<group>"; };
 		D113CE35000F363BFC349B86 /* ARRadar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARRadar.swift; sourceTree = "<group>"; };
@@ -578,6 +580,7 @@
 				0F58F3B432B32819455B1610 /* DuoTokens.swift */,
 				A2C8483E299C9E585EEBAE66 /* FormGroup.swift */,
 				183735FCEB63D6C0723B28A8 /* FoxMascot.swift */,
+				CBDC3C394E6C60C1BD70466D /* HUDComponents.swift */,
 				0DCBD86F7166104114C03198 /* ItemPin.swift */,
 				48CDD4E2E628FEBAB8B3B3E2 /* PSDesignSystemPreview.swift */,
 				D71001FB1FFDE98E66121E55 /* PSToggle.swift */,
@@ -856,6 +859,7 @@
 				9A4209EB30B5FDED7AD41B06 /* GameStatusBar.swift in Sources */,
 				A839AAD0BC882F519A0C1D24 /* GameTimerView.swift in Sources */,
 				55DAC18036A044129439A227 /* GameTooltipView.swift in Sources */,
+				73C478CC0E4CD567E6DE8E37 /* HUDComponents.swift in Sources */,
 				99C5CE3067E01B95800FE78E /* HapticService.swift in Sources */,
 				1DA8939683F686D8DF8AA246 /* HelpDesignView.swift in Sources */,
 				1988D833A044C616013275C8 /* HelpHowToView.swift in Sources */,

@@ -291,58 +291,33 @@ private struct LegacyTopChrome: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            // EXIT — 작은 빨강 CandyButton 스타일
-            Button(action: onExit) {
-                Text("EXIT")
-                    .font(.duoDisplay(size: 12))
-                    .kerning(0.72)
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 12)
-                    .frame(height: 36)
-                    .background(RoundedRectangle(cornerRadius: 10).fill(Color.duoCardinal))
-                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.white.opacity(0.2), lineWidth: 1.5))
-            }
+            CandyExitButton(action: onExit)
 
             Spacer(minLength: 4)
 
-            DigitClock(
-                seconds: seconds,
-                style: isRunActive ? .dark : .light,
-                digitFontSize: 16,
-                digitWidth: 16,
-                digitHeight: 26
-            )
-            .background(
-                isRunActive
-                    ? RoundedRectangle(cornerRadius: 6).fill(Color.duoCardinal).padding(-3)
-                    : nil
-            )
+            WhitePillTimer(seconds: seconds, isRunActive: isRunActive)
 
             Spacer(minLength: 4)
 
-            // Recenter (locate) — 36×36 흰 사각 + locate 아이콘
-            Button(action: onRecenter) {
-                Image(systemName: "location.fill")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.duoEel2)
-                    .frame(width: 36, height: 36)
-                    .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
-                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.white.opacity(0.4), lineWidth: 1.5))
-            }
+            CandyIconButton(
+                systemImage: "scope",
+                fg: .duoEel2,
+                shadowColor: .duoSwan2,
+                action: onRecenter
+            )
 
-            // Info — 36×36 macaw 사각 + i
-            Button(action: onInfo) {
-                Image(systemName: "info")
-                    .font(.system(size: 16, weight: .heavy))
-                    .foregroundColor(.white)
-                    .frame(width: 36, height: 36)
-                    .background(RoundedRectangle(cornerRadius: 10).fill(Color.duoMacaw))
-                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.white.opacity(0.25), lineWidth: 1.5))
-            }
+            CandyIconButton(
+                systemImage: "info",
+                tint: .duoMacaw,
+                fg: .white,
+                shadowColor: Color(hex: 0x1899D6),
+                action: onInfo
+            )
         }
         .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .background(LinearGradient.hudTeal.ignoresSafeArea(edges: .top))
+        .padding(.top, 8)
+        .padding(.bottom, 6)
+        // 투명 오버레이 — 지도가 끝까지 보이게 (background 없음)
     }
 }
 
@@ -357,59 +332,41 @@ private struct LegacyBottomBar: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            // 티얼 그라데이션 바 (5 column segments + 카메라 자리)
-            HStack(spacing: 0) {
-                counter(label: "지뢰", value: mineCount, valueColor: .duoCardinal)
-                counter(label: "남은필수", value: mandatoryRemaining, valueColor: .duoBee)
-                Spacer().frame(width: 72) // 카메라 버튼 자리
-                counter(label: "Hidden", value: hiddenCount, valueColor: .white)
-                counter(label: "Stealth", value: stealthCount, valueColor: .white)
+            // 흰 카드 — 5컬럼 chip 그리드 + 카메라 자리
+            HStack(spacing: 6) {
+                StatChip(label: "지형",     value: mineCount,          style: .blue)
+                StatChip(label: "필수",     value: mandatoryRemaining, style: .orange)
+                Spacer().frame(width: 70)  // 카메라 자리
+                StatChip(label: "HIDDEN",  value: hiddenCount,         style: .neutral)
+                StatChip(label: "STEALTH", value: stealthCount,        style: .purple)
             }
-            .padding(.horizontal, 4)
-            .frame(height: 66)
-            .background(LinearGradient.hudTeal.ignoresSafeArea(edges: .bottom))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity)
+            .background(
+                Color.white
+                    .overlay(
+                        Rectangle().fill(Color.duoSwan).frame(height: 1),
+                        alignment: .top
+                    )
+                    .ignoresSafeArea(edges: .bottom)
+            )
 
-            // 플로팅 카메라 버튼 — 62px 원형, radial 그라데이션, 1.5px 흰 보더 + 4px 아래 섀도.
+            // 카메라 버튼 — 64px 녹색 원, 3px 흰 보더, 그림자 없음 (mockup 디자인)
             Button(action: onCamera) {
                 ZStack {
                     Circle()
-                        .fill(
-                            RadialGradient(
-                                colors: [Color.radarGreenLight, Color.radarGreenDark],
-                                center: .center, startRadius: 4, endRadius: 32
-                            )
-                        )
-                        .frame(width: 62, height: 62)
-                        .overlay(Circle().stroke(Color.white, lineWidth: 1.5))
+                        .fill(Color.duoGreen500)
+                        .frame(width: 64, height: 64)
+                        .overlay(Circle().stroke(Color.white, lineWidth: 3))
                     Image(systemName: "camera.fill")
-                        .font(.system(size: 22, weight: .bold))
+                        .font(.system(size: 24, weight: .heavy))
                         .foregroundColor(.white)
-                    // 카메라 본체 옆 노란 점 (flash 표시)
-                    Circle().fill(Color.duoBee).frame(width: 7, height: 7)
-                        .offset(x: 16, y: -10)
                 }
-                .background(
-                    Circle()
-                        .fill(Color.hudDarkEnd)
-                        .frame(width: 62, height: 62)
-                        .offset(y: 4)
-                )
             }
-            .offset(y: -22)
+            .buttonStyle(.plain)
+            .offset(y: -20)
         }
-    }
-
-    private func counter(label: String, value: Int, valueColor: Color) -> some View {
-        VStack(spacing: 2) {
-            Text(label.uppercased())
-                .font(.duoDisplay(size: 10))
-                .kerning(0.5)
-                .foregroundColor(.white.opacity(0.85))
-            Text(String(format: "%03d", value))
-                .font(.duoDisplay(size: 18))
-                .foregroundColor(valueColor)
-        }
-        .frame(maxWidth: .infinity)
     }
 }
 

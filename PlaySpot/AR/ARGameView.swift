@@ -50,39 +50,29 @@ struct ARGameView: View {
                 }
             }
 
-            // Candy 크롬: 상단 hudTeal 그라데이션 (MAP + digit clock) / 하단 hudDark (라벨 + radar)
+            // 상단: 투명 오버레이 (status bar 아래 36px) — MAP 아이콘 candy + 흰 pill 타이머
+            // 하단: hudDark 라벨 + 부유 레이더 (기존 유지)
             VStack {
-                HStack(spacing: 8) {
-                    Button {
+                HStack(spacing: 12) {
+                    CandyIconButton(
+                        systemImage: "map.fill",
+                        size: 44,
+                        tint: .duoGreen500,
+                        fg: .white,
+                        shadowColor: .duoGreen700
+                    ) {
                         onMapTapped?()
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "map.fill")
-                                .font(.system(size: 14, weight: .bold))
-                            Text("MAP")
-                                .font(.duoDisplay(size: 12))
-                                .kerning(0.6)
-                        }
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 12)
-                        .frame(height: 36)
-                        .background(RoundedRectangle(cornerRadius: 10).fill(Color.hudDarkEnd))
-                        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.white.opacity(0.2), lineWidth: 1.5))
                     }
 
-                    Spacer(minLength: 4)
-
-                    DigitClock(
+                    WhitePillTimer(
                         seconds: arSeconds,
-                        style: .light,
-                        digitFontSize: 16,
-                        digitWidth: 16,
-                        digitHeight: 26
+                        isRunActive: engine.isTimeOutActive
                     )
+
+                    Spacer()
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 10)
-                .background(LinearGradient.hudTeal.ignoresSafeArea(edges: .top))
+                .padding(.horizontal, 14)
+                .padding(.top, 36)
 
                 Spacer()
 

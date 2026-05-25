@@ -31,85 +31,31 @@ struct ARSearchView: View {
                 bottomHUD
             }
         }
-        .statusBarHidden(true)
         .onAppear { startAnimations() }
     }
 
-    // MARK: - 상단 HUD (블루 그라데이션)
+    // MARK: - 상단 HUD (투명 오버레이 — status bar 아래 36px)
 
     private var topHUD: some View {
-        HStack(spacing: 10) {
-            // MAP 버튼 — dark teal/blue
-            Button {
+        HStack(spacing: 12) {
+            // MAP 버튼 — 아이콘만, 테마 색 candy (녹색)
+            CandyIconButton(
+                systemImage: "map.fill",
+                size: 44,
+                tint: .duoGreen500,
+                fg: .white,
+                shadowColor: .duoGreen700
+            ) {
                 (onClose ?? { dismiss() })()
-            } label: {
-                HStack(spacing: 5) {
-                    Image(systemName: "map.fill")
-                        .font(.system(size: 13, weight: .bold))
-                    Text("MAP")
-                        .font(.duoDisplay(size: 13))
-                        .kerning(0.6)
-                }
-                .foregroundColor(.white)
-                .frame(width: 70, height: 40)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(hex: 0x1F6A8A))
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.white.opacity(0.25), lineWidth: 1.5)
-                )
             }
-            .buttonStyle(.plain)
 
-            // 타이머 — 흰 카드 + 옅은 블루 보더 + 진한 블루 텍스트
-            timerCard(seconds: 9 * 60)
+            // 타이머 — Map Play 와 동일한 흰 pill
+            WhitePillTimer(seconds: 9 * 60)
 
             Spacer()
         }
         .padding(.horizontal, 14)
-        .padding(.top, 6)
-        .padding(.bottom, 14)
-        .background(
-            LinearGradient(
-                colors: [Color.duoMacaw, Color.duoMacawDeep],
-                startPoint: .top, endPoint: .bottom
-            )
-            .ignoresSafeArea(edges: .top)
-        )
-    }
-
-    private func timerCard(seconds: Int) -> some View {
-        let s = max(0, seconds)
-        let h = s / 3600
-        let m = (s % 3600) / 60
-        let sec = s % 60
-        let formatted = String(format: "%02d:%02d:%02d", h, m, sec)
-
-        return HStack(spacing: 3) {
-            ForEach(Array(formatted.enumerated()), id: \.offset) { _, ch in
-                if ch == ":" {
-                    Text(":")
-                        .font(.duoDisplay(size: 22))
-                        .foregroundColor(.white)
-                        .frame(width: 10)
-                } else {
-                    Text(String(ch))
-                        .font(.duoDisplay(size: 22))
-                        .foregroundColor(Color.duoMacawDeep)
-                        .frame(width: 22, height: 34)
-                        .background(
-                            RoundedRectangle(cornerRadius: 5)
-                                .fill(Color.white)
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 5)
-                                .stroke(Color(hex: 0xB7E1F5), lineWidth: 1.5)
-                        )
-                }
-            }
-        }
+        .padding(.top, 36)   // status bar 아래 여백 36px
     }
 
     // MARK: - 카메라 배경 — 3 레이어 일러스트

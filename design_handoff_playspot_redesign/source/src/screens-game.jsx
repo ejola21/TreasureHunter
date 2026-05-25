@@ -8,32 +8,72 @@ function ScreenMapPlay({ accent = 'green', onCamera, onExit }) {
   return (
     <div className="ps-screen">
       <PSStatusBar />
-      {/* Top game HUD */}
+      {/* Top game HUD — Duolingo candy floating overlay */}
       <div style={{
-        padding: '6px 12px 10px',
-        background: 'linear-gradient(180deg, var(--theme-primary) 0%, var(--theme-primary-shadow) 100%)',
-        display: 'flex', alignItems: 'center', gap: 8, borderBottom: "1.5px solid rgb(49, 121, 132)", borderTopColor: "rgb(49, 121, 132)", borderRightColor: "rgb(49, 121, 132)", borderLeftColor: "rgb(49, 121, 132)", opacity: "1"
-
+        position: 'absolute', left: 0, right: 0, top: 0, zIndex: 5,
+        padding: '12px 12px 14px',
+        display: 'flex', alignItems: 'center', gap: 8,
+        background: 'transparent',
       }}>
-        <button onClick={onExit} style={{ width: 64, height: 36, borderRadius: 10, background: '#FF4B4B', border: '1.5px solid #d33', color: '#fff', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 13, letterSpacing: '0.06em', cursor: 'pointer', padding: 0 }}>EXIT</button>
-        <div style={{ flex: 1, display: 'flex', justifyContent: 'center', gap: 2, alignItems: 'center' }}>
-          {'00:00:05'.split('').map((c, i) =>
-          c === ':' ?
-          <div key={i} style={{
-            fontFamily: 'var(--font-display)', fontWeight: 900,
-            fontSize: 20, color: '#fff', padding: '0 2px'
-          }}>:</div> :
+        {/* EXIT — red candy */}
+        <button onClick={onExit} style={{
+          height: 42, padding: '0 14px', borderRadius: 12,
+          background: 'var(--duo-cardinal)',
+          border: '2px solid var(--duo-cardinal-deep)',
+          color: '#fff',
+          fontFamily: 'var(--font-display)', fontWeight: 900,
+          fontSize: 13, letterSpacing: '0.08em',
+          cursor: 'pointer',
+          boxShadow: 'none',
+        }}>EXIT</button>
 
-          <div key={i} className="ps-digit dark" style={{ width: 20, height: 30, fontSize: 18 }}>{c}</div>
-
-          )}
+        {/* Timer pill — white with chunky border */}
+        <div style={{
+          flex: 1, display: 'flex', justifyContent: 'center',
+        }}>
+          <div style={{
+            background: '#fff',
+            border: '2px solid var(--duo-swan-2)',
+            borderRadius: 999,
+            boxShadow: 'none',
+            padding: '0 14px', height: 42,
+            display: 'flex', alignItems: 'center', gap: 6,
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="var(--duo-fox)" strokeWidth="2.6" strokeLinecap="round">
+              <circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/>
+            </svg>
+            <div style={{
+              fontFamily: 'var(--font-display)', fontWeight: 900,
+              fontSize: 17, color: 'var(--duo-eel-2)',
+              letterSpacing: '0.02em', fontVariantNumeric: 'tabular-nums',
+            }}>00:00:05</div>
+          </div>
         </div>
-        <FlatHudButton title="현재 위치로" variant="white">
-          <LocateIcon size={20} color="#1c8a9f" />
-        </FlatHudButton>
-        <FlatHudButton title="진행 사항" variant="blue">
-          <InfoIcon size={20} color="#fff" />
-        </FlatHudButton>
+
+        {/* Locate (white candy) */}
+        <button style={{
+          width: 42, height: 42, borderRadius: 12,
+          background: '#fff',
+          border: '2px solid var(--duo-swan-2)',
+          boxShadow: 'none',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer', padding: 0,
+        }}>
+          <LocateIcon size={20} color="var(--duo-macaw-deep)"/>
+        </button>
+
+        {/* Info (blue candy) */}
+        <button style={{
+          width: 42, height: 42, borderRadius: 12,
+          background: 'var(--duo-macaw)',
+          border: '2px solid var(--duo-macaw-deep)',
+          boxShadow: 'none',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer', padding: 0,
+        }}>
+          <InfoIcon size={20} color="#fff"/>
+        </button>
       </div>
 
       {/* Map area — fills remaining space, HUD overlays on top */}
@@ -80,49 +120,43 @@ function ScreenMapPlay({ accent = 'green', onCamera, onExit }) {
           <div style={{
             width: 24, height: 24, borderRadius: '50%',
             background: 'var(--duo-macaw)', border: '3px solid #fff',
-            boxShadow: '0 2px 0 0 rgba(0,0,0,0.2)'
+            boxShadow: 'none'
           }} />
         </div>
       </div>
 
-      {/* Bottom stat bar — absolute overlay on map, segmented colors */}
+      {/* Bottom HUD — Duolingo candy chips + bold camera button */}
       <div style={{
-        position: 'absolute', left: 0, right: 0, bottom: 0,
-        zIndex: 5
+        position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 5,
+        padding: '40px 8px 12px',
+        background: 'transparent',
       }}>
-        {/* Camera button — floats above */}
+        {/* Camera — primary green candy, prominent */}
         <button onClick={onCamera} style={{
           position: 'absolute',
-          left: '50%', top: -22,
+          left: '50%', bottom: 12,
           transform: 'translateX(-50%)',
-          width: 62, height: 62, borderRadius: '50%',
-          background: 'radial-gradient(circle at 35% 30%, #4dd0e4 0%, #1c8a9f 70%, #0e6675 100%)',
+          width: 64, height: 64, borderRadius: '50%',
+          background: 'var(--theme-primary)',
           color: '#fff',
-          border: '1.5px solid #fff',
-          boxShadow: '0 4px 0 0 #0e3a42, 0 6px 12px rgba(0,0,0,0.3)',
+          border: '3px solid #fff',
+          boxShadow: 'none',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer',
-          zIndex: 2,
-          padding: 0
+          cursor: 'pointer', zIndex: 2, padding: 0,
         }}>
-          <CameraIcon size={32} />
+          <CameraIcon size={32}/>
         </button>
 
         <div style={{
-          borderRadius: 0,
-          borderTop: '1.5px solid rgba(255,255,255,0.25)',
-          boxShadow: '0 -2px 8px rgba(0,0,0,0.25)',
-          padding: 0,
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr 70px 1fr 1fr',
-          alignItems: 'stretch',
-          overflow: 'hidden'
+          gridTemplateColumns: '1fr 1fr 76px 1fr 1fr',
+          gap: 4, alignItems: 'center',
         }}>
-          <StatSeg label="남은지형" value="001" tint="#fff" segBg="linear-gradient(180deg, rgba(42,135,148,0.92) 0%, rgba(26,94,105,0.92) 100%)" radius="left" />
-          <StatSeg label="남은필수" value="004" tint="#FFC800" segBg="linear-gradient(180deg, rgba(26,94,105,0.95) 0%, rgba(14,58,66,0.95) 100%)" />
-          <div style={{ background: 'rgba(14,58,66,0.85)' }} />
-          <StatSeg label="Hidden" value="001" tint="#fff" segBg="linear-gradient(180deg, rgba(26,94,105,0.95) 0%, rgba(14,58,66,0.95) 100%)" />
-          <StatSeg label="Stealth" value="000" tint="#fff" segBg="linear-gradient(180deg, rgba(42,135,148,0.92) 0%, rgba(26,94,105,0.92) 100%)" radius="right" />
+          <StatChip label="지형"   value="001" tint="blue"/>
+          <StatChip label="필수"   value="004" tint="orange"/>
+          <div/>
+          <StatChip label="HIDDEN"  value="001" tint="neutral"/>
+          <StatChip label="STEALTH" value="000" tint="purple"/>
         </div>
       </div>
     </div>);
@@ -216,6 +250,63 @@ function Stat({ label, value, tint = '#fff', big = false }) {
       }}>{value}</div>
     </div>);
 
+}
+
+// Candy chip used in Map Play bottom HUD — colored pill with label + value
+function StatChip({ label, value, tint = 'blue' }) {
+  const tints = {
+    blue:    { bg: 'var(--duo-macaw-bg)',   border: 'var(--duo-macaw-border)', fg: 'var(--duo-macaw-deep)' },
+    orange:  { bg: 'var(--duo-fox-bg)',     border: 'var(--duo-fox-deep)',     fg: 'var(--duo-fox-deep)' },
+    neutral: { bg: '#fff',                  border: 'var(--duo-swan-2)',       fg: 'var(--duo-eel-2)' },
+    purple:  { bg: '#eed4ff',               border: 'var(--duo-beetle-deep)',  fg: 'var(--duo-beetle-deep)' },
+  };
+  const t = tints[tint] || tints.blue;
+  return (
+    <div style={{
+      background: t.bg,
+      border: `1.5px solid ${t.border}`,
+      borderRadius: 10,
+      padding: '3px 4px',
+      textAlign: 'center',
+      minWidth: 0,
+    }}>
+      <div style={{
+        fontFamily: 'var(--font-display)', fontWeight: 800,
+        fontSize: 8, letterSpacing: '0.04em', textTransform: 'uppercase',
+        color: t.fg, opacity: 0.8,
+        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+      }}>{label}</div>
+      <div style={{
+        fontFamily: 'var(--font-display)', fontWeight: 900,
+        fontSize: 14, color: t.fg, letterSpacing: '0.02em',
+        marginTop: -1,
+      }}>{value}</div>
+    </div>
+  );
+}
+
+// Duolingo-style stat — kicker label on top, big chunky value
+function DuoStat({ label, value, valueColor, divider }) {
+  return (
+    <div style={{ position: 'relative', textAlign: 'center', padding: '0 4px' }}>
+      {divider && (
+        <div style={{
+          position: 'absolute', left: 0, top: 4, bottom: 4, width: 1.5,
+          background: 'var(--duo-swan)',
+          borderRadius: 999,
+        }}/>
+      )}
+      <div style={{
+        fontFamily: 'var(--font-display)', fontWeight: 800,
+        fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase',
+        color: 'var(--duo-hare)', marginBottom: 2,
+      }}>{label}</div>
+      <div style={{
+        fontFamily: 'var(--font-display)', fontWeight: 900,
+        fontSize: 18, color: valueColor, letterSpacing: '0.02em',
+      }}>{value}</div>
+    </div>
+  );
 }
 
 // Segmented stat — used inside the HUD bar, each with its own bg tint.
@@ -564,79 +655,92 @@ function OutlinedWordmark({ progress = 0.36 }) {
 
 }
 
-// Shared bottom HUD for AR screens — pill bar with integrated green radar
+// Shared bottom HUD for AR screens — Duolingo white card with chunky border
 function ARBottomHud({ distLabel = 'Hint', dist = '36m', radius = '100m', itemKind = 'hint' }) {
-  // Map distLabel → item kind so the right-side icon matches the active target
   const kindMap = { Start: 'start', End: 'end', Hint: 'hint' };
   const rightKind = kindMap[distLabel] || itemKind;
   return (
     <div style={{
-      padding: '12px 10px 14px',
+      padding: '24px 10px 14px',
       background: 'transparent',
-      position: 'relative'
+      position: 'relative',
     }}>
       {/* Radar — floats above center */}
       <div style={{
         position: 'absolute',
-        left: '50%', top: -8,
+        left: '50%', top: -12,
         transform: 'translateX(-50%)',
-        zIndex: 2
+        zIndex: 2,
       }}>
-        <ARRadar size={64} />
+        <ARRadar size={68}/>
       </div>
 
       <div style={{
-        background: 'linear-gradient(180deg, #1a5e69 0%, #0e3a42 100%)',
-        borderRadius: 14,
-        border: '1.5px solid rgba(255,255,255,0.25)',
-        boxShadow: '0 3px 8px rgba(0,0,0,0.3), inset 0 1px 0 0 rgba(255,255,255,0.15)',
+        background: '#fff',
+        borderRadius: 16,
+        border: '2px solid var(--duo-swan-2)',
+        boxShadow: '0 4px 0 0 var(--duo-swan-2)',
         display: 'flex', alignItems: 'center',
-        height: 56, padding: '0 4px'
+        height: 60, padding: '0 4px',
       }}>
-        {/* Left side */}
+        {/* Left side — themed flag icon + Start/2m */}
         <div style={{
-          flex: 1, display: 'flex', alignItems: 'center', gap: 8,
-          padding: '0 12px'
+          flex: 1, display: 'flex', alignItems: 'center', gap: 10,
+          padding: '0 12px',
         }}>
-          <svg width="20" height="22" viewBox="0 0 20 22" fill="none">
-            <line x1="3" y1="2" x2="3" y2="20" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" />
-            <path d="M3 3 L17 3 L13 8 L17 13 L3 13 Z" fill="#1CB0F6" stroke="#fff" strokeWidth="1.5" strokeLinejoin="round" />
-          </svg>
+          <div style={{
+            width: 30, height: 30, borderRadius: 8,
+            background: 'var(--duo-macaw-bg)',
+            border: '2px solid var(--duo-macaw-border)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flex: 'none',
+          }}>
+            <svg width="14" height="16" viewBox="0 0 20 22" fill="none">
+              <line x1="3" y1="2" x2="3" y2="20" stroke="var(--duo-macaw-deep)" strokeWidth="2.5" strokeLinecap="round"/>
+              <path d="M3 3 L17 3 L13 8 L17 13 L3 13 Z" fill="var(--duo-macaw)" stroke="var(--duo-macaw-deep)" strokeWidth="1.5" strokeLinejoin="round"/>
+            </svg>
+          </div>
           <div style={{
             fontFamily: 'var(--font-display)', fontWeight: 900,
-            fontSize: 12, color: '#fff',
-            textShadow: '0 1px 0 rgba(0,0,0,0.4)',
-            lineHeight: 1.1,
-            textAlign: 'left'
+            lineHeight: 1.05, textAlign: 'left',
           }}>
-            <div>{distLabel}</div>
-            <div style={{ color: '#FFC800', fontSize: 14 }}>{dist}</div>
+            <div style={{ fontSize: 10, color: 'var(--duo-hare)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+              {distLabel}
+            </div>
+            <div style={{ color: 'var(--duo-fox-deep)', fontSize: 16 }}>{dist}</div>
           </div>
         </div>
 
         {/* Center spacer for radar */}
-        <div style={{ width: 56, flexShrink: 0 }} />
+        <div style={{ width: 64, flexShrink: 0 }}/>
 
-        {/* Right side */}
+        {/* Right side — green pin radius icon + label/value */}
         <div style={{
-          flex: 1, display: 'flex', alignItems: 'center', gap: 6,
-          padding: '0 10px', justifyContent: 'flex-end'
+          flex: 1, display: 'flex', alignItems: 'center', gap: 8,
+          padding: '0 12px', justifyContent: 'flex-end',
         }}>
-          <PinRadiusIcon size={22} />
           <div style={{
             fontFamily: 'var(--font-display)', fontWeight: 900,
-            fontSize: 12, color: '#fff',
-            textShadow: '0 1px 0 rgba(0,0,0,0.4)',
-            lineHeight: 1.1,
-            textAlign: 'left'
+            lineHeight: 1.05, textAlign: 'right',
           }}>
-            <div>유효 반경</div>
-            <div style={{ color: '#1CB0F6', fontSize: 14 }}>{radius}</div>
+            <div style={{ fontSize: 10, color: 'var(--duo-hare)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+              유효 반경
+            </div>
+            <div style={{ color: 'var(--duo-green-800)', fontSize: 16 }}>{radius}</div>
+          </div>
+          <div style={{
+            width: 30, height: 30, borderRadius: 8,
+            background: 'var(--duo-green-100)',
+            border: '2px solid var(--duo-green-800)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flex: 'none',
+          }}>
+            <PinRadiusIcon size={18}/>
           </div>
         </div>
       </div>
-    </div>);
-
+    </div>
+  );
 }
 
 // Green map-marker-with-radius-disc icon — pin sitting on a flat radius ellipse
@@ -839,39 +943,50 @@ function ARTopBarProgress({ onMap, progress = 0, target = 100 }) {
 function ARTopBar({ onMap, time = '00:09:00' }) {
   return (
     <div style={{
-      background: 'linear-gradient(180deg, var(--theme-primary) 0%, var(--theme-primary-shadow) 100%)',
-      borderBottom: '1.5px solid var(--theme-primary-text)',
-      padding: '6px 12px 10px',
+      position: 'absolute', left: 0, right: 0, top: 36, zIndex: 5,
+      padding: '8px 12px 14px',
       display: 'flex', alignItems: 'center', gap: 8,
-      position: 'relative', zIndex: 5
+      background: 'linear-gradient(180deg, rgba(0,0,0,0.18) 0%, transparent 100%)',
     }}>
+      {/* MAP — icon-only themed candy button */}
       <button onClick={onMap} style={{
-        width: 64, height: 36, borderRadius: 10,
-        background: '#1c8a9f',
-        border: '1.5px solid #0e6675',
+        width: 42, height: 42, borderRadius: 12,
+        background: 'var(--theme-primary)',
+        border: '2px solid var(--theme-primary-shadow)',
         color: '#fff',
-        fontFamily: 'var(--font-display)', fontWeight: 900,
-        fontSize: 12, letterSpacing: '0.06em',
         cursor: 'pointer', padding: 0,
-        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
-        <PSIcons.Map size={14} color="#fff" /> MAP
+        <PSIcons.Map size={20} color="#fff"/>
       </button>
-      <div style={{ flex: 1, display: 'flex', justifyContent: 'center', gap: 2, alignItems: 'center' }}>
-        {time.split('').map((c, i) =>
-        c === ':' ?
-        <div key={i} style={{
-          fontFamily: 'var(--font-display)', fontWeight: 900,
-          fontSize: 20, color: '#fff', padding: '0 2px'
-        }}>:</div> :
 
-        <div key={i} className="ps-digit dark" style={{ width: 20, height: 30, fontSize: 18 }}>{c}</div>
-
-        )}
+      {/* Timer pill — same as Map Play */}
+      <div style={{
+        flex: 1, display: 'flex', justifyContent: 'center',
+      }}>
+        <div style={{
+          background: '#fff',
+          border: '2px solid var(--duo-swan-2)',
+          borderRadius: 999,
+          padding: '0 14px', height: 42,
+          display: 'flex', alignItems: 'center', gap: 6,
+        }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="var(--duo-fox)" strokeWidth="2.6" strokeLinecap="round">
+            <circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/>
+          </svg>
+          <div style={{
+            fontFamily: 'var(--font-display)', fontWeight: 900,
+            fontSize: 17, color: 'var(--duo-eel-2)',
+            letterSpacing: '0.02em', fontVariantNumeric: 'tabular-nums',
+          }}>{time}</div>
+        </div>
       </div>
-      <div style={{ width: 64 }} />
-    </div>);
 
+      {/* Right spacer to keep timer visually centered */}
+      <div style={{ width: 42, flex: 'none' }}/>
+    </div>
+  );
 }
 
 Object.assign(window, {

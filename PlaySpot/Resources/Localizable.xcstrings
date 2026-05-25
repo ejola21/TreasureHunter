@@ -31,6 +31,12 @@
     "💡" : {
 
     },
+    "2m" : {
+
+    },
+    "100m" : {
+
+    },
     "appDel_game0" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -4506,6 +4512,9 @@
     "Settings" : {
 
     },
+    "Start" : {
+
+    },
     "success" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -4877,6 +4886,9 @@
 
     },
     "우측 상단 + 버튼으로 새 미션을 만들어보세요." : {
+
+    },
+    "유효 반경" : {
 
     },
     "이 미션은 어땠나요?" : {
