@@ -34,28 +34,29 @@ struct ARSearchView: View {
         .onAppear { startAnimations() }
     }
 
-    // MARK: - 상단 HUD (투명 오버레이 — status bar 아래 36px)
+    // MARK: - 상단 HUD (투명 오버레이 — status bar 아래 36px, 타이머 가운데)
 
     private var topHUD: some View {
-        HStack(spacing: 12) {
-            // MAP 버튼 — 아이콘만, 테마 색 candy (녹색)
-            CandyIconButton(
-                systemImage: "map.fill",
-                size: 44,
-                tint: .duoGreen500,
-                fg: .white,
-                shadowColor: .duoGreen700
-            ) {
-                (onClose ?? { dismiss() })()
-            }
-
-            // 타이머 — Map Play 와 동일한 흰 pill
+        ZStack {
+            // 가운데 — 타이머
             WhitePillTimer(seconds: 9 * 60)
 
-            Spacer()
+            // 좌측 — MAP 버튼 (candy 녹색)
+            HStack {
+                CandyIconButton(
+                    systemImage: "map.fill",
+                    size: 44,
+                    tint: .duoGreen500,
+                    fg: .white,
+                    shadowColor: .duoGreen700
+                ) {
+                    (onClose ?? { dismiss() })()
+                }
+                Spacer()
+            }
         }
         .padding(.horizontal, 14)
-        .padding(.top, 36)   // status bar 아래 여백 36px
+        .padding(.top, 36)
     }
 
     // MARK: - 카메라 배경 — 3 레이어 일러스트
