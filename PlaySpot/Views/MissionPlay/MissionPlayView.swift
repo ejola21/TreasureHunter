@@ -332,17 +332,17 @@ private struct LegacyBottomBar: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            // 흰 카드 — 5컬럼 chip 그리드 + 카메라 자리
+            // 흰 카드 — 5컬럼 chip 그리드 + 카메라 자리 (높이 ARGameView 와 동일)
             HStack(spacing: 6) {
                 StatChip(label: "지형",     value: mineCount,          style: .blue)
                 StatChip(label: "필수",     value: mandatoryRemaining, style: .orange)
-                Spacer().frame(width: 70)  // 카메라 자리
+                Spacer().frame(width: 80)  // 카메라 자리 (AR 레이더와 동일)
                 StatChip(label: "HIDDEN",  value: hiddenCount,         style: .neutral)
                 StatChip(label: "STEALTH", value: stealthCount,        style: .purple)
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 12)
-            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 14)
+            .frame(maxWidth: .infinity, minHeight: 80)
             .background(
                 Color.white
                     .overlay(
@@ -352,7 +352,7 @@ private struct LegacyBottomBar: View {
                     .ignoresSafeArea(edges: .bottom)
             )
 
-            // 카메라 버튼 — 64px 녹색 원, 3px 흰 보더, 그림자 없음 (mockup 디자인)
+            // 카메라 버튼 — 64px 녹색 원, 3px 흰 보더 (offset 통일)
             Button(action: onCamera) {
                 ZStack {
                     Circle()
@@ -365,7 +365,7 @@ private struct LegacyBottomBar: View {
                 }
             }
             .buttonStyle(.plain)
-            .offset(y: -20)
+            .offset(y: -24)
         }
     }
 }

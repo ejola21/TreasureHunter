@@ -56,7 +56,7 @@ struct ARGameView: View {
                 ZStack {
                     WhitePillTimer(
                         seconds: arSeconds,
-                        isRunActive: engine.isTimeOutActive
+                        isRunActive: isCountdownWarning
                     )
                     HStack {
                         CandyIconButton(
@@ -130,31 +130,45 @@ struct ARGameView: View {
 
     // MARK: - 디지트 시계 / 레이더 바 (Phase 4 candy)
 
-    /// DigitClock 으로 전달할 초 단위 시간.
+    /// 상단 타이머 표시 초. MissionPlayView.timeString 과 동일 로직 (3분기).
+    ///   1) Run Start 활성 → run 카운트다운 (remainingRunTime)
+    ///   2) 미션 제한시간 > 0 → 미션 카운트다운 (remainingMissionTime)
+    ///   3) 그 외 → 경과시간 카운트업 (elapsedTime)
     private var arSeconds: Int {
         if engine.isTimeOutActive {
             return max(0, Int(engine.remainingRunTime))
+        } else if engine.missionLimitSeconds > 0 {
+            return max(0, Int(engine.remainingMissionTime))
         } else {
             return Int(engine.elapsedTime)
         }
     }
 
-    private var isTimeOutWarning: Bool {
-        engine.isTimeOutActive && engine.remainingRunTime < 10
+    /// 카운트다운 경고 — Run 진행 중 10초 미만 또는 미션 카운트다운 10초 미만.
+    private var isCountdownWarning: Bool {
+        (engine.isTimeOutActive && engine.remainingRunTime < 10)
+            || (engine.missionLimitSeconds > 0
+                && !engine.isTimeOutActive
+                && engine.remainingMissionTime < 10)
+    }
+
+    /// 타이머 카운트다운 모드 — 빨강 강조 트리거.
+    private var isCountdownMode: Bool {
+        engine.isTimeOutActive || engine.missionLimitSeconds > 0
     }
 
     /// 하단 HUD — 흰 카드 + 깃발 chip + 부유 레이더 + 마커 chip (mockup v4).
+    /// 높이/패딩/오프셋은 MissionPlayView.LegacyBottomBar 와 통일.
     private var radarBar: some View {
         ZStack(alignment: .top) {
-            // 흰 카드 + 1px swan 상단 디바이더
             HStack(spacing: 6) {
                 leftInfoBlock
-                Spacer().frame(width: 90)   // 부유 레이더 자리
+                Spacer().frame(width: 80)   // 부유 레이더 자리 (Map Play 카메라 자리와 동일)
                 rightInfoBlock
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 14)
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity, minHeight: 80)
             .background(
                 Color.white
                     .overlay(
@@ -164,7 +178,7 @@ struct ARGameView: View {
                     .ignoresSafeArea(edges: .bottom)
             )
 
-            // 부유 candy 레이더 (위로 -28pt)
+            // 부유 candy 레이더 — Map Play 의 카메라와 동일 offset.
             ARRadarView(
                 items: items,
                 itemStatuses: itemStatuses,
@@ -177,7 +191,7 @@ struct ARGameView: View {
                     .frame(width: 70, height: 70)
                     .shadow(color: Color.black.opacity(0.18), radius: 6, x: 0, y: 4)
             )
-            .offset(y: -28)
+            .offset(y: -24)
         }
     }
 
