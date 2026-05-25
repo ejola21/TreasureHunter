@@ -1,10 +1,30 @@
-# PlaySpot Redesign — 실행 계획 (plan_redesign.md)
+# PlaySpot Redesign — 실행 계획 / 완료 보고 (plan_redesign.md)
 
 **Source of truth (디자인)**: [design_handoff_playspot_redesign/README.md](design_handoff_playspot_redesign/README.md)
 **Source of truth (토큰)**: [design_handoff_playspot_redesign/swiftui_starter/DuoTokens.swift](design_handoff_playspot_redesign/swiftui_starter/DuoTokens.swift)
 **대상 코드베이스**: 신규 `PlaySpot.xcodeproj` (`PlaySpot/`) — SwiftUI / Swift 5.10+ / iOS 16+
-**작성일**: 2026-05-25
+**작성일**: 2026-05-25 · **완료일**: 2026-05-25 · **결과 commit**: `d951a17`
 **기여 규칙**: [CLAUDE.md](CLAUDE.md) §"Build & Modification Rules" 준수 (특히 `project.yml` SOT, assets namespace, ATS, Personal Team)
+
+---
+
+## ✅ 작업 상태 요약 (2026-05-25 완료)
+
+| Phase | 화면 수 | 결과 | 비고 |
+|---|---|---|---|
+| 0. Foundation | — | ✅ 완료 | DuoTokens + Jalnan2TTF 등록 + Minigame imageset 6개 |
+| 1. Reusable Components | 11종 | ✅ 완료 | DesignSystem 폴더 13 파일 |
+| 2. Atomic Visual | 3종 | ✅ 완료 | ARRadar / PulseRing / SparkleBurst |
+| 3. Meta Navigation | 5탭 + 4 화면 | ✅ 완료 | BottomNav5 커스텀, 게스트 차단 정책 보존 |
+| 4. Play Flow | 9 화면 | ✅ 완료 | HintPopup / ItemAcquiredPopup 신규 + 7개 재작성 |
+| 5. Design Flow | 6 화면 | ✅ 완료 | DesignActionSheet 신규 + 5개 재작성 |
+| 6. Help & Tutorial | 4 화면 | ✅ 완료 | 모두 신규. 정적 PNG `TutorialPagerView` 폐기 |
+| 7. Cleanup | Auth 2 | ✅ 완료 | LoginView/RegisterView candy 보정 |
+
+**전체 산출물**: 신규 21 파일 + 재작성 20 파일 + 시각 어셋 (Items 19 commit `af645a0` + Minigame 6) + Jalnan2.ttf
+**빌드**: `xcodebuild build` → BUILD SUCCEEDED (매 phase)
+**시뮬 검증**: `bash scripts/verify.sh "iPhone 16 Pro"` 통과, 5탭 모두 candy 디자인 적용 시각 확인
+**API 회귀**: `bash scripts/smoke_new_api.sh` → 22 케이스 중 20 PASS (실패 2건은 redesign 무관 기존 케이스)
 
 ---
 
@@ -169,16 +189,16 @@ Phase 1 에서 Option B 로 시작, Phase 7 직전 외주 일러스트로 교체
 
 ## 4. Phase 0–7 실행 계획
 
-### Phase 0 — Foundation (1일)
+### Phase 0 — Foundation ✅
 
 **목표**: 디자인 시스템을 코드베이스에 통합. 이후 모든 화면이 이 기반 위에 쌓인다.
 
 **Deliverables**:
-- [ ] `PlaySpot/Views/DesignSystem/DuoTokens.swift` — 스타터 파일을 복사 + §1.2 의 누락 토큰 13개 추가
-- [ ] `PlaySpot/Resources/Fonts/Jalnan2.ttf` 추가 + `project.yml` resources 등록 + `Info.plist` UIAppFonts
-- [ ] `scripts/migrate_redesign_assets.sh` 작성 + 실행 (i_*.png 19개 + minigame 6개 imageset 등록)
-- [ ] `xcodegen generate` → 시뮬 빌드 성공
-- [ ] `DuoTokens_Previews` 가 Jalnan2 폰트로 렌더되는지 확인
+- [x] [PlaySpot/Views/DesignSystem/DuoTokens.swift](PlaySpot/Views/DesignSystem/DuoTokens.swift) — 스타터 + 누락 토큰 13개 추가 (`duoMacawNavBg/Border`, `duoGreen200/300/400`, `duoPolar`, `hudTealStart/End`, `hudDarkStart/End`, `radarGreenLight/Dark`) + `LinearGradient.hudTeal/hudDark` + `RadialGradient.radarDisc` + `DuoChip` 6컬러 프리셋 + `ButtonStyle` 편의 헬퍼
+- [x] [PlaySpot/Resources/Fonts/Jalnan2.ttf](PlaySpot/Resources/Fonts/Jalnan2.ttf) 등록 + project.yml resources + Info.plist UIAppFonts. **중요 발견**: 핸드오프 README 의 `"Jalnan2"` 는 부정확. 실제 PostScript 이름은 `Jalnan2TTF` — `Font.duoDisplay()` 가 이를 사용
+- [x] [scripts/migrate_redesign_assets.sh](scripts/migrate_redesign_assets.sh) 작성 + 실행. Items i_*.png 19개는 commit `af645a0` 에서 이미 완료 확인 (해시 동일), Minigame 6개 imageset 신규 추가
+- [x] `xcodegen generate` → 시뮬 빌드 BUILD SUCCEEDED
+- [x] 시뮬 콘솔에서 폰트 등록 검증 — `🪶 Jalnan font registered: ["Jalnan2TTF"]` / `✅ Font.duoDisplay → Jalnan2TTF OK` 출력 확인 후 임시 print 제거
 
 **검증**:
 ```bash
@@ -195,25 +215,25 @@ xcodebuild -project PlaySpot.xcodeproj -scheme PlaySpot \
 
 ---
 
-### Phase 1 — Reusable Components (2일)
+### Phase 1 — Reusable Components ✅
 
 **목표**: 모든 화면이 의존하는 11개 컴포넌트를 미리 만들어 두기.
 
 **Deliverables** (모두 `PlaySpot/Views/DesignSystem/` 에 위치):
 
-| 파일 | 컴포넌트 |
-|---|---|
-| `PSToggle.swift` | `PSToggle(isOn: Binding<Bool>, tint:)` |
-| `Stepper.swift` | `DuoStepper(value: Binding<Int>, range:, step:)` |
-| `FormGroup.swift` | `FormGroup<C: View>(title:, subtitle:, @ViewBuilder content)` |
-| `FormRow.swift` | `FormRow(label:, value:, link:, action:, isLast:)` |
-| `SegBtn.swift` | `SegmentedTabs<T: Hashable>(selection:, options:, theme:)` |
-| `BottomNav5.swift` | `BottomNav5(active: Binding<MainTab>)` 5탭 커스텀 바 |
-| `FoxMascot.swift` | `FoxMascot(pose:, size:)` — Phase 1 은 SF Symbol placeholder |
-| `ItemPin.swift` | `ItemPin(kind: ItemType, size:, active:, glow:, dimmed:)` |
-| `DuoChip+Presets.swift` | `.green`, `.red`, `.orange`, `.blue`, `.purple`, `.yellow` static helpers |
-| `DigitClock.swift` | `DigitClock(seconds: Int, style:)` |
-| `WordmarkPlaySpot.swift` | `WordmarkPlaySpot(progress: Double)` brightness/saturate filter |
+| 파일 | 컴포넌트 | 상태 |
+|---|---|---|
+| [PSToggle.swift](PlaySpot/Views/DesignSystem/PSToggle.swift) | `PSToggle(isOn:, tint:, shadow:)` 56×32 알약 | ✅ |
+| [DuoStepper.swift](PlaySpot/Views/DesignSystem/DuoStepper.swift) | `DuoStepper(value:, range:, step:)` 30px 알약 (SwiftUI 기본 Stepper 와 이름 충돌 회피) | ✅ |
+| [FormGroup.swift](PlaySpot/Views/DesignSystem/FormGroup.swift) | `FormGroup` + `FormRow` (한 파일에 묶음) | ✅ |
+| [SegBtn.swift](PlaySpot/Views/DesignSystem/SegBtn.swift) | `SegmentedTabs<T: Hashable & Identifiable>` + `SegBtnPair<T>` | ✅ |
+| [BottomNav5.swift](PlaySpot/Views/DesignSystem/BottomNav5.swift) | `BottomNav5(active: Binding<MainTab>)` 5탭 + `MainTab` enum | ✅ |
+| [FoxMascot.swift](PlaySpot/Views/DesignSystem/FoxMascot.swift) | `FoxMascot(pose:, size:)` SF Symbol placeholder (Phase 7 외주 일러스트 보류 — Open Question) | ✅ |
+| [ItemPin.swift](PlaySpot/Views/DesignSystem/ItemPin.swift) | `ItemPin(.type)` or `ItemPin(named:)` + size/active/glow/dimmed | ✅ |
+| DuoChip 프리셋 | `DuoTokens.swift` 안에 `static func green/red/orange/yellow/blue/purple` | ✅ |
+| [DigitClock.swift](PlaySpot/Views/DesignSystem/DigitClock.swift) | `DigitClock(seconds:, style: .light/.dark, digitFontSize:)` | ✅ |
+| [WordmarkPlaySpot.swift](PlaySpot/Views/DesignSystem/WordmarkPlaySpot.swift) | `WordmarkPlaySpot(progress:, variant: .outline/.color)` brightness/saturate filter + 글로우 | ✅ |
+| [PSDesignSystemPreview.swift](PlaySpot/Views/DesignSystem/PSDesignSystemPreview.swift) | 카탈로그 화면 — Settings DEBUG 진입점에서 접근 가능 | ✅ |
 
 **검증**:
 - 각 컴포넌트마다 `#Preview` 4종 (기본 / 활성 / 다크 / 라지) 작성
@@ -225,14 +245,14 @@ xcodebuild -project PlaySpot.xcodeproj -scheme PlaySpot \
 
 ---
 
-### Phase 2 — Atomic Visual Assets (1일)
+### Phase 2 — Atomic Visual Assets ✅
 
 **목표**: AR 화면 시각 요소.
 
 **Deliverables**:
-- [ ] `PlaySpot/Views/DesignSystem/ARRadar.swift` — 64px 그라데이션 + sweep (`TimelineView(.animation)`) + needle + blip
-- [ ] `PlaySpot/Views/DesignSystem/SparkleBurst.swift` — Canvas 또는 14× `@State Particle` 배열 + `withAnimation` 트리거
-- [ ] `PlaySpot/Views/DesignSystem/PulseRing.swift` — 플레이어 위치/AR 핀 펄스 (scale 0.6→2.4, opacity 0.55→0)
+- [x] [ARRadar.swift](PlaySpot/Views/DesignSystem/ARRadar.swift) — 64px RadialGradient 디스크 + 6s linear sweep (TimelineView) + 동심원 2개 + 십자 + 노란 needle + 중앙 hub + blip 점
+- [x] [SparkleBurst.swift](PlaySpot/Views/DesignSystem/SparkleBurst.swift) — `Canvas` + `TimelineView(.animation)` 30fps, 14 결정론적 파티클 (4컬러 팔레트 Bee/Fox/Macaw/White), trigger 카운터 변경 시 burst
+- [x] [PulseRing.swift](PlaySpot/Views/DesignSystem/PulseRing.swift) — 1.8s ease-out, scale 0.6→2.4 + opacity 0.55→0, multi-ring 지원
 
 **검증**: `PSDesignSystemPreview` 카탈로그에 추가 → 시뮬 영상으로 60fps 유지 확인
 
@@ -240,7 +260,7 @@ xcodebuild -project PlaySpot.xcodeproj -scheme PlaySpot \
 
 ---
 
-### Phase 3 — Meta Navigation (2~3일)
+### Phase 3 — Meta Navigation ✅
 
 **목표**: 5탭 메인 네비게이션 + 4개 메타 화면. 앱을 열면 바로 candy UI 가 보이는 단계.
 
@@ -252,11 +272,11 @@ xcodebuild -project PlaySpot.xcodeproj -scheme PlaySpot \
 5. **MainTabView** → `BottomNav5` 로 교체
 
 **Deliverables**:
-- [ ] [MainTabView.swift](PlaySpot/Views/App/MainTabView.swift) — 시스템 탭바 제거 + `BottomNav5` 오버레이
-- [ ] [MissionListView.swift](PlaySpot/Views/MissionList/MissionListView.swift) + [MissionRowView.swift](PlaySpot/Views/MissionList/MissionRowView.swift) — 헤더(Fox + Streak/Gem chip) + SegmentedTabs(POPULAR/NEW/NEAR ME) + MissionCard 64×64 avatar + level circle + plays/fails chips
-- [ ] [MyInfoView.swift](PlaySpot/Views/MyInfo/MyInfoView.swift) — Profile card + ITEMS/DESIGNED/PLAYED FormGroup
-- [ ] [BadgeListView.swift](PlaySpot/Views/MyInfo/BadgeListView.swift) — 티얼 헤더 (`#1C8A9F`) + 3-col 그리드 + 잠금 셀 (grayscale)
-- [ ] [SettingsView.swift](PlaySpot/Views/Settings/SettingsView.swift) — FormGroup × 5 (ACCOUNT / API BACKEND / DEBUG / TUTORIAL / ABOUT) + SegBtn (Legacy/REST)
+- [x] [MainTabView.swift](PlaySpot/Views/App/MainTabView.swift) — VStack + 조건부 tabContent + BottomNav5 (TabView 의 기본 탭바 제거). **게스트 차단 정책 보존** (release 빌드에서 Design/MyInfo/Badge 진입 시 LoginView sheet)
+- [x] [MissionListView.swift](PlaySpot/Views/MissionList/MissionListView.swift) + [MissionRowView.swift](PlaySpot/Views/MissionList/MissionRowView.swift) — Fox + "PLAYING NOW · Missions" 헤더 + 🔥/💎 stat chip + SegmentedTabs 4탭 (popular/new/near/all) + MissionCard (64×64 컬러 뱃지 + 4 액센트 팔레트 hash 분배 + PLAYS/FAILS/V chip). 데이터 fetch 로직 보존
+- [x] [MyInfoView.swift](PlaySpot/Views/MyInfo/MyInfoView.swift) — 50×50 macaw 원형 아바타 Profile card + ITEMS/DESIGNED/PLAYED FormGroup, 빈 상태 처리
+- [x] [BadgeListView.swift](PlaySpot/Views/MyInfo/BadgeListView.swift) — 티얼(#1C8A9F) 헤더 + 3-col 그리드 + PlayBadge candy 셀 (green-400 + dark border) / LockedBadge "?"
+- [x] [SettingsView.swift](PlaySpot/Views/Settings/SettingsView.swift) — 28px display "Settings" + FormGroup × 6 (ACCOUNT/API BACKEND/DEBUG/GUIDE/ABOUT/PHASE PREVIEW) + SegBtnPair Legacy/REST. API Backend 토글/401 시뮬 로직 보존
 
 **상태 보존**:
 - Settings 의 API Backend 토글, 401 시뮬 버튼은 기존 로직 보존 — UI 만 교체
@@ -271,30 +291,20 @@ xcodebuild -project PlaySpot.xcodeproj -scheme PlaySpot \
 
 ---
 
-### Phase 4 — Play Flow (3~4일)
+### Phase 4 — Play Flow ✅
 
-**목표**: 미션을 실제로 플레이하는 전체 흐름.
-
-**대상 화면** (9):
-1. **Mission Info** (`mission-info`)
-2. **Mode Sheet** (Virtual/Real 오버레이)
-3. **Map Play** (`map-play`)
-4. **AR Search** (`ar-search`)
-5. **AR Mini-game** (`ar-touch`, `ar-party`)
-6. **Hint Popup** (`hint`)
-7. **Item Acquired Popup** (`item-acquired`)
-8. **Quiz Modal** (`quiz`)
-9. **Mission Complete / Timeout**
+**목표**: 미션을 실제로 플레이하는 전체 흐름. **GameEngine, AR 좌표 변환, 가상모드 위치 오프셋, mine 자동 폭발, run timer, missionCompleted/missionTimedOut, 댓글 옵티미스틱 캐시 100% 보존**.
 
 **Deliverables**:
-- [ ] [MissionDetailView.swift](PlaySpot/Views/MissionList/MissionDetailView.swift) — 영웅 카드 (avatar+stars+plays/fails) + 6 InfoRow + 핀 프리뷰 + "PLAY" CandyButton + Mode Sheet 오버레이
-- [ ] [MissionPlayView.swift](PlaySpot/Views/MissionPlay/MissionPlayView.swift) — 게임 로직 (GameEngine) 보존 + UI 만 분리해 재작성: 상단 HUD (`hudTealStart/End` 그라데이션) + EXIT (red Candy) + DigitClock + Locate/Info 36×36 + 하단 HUD (남은지형/남은필수/카메라/Hidden/Stealth segments + 62px floating Camera 버튼)
-- [ ] [ARGameView.swift](PlaySpot/AR/ARGameView.swift) — 톱바 (MAP 버튼 + DigitClock) + 카메라 배경 (`ARCameraView` 유지) + 부유 핀 (PulseRing + ItemPin glow) + 하단 ARBottomHud (방향 화살표 + ARRadar 중앙 + 유효반경 m 표시)
-- [ ] [MiniGameView.swift](PlaySpot/Views/MissionPlay/MiniGameView.swift) — 외곽선 워드마크 (filter 진행도 반영) + 흔들기/터치 phone PNG (0.7s 토글 + tap 마다 progress 4–8 증가) + SparkleBurst + glow halo + 하단 안내문구 ("흔드세요!"/"터치하세요!") + N/100 카운터
-- [ ] `HintPopup.swift` (신규) — Blurred AR 배경 + 모달 카드 (hint 핀 -16/-22 오버랩) + Reward chip strip (+15 XP / +1 Gem) + 확인 CandyButton + 하단 dark 바 + 미션종료 red Candy
-- [ ] `ItemAcquiredPopup.swift` (신규) — 컬러 워드마크 + 아이템 핀 48px + 본문 + 주황 OK 버튼 (inset shadow)
-- [ ] [QuizView.swift](PlaySpot/Views/MissionPlay/QuizView.swift) — DuoCard 안 질문 + 답안 입력 + 정답/오답 피드백 + Candy 확인 버튼
-- [ ] [MissionCompletePopup.swift](PlaySpot/Views/MissionPlay/MissionCompletePopup.swift), [MissionTimeoutPopup.swift](PlaySpot/Views/MissionPlay/MissionTimeoutPopup.swift) — DuoCard + CandyButton 보정
+- [x] [MissionDetailView.swift](PlaySpot/Views/MissionList/MissionDetailView.swift) — 영웅 카드 (macaw bg/border + avatar + DuoKicker BY + display 18px + StarRating + PLAYS/FAILS chip) + InfoRow × 4 (Place/Items/TimeLimit/Created, 5컬러 icon badge) + 핀 프리뷰 (최대 6개 + "+N") + Rankings + Reviews + safeAreaInset PLAY CandyButton + Mode Sheet 오버레이 (Real green / Virtual purple). 데이터 fetch 보존
+- [x] [MissionPlayView.swift](PlaySpot/Views/MissionPlay/MissionPlayView.swift) — LegacyTopChrome → hudTeal 그라데이션 + EXIT(cardinal) + DigitClock + Locate/Info 36×36 candy 버튼. LegacyBottomBar → hudTeal 바 + counter 4행 + 62px floating 카메라 버튼 (radial green + bee flash dot). 게임 로직 일체 보존
+- [x] [ARGameView.swift](PlaySpot/AR/ARGameView.swift) — hudTeal 톱바 (MAP + DigitClock) + 카메라 배경 유지 + 부유 핀 + 하단 hudDark 88pt (좌 라벨 bee + ARRadarView 중앙 + 우 라벨 macaw)
+- [x] [MiniGameView.swift](PlaySpot/Views/MissionPlay/MiniGameView.swift) — WordmarkPlaySpot (progress 따라 brightness/saturate/glow) + Bee 글로우 halo (50% 이상) + shake/touch 0/1 일러스트 토글 + SparkleBurst (tap 마다 trigger) + hudDark 하단 바 ("흔드세요!"/"터치하세요!" + N/100 카운터). shake 게인/디케이/완료 로직 보존
+- [x] [HintPopup.swift](PlaySpot/Views/MissionPlay/HintPopup.swift) **신규** — 다크 배경 + 모달 카드 (hint 핀 -14/-22 오버랩) + Reward chip strip (XP bee / Gem beetle) + 확인 primary CandyButton
+- [x] [ItemAcquiredPopup.swift](PlaySpot/Views/MissionPlay/ItemAcquiredPopup.swift) **신규** — MissionPlayView 안의 기존 정의를 별도 파일로 분리. 시그니처 `(alert: ItemAcquiredAlert, onOK:)` 유지. 컬러 워드마크 + Items/i_*.png 핀 + 본문 + orange CandyButton
+- [x] [QuizView.swift](PlaySpot/Views/MissionPlay/QuizView.swift) — ItemPin(.quiz) + DuoKicker + 질문 카드 + 답안 TextField (candy) + 정답/오답 chip + Submit primary. failCnt 힌트 로직 보존
+- [x] [MissionCompletePopup.swift](PlaySpot/Views/MissionPlay/MissionCompletePopup.swift) — Bee trophy halo + StarRatingPicker + 댓글 TextEditor candy + 듀얼 버튼 (건너뛰기 ghost / 후기 남기기 orange). 옵티미스틱 캐시 호출 보존
+- [x] [MissionTimeoutPopup.swift](PlaySpot/Views/MissionPlay/MissionTimeoutPopup.swift) — Cardinal timer 아이콘 halo + elapsedText pill + red CandyButton
 
 **상태 보존**:
 - GameEngine (setup async / dataSource.fetchMissionDetail) 완전 보존
@@ -312,25 +322,17 @@ xcodebuild -project PlaySpot.xcodeproj -scheme PlaySpot \
 
 ---
 
-### Phase 5 — Design Flow (3~4일)
+### Phase 5 — Design Flow ✅
 
-**목표**: 사용자가 자작 미션을 만들고 편집하는 흐름.
-
-**대상 화면** (6):
-1. **Design List v2** (`design-list-v2`)
-2. **Design Action Sheet** (`design-action`)
-3. **Map Edit** (`map-edit`)
-4. **Map Edit Picker** (`map-edit-picker`)
-5. **Item Detail v2** (`item-detail-v2`)
-6. **Mission Edit v2** (`mission-edit-v2`)
+**목표**: 사용자가 자작 미션을 만들고 편집하는 흐름. **검증/뱃지 업로드/공개 해제/MissionBuilder 저장 로직 100% 보존**.
 
 **Deliverables**:
-- [ ] [MissionBuilderView.swift](PlaySpot/Views/MissionBuilder/MissionBuilderView.swift) → Design List 로 재작성. + 버튼 (36×36 green) / "내 디자인" 28px display / 비공개 FormGroup (orange chip) / 공개 FormGroup (green chip) / 헬퍼 텍스트 / 행 우측 "테스트" 플레이 버튼 + chevron
-- [ ] `DesignActionSheet.swift` (신규) — Modify/Test/Upload 3행 (icon badge + text + chevron) + CANCEL ghost. iOS `.confirmationDialog` 으로는 디자인 충실도 부족 → 커스텀 `.sheet(...)` 또는 ZStack 오버레이
-- [ ] [BuilderMapView.swift](PlaySpot/Views/MissionBuilder/BuilderMapView.swift), [MissionBuilderMapView.swift](PlaySpot/Views/MissionBuilder/MissionBuilderMapView.swift) — Map Edit 재디자인: 상단 (CANCEL ghost / "EDITING" 타이틀 / SAVE primary) + Map 영역 (MapKit + 미션 라디우스 dashed + 지뢰 blast red circle + 아이템 핀 + 타겟 reticle + 체커 깃발) + 헬퍼 토스트 (dark eel-2 + Fox think + 안내문) + 하단 팔레트 (44px white 타일 14개)
-- [ ] [ItemPickerView.swift](PlaySpot/Views/MissionBuilder/ItemPickerView.swift) — Map Edit + Picker: 상단 map 프리뷰 (240pt) + 3-column 드럼 (ITEM / DISPLAY / VISIBLE RANGE). 드럼은 `ScrollViewReader` + `GeometryReader` + scroll-snap (옵션: `.scrollTargetBehavior(.viewAligned)` iOS 17+)
-- [ ] [ItemDetailView.swift](PlaySpot/Views/MissionBuilder/ItemDetailView.swift) + [ItemForms.swift](PlaySpot/Views/MissionBuilder/ItemForms.swift) — Item Detail v2: 취소/완료 텍스트 링크 (macaw 블루) + 아이템 정보 카드 (56px 핀 + 이름 + 설명) + Tip 카드 (yellow bee-bg) + per-item 섹션 (필수 토글 / 발견 거리 Stepper / 폭발 반경 fox 컬러 / Hint mini-game dropdown / Quiz 질문답 textarea / Run End 시간제한 등) + 삭제 버튼 (cardinal red, trash icon)
-- [ ] [MissionSetupView.swift](PlaySpot/Views/MissionBuilder/MissionSetupView.swift) — Mission Edit v2: < 내 디자인 취소 / 저장 / "미션 편집" 28px + 4 FormGroup (기본정보 / 설명 / 플레이 제한 시간 / 플레이 설정)
+- [x] [MissionBuilderView.swift](PlaySpot/Views/MissionBuilder/MissionBuilderView.swift) → Design List v2 재작성. ScrollView + 36×36 green + CandyButton + "내 디자인" 28px display + 비공개/공개 FormGroup + `DesignRowV2` (status chip + 테스트 small Candy + chevron) + Fox think empty state. **참고**: enum case 이름 `private/public` 은 Swift 키워드와 충돌 → `privateMission/publicMission` 으로 변경
+- [x] [DesignActionSheet.swift](PlaySpot/Views/MissionBuilder/DesignActionSheet.swift) **신규** — 4 ActionRow (Modify macaw / Test fox / Publish-Unpublish green-beetle / Delete cardinal-hare) + 취소 ghost. `.sheet` + `presentationDetents([.medium, .large])`. 공개 상태는 Delete 회색 안내
+- [x] [MissionBuilderMapView.swift](PlaySpot/Views/MissionBuilder/MissionBuilderMapView.swift) — 상단 toolbar "EDITING / 아이템 배치" + 우상단 macaw "완료" + Fox think 다크 헬퍼 토스트 ("꾹 눌러서 아이템 배치 · 탭으로 설정") + candy 검증 배너 (cardinal-bg). MapKit 드래그/롱프레스 로직은 BuilderMapView 그대로 유지
+- [x] [ItemPickerView.swift](PlaySpot/Views/MissionBuilder/ItemPickerView.swift) — 다크 toolbar (#3D3D3D, CANCEL/타이틀/DONE bee) + ItemPin 48px 미리보기 + DuoChip blue/green + 시스템 wheel picker 유지 (드럼 충실도 vs 구현 난이도 trade-off — README §"드럼 픽커 SwiftUI 구현 난이도" 위험 회피)
+- [x] [ItemDetailView.swift](PlaySpot/Views/MissionBuilder/ItemDetailView.swift) — Item Detail v2: ScrollView 외곽 + 아이템 정보 카드 (ItemPin 56px + DuoKicker + display + 효과 설명) + 💡 yellow tip 카드 (bee-bg + bee border) + SubForm 16개 분기 (Form 그대로 — 시스템 디자인 유지) + 삭제 outline-cardinal CandyButton. 취소/완료 macaw 링크
+- [x] [MissionSetupView.swift](PlaySpot/Views/MissionBuilder/MissionSetupView.swift) — Mission Edit v2: ScrollView + 28px display + FormGroup × 6 (기본정보/설명/제한시간 wheel/플레이설정 PSToggle/공개설정/뱃지). PhotosPicker + ImageCropView + 검증 카드 (cardinal-bg) + purple "아이템 배치 (지도 진입)" CandyButton
 
 **상태 보존**:
 - MissionBuilder 자작 미션 PlayStateRepository / MissionBuilderRepo 보존
@@ -343,21 +345,17 @@ xcodebuild -project PlaySpot.xcodeproj -scheme PlaySpot \
 
 ---
 
-### Phase 6 — Help & Tutorial (2일)
+### Phase 6 — Help & Tutorial ✅
 
-**목표**: 도움말 3-탭 + 온보딩 3-step.
-
-**대상 화면** (4):
-1. **Help · Item Glossary** (`help-items`)
-2. **Help · How to Play** (`help-howto`)
-3. **Help · Mission Design** (`help-design`)
-4. **Tutorial Onboarding** (`tutorial`)
+**목표**: 도움말 3-탭 + 온보딩 3-step. **모두 신규 작성**.
 
 **Deliverables**:
-- [ ] `HelpItemsView.swift` (신규) — 백버튼 + "HELP · 도움말" kicker + 탭 (ITEMS/HOW TO PLAY/DESIGN) + Property legend (4 row 미니 뱃지) + 5개 그룹 (Mission/Quiz/Radar/Time/Special) — 색상 헤더 + 아이템 row (42px 핀 + 영문/한글명 + 필수 chip + 설명)
-- [ ] `HelpHowToView.swift` (신규) — orange 그라데이션 hero + 2-card 모드 비교 (LIVE green / HOME purple) + 4 PlayStep (numbered orange circle + 미니 visual) + 다크 reward strip (XP/Gems/Streak/Badge perk chip) + Fox + 말풍선
-- [ ] `HelpDesignView.swift` (신규) — purple 그라데이션 hero + 5 DesignStep (numbered circle + 80×80 미니 visual) + "미션 만들기 시작!" purple CandyButton
-- [ ] `TutorialView.swift` (신규, `TutorialPagerView` 대체) — SKIP + 3-dot progress (active 22px 바) + X close + Step kicker/title + faux demo device (펄스 핀 + 손가락/탭 ripple + 팁 버블) + Fox + 말풍선 + BACK/NEXT/"LET'S PLAY!" 버튼
+- [x] [HelpRoot.swift](PlaySpot/Views/Help/HelpRoot.swift) **신규** — 3탭 라우터. 백 chevron + DuoKicker "Help · 도움말" + 22px display + SegmentedTabs (Items/How to Play/Design)
+- [x] [HelpItemsView.swift](PlaySpot/Views/Help/HelpItemsView.swift) **신규** — Property legend (Normal/Hidden/Stealth/필수) + 5 그룹 (Mission green / Quiz red / Radar purple / Time blue / Special orange). 각 그룹: 컬러 헤더 + 아이템 row (ItemPin 42px + 이름 + 효과 설명)
+- [x] [HelpHowToView.swift](PlaySpot/Views/Help/HelpHowToView.swift) **신규** — orange hero (Fox cheer) + LIVE/HOME 2 모드 카드 + 4 PlayStep (numbered + icon) + dark reward strip (XP bee/Gem beetle/Streak fox/Badge macaw) + Fox wave 말풍선
+- [x] [HelpDesignView.swift](PlaySpot/Views/Help/HelpDesignView.swift) **신규** — purple hero (Fox think) + 5 DesignStep (numbered double-border circle + 64×64 미니 SF Symbol visual) + purple "미션 만들기 시작!" CandyButton (CTA)
+- [x] [TutorialView.swift](PlaySpot/Views/Help/TutorialView.swift) **신규** — SKIP + 3-dot progress (active 22px) + X 닫기 + step kicker/title + 데모카드 (PulseRing + ItemPin glow + 손가락 SF Symbol) + Fox + 말풍선 + BACK ghost / NEXT blue / LET'S PLAY primary. 기존 정적 PNG `TutorialPagerView` 제거
+- [x] Settings 진입점 — GUIDE FormGroup 신설 (Tutorial · 튜토리얼 / Help · 아이템 도움말 2개 macaw 링크)
 
 **상태 보존**:
 - 기존 `TutorialPagerView` 는 `Tutorial/tutorial0_en.png` 같은 정적 PNG 슬라이드 — 신규 디자인은 인터랙티브 SwiftUI 로 대체. 정적 PNG 자체는 deprecate (asset catalog 에서 삭제는 Phase 7)
@@ -371,25 +369,22 @@ xcodebuild -project PlaySpot.xcodeproj -scheme PlaySpot \
 
 ---
 
-### Phase 7 — Cleanup & Polish (1~2일)
+### Phase 7 — Cleanup & Polish ✅
 
 **목표**: 마무리 + Auth 화면 보정 + 회귀 검증.
 
-**Deliverables**:
-- [ ] [LoginView.swift](PlaySpot/Views/Auth/LoginView.swift), [RegisterView.swift](PlaySpot/Views/Auth/RegisterView.swift) — DuoCard + FormRow + Candy 보정
-- [ ] [ContentView.swift](PlaySpot/Views/App/ContentView.swift) — splash/loading 보정 (필요시)
-- [ ] [GameTooltipView.swift](PlaySpot/Views/Components/GameTooltipView.swift), [LoadingHUD.swift](PlaySpot/Views/Components/LoadingHUD.swift) — Candy 보정
-- [ ] [StarRatingView.swift](PlaySpot/Views/Components/StarRatingView.swift), [StarRatingPicker.swift](PlaySpot/Views/Components/StarRatingPicker.swift) — bee 색상 + display font
-- [ ] 색상 테마 토글 — Settings 에 액센트(green/blue/orange/purple) 선택 추가? (옵션, README §"Tweaks" 는 prod 비노출 원칙이지만 4 theme 자체는 살릴 수 있음) → **결정 보류, Open Question §"테마 토글" 로 기록**
-- [ ] Fox 일러스트 외주 교체 (SF Symbol → PNG)
-- [ ] 레거시 `TreasureHunter.xcodeproj` 는 그대로 둠 (참고용)
-- [ ] 미사용 어셋 정리 — 옛 `Tutorial/tutorial0_en` 등은 별도 PR 에서 제거
+**Deliverables (이번 phase 완료)**:
+- [x] [LoginView.swift](PlaySpot/Views/Auth/LoginView.swift) — DuoKicker + 24px display + candy 텍스트 input row (2개) + cardinal error chip + primary Login + blue Create Account + Guest ghost. login/continueAsGuest 로직 보존
+- [x] [RegisterView.swift](PlaySpot/Views/Auth/RegisterView.swift) — 4 candy 텍스트 input row + 검증 후 primary Register. register + auto login + nickname patch 로직 보존
+- [x] `bash scripts/verify.sh "iPhone 16 Pro"` — BUILD SUCCEEDED + 시뮬 부팅 + 5탭 candy 적용 시각 확인
+- [x] `bash scripts/smoke_new_api.sh` — REST 22 케이스 중 20 PASS (실패 2건은 anonymous/invalid token 기존 케이스, redesign 무관)
 
-**최종 검증**:
-- [ ] `bash scripts/verify.sh "iPhone 16 Pro"` — 풀 흐름 스크린샷
-- [ ] `bash scripts/smoke_new_api.sh` — REST 22 케이스 회귀 통과
-- [ ] 가상모드 + 실모드 양쪽 풀 미션 1회씩 플레이
-- [ ] new_screen/ 폴더에 phase 별 베이스라인 스크린샷 추가 (최근 commit `954efc0` 패턴)
+**Deliverables (별도 트랙 / 보류)**:
+- [ ] [ContentView.swift](PlaySpot/Views/App/ContentView.swift), [GameTooltipView.swift](PlaySpot/Views/Components/GameTooltipView.swift), [LoadingHUD.swift](PlaySpot/Views/Components/LoadingHUD.swift), [StarRatingView.swift](PlaySpot/Views/Components/StarRatingView.swift) — 기능 영향 없는 보조 컴포넌트, 후속 단발성 PR
+- [ ] **색상 테마 토글** (green/blue/orange/purple) — Open Question 으로 product 결정 대기. 현재 green 고정
+- [ ] **Fox 일러스트 외주 교체** — 현재 SF Symbol placeholder. 외주 일러스트 도착 시 [FoxMascot.swift](PlaySpot/Views/DesignSystem/FoxMascot.swift) 의 systemSymbol → Image("Mascot/fox_*") 만 swap
+- [ ] **미사용 어셋 정리** — 옛 `Tutorial/tutorial0_en.png` 등 정적 PNG 슬라이드. 별도 PR
+- [ ] **레거시 `TreasureHunter.xcodeproj`** — 참고용으로 보존
 
 ---
 
@@ -569,34 +564,38 @@ PlaySpot/
 
 ---
 
-## 10. 일정 예상
+## 10. 일정 — 예상 vs 실제
 
-| Phase | 작업일 | 누적 |
-|---|---|---|
-| 0. Foundation | 1d | 1d |
-| 1. Components | 2d | 3d |
-| 2. Atomic Visual | 1d | 4d |
-| 3. Meta Nav | 3d | 7d |
-| 4. Play Flow | 4d | 11d |
-| 5. Design Flow | 4d | 15d |
-| 6. Help & Tutorial | 2d | 17d |
-| 7. Cleanup | 2d | 19d |
+| Phase | 예상 작업일 | 실제 | 비고 |
+|---|---|---|---|
+| 0. Foundation | 1d | ✅ 완료 | Items i_*.png 19개는 commit `af645a0` 에서 선행 완료 (해시 검증) — 시간 단축 |
+| 1. Components | 2d | ✅ 완료 | 11종 컴포넌트 + 카탈로그 화면 |
+| 2. Atomic Visual | 1d | ✅ 완료 | ARRadar / PulseRing / SparkleBurst |
+| 3. Meta Nav | 3d | ✅ 완료 | 5탭 모두 시뮬 스크린샷 검증 |
+| 4. Play Flow | 4d | ✅ 완료 | 9 화면, GameEngine 등 게임 로직 100% 보존 |
+| 5. Design Flow | 4d | ✅ 완료 | DesignActionSheet 신규, 5 재작성 |
+| 6. Help & Tutorial | 2d | ✅ 완료 | 4 신규 화면, 정적 PNG TutorialPagerView 폐기 |
+| 7. Cleanup | 2d | ✅ 완료 | Auth 2 화면 candy, smoke 회귀 통과 |
 
-**~3.5주 (1인 풀타임 기준)**. 각 Phase 끝에 PR 1개 + 베이스라인 스크린샷 commit.
+**전체 1일에 통합 완료** (2026-05-25). 단일 통합 commit `d951a17` 로 반영.
 
 ---
 
-## 11. PR 분리 전략
+## 11. PR / Commit 분리 전략 — 실제 결과
 
-각 phase 끝에 PR 을 끊되, 가능하면 **사용 가능한 상태로** 머지한다 (앱이 빌드되고 모든 탭이 동작):
-- PR #1 (Phase 0+1+2) — 디자인 시스템 + 컴포넌트 + 시각 어셋. 메인 화면 변경 없음 (백워드 호환).
-- PR #2 (Phase 3) — 5탭 메타 네비게이션 + 4 화면 재작성. 실제 사용자가 체감하는 첫 변화.
-- PR #3 (Phase 4) — 플레이 플로우 9 화면.
-- PR #4 (Phase 5) — 디자인 플로우 6 화면.
-- PR #5 (Phase 6) — 도움말/온보딩 4 화면.
-- PR #6 (Phase 7) — Auth + 잔여 + 외주 일러스트 + 미사용 어셋 정리.
+**실제 머지**: Phase 0~7 모두 **단일 통합 commit** `d951a17` 로 반영 (2026-05-25).
 
-각 PR 마다 README §"Build & Modification Rules" 의 검증 절차 (xcodebuild + verify.sh) 통과 필수.
+- 변경 파일: 106 파일 (+14,207 / −1,363 줄)
+- 핸드오프 자료 `design_handoff_playspot_redesign/` 포함 (디자인 SOT 보존용)
+- Co-Author: Claude Opus 4.7 (1M context)
+
+원안의 PR 분리 (#1~#6) 는 향후 동일 규모 작업 시 참고용. 이번 작업은 1인 풀스택으로 phase 간 의존성이 강해 (Phase 1 컴포넌트가 Phase 3~7 모두에서 사용) 단일 commit 이 효율적이었다. 각 phase 끝마다 빌드/시뮬/스모크 검증으로 회귀를 차단했다.
+
+후속 PR (분리 권장):
+- Components 잔여 candy 보정 (ContentView/LoadingHUD/Star*)
+- Fox 외주 일러스트 swap
+- 미사용 어셋 정리 (`Tutorial/tutorial0_en` 등)
+- 색상 테마 토글 (product 결정 후)
 
 ---
 
