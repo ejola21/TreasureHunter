@@ -172,7 +172,7 @@
 		00120BE64846A2A9C70D1AC6 /* MissionListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissionListView.swift; sourceTree = "<group>"; };
 		00180C1DD978E3B4B92B8D27 /* ShowType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowType.swift; sourceTree = "<group>"; };
 		0068203B2EAC7C5835258EF0 /* MissionItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissionItem.swift; sourceTree = "<group>"; };
-		016EAC57E2E55D07E4E72879 /* PlaySpot.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = PlaySpot.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		016EAC57E2E55D07E4E72879 /* PlaySpot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PlaySpot.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		02A6AFC3651B4D2DA5595EF2 /* s_gogogo.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = s_gogogo.mp3; sourceTree = "<group>"; };
 		051D99930CFD484C66FA928B /* s_yougotit.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = s_yougotit.wav; sourceTree = "<group>"; };
 		056BDA1FB2CD20902764436D /* treasure.sqlite */ = {isa = PBXFileReference; lastKnownFileType = file; path = treasure.sqlite; sourceTree = "<group>"; };
@@ -753,9 +753,6 @@
 						DevelopmentTeam = "";
 						TestTargetID = BADDF113611F5C88EC37450B;
 					};
-					BADDF113611F5C88EC37450B = {
-						DevelopmentTeam = A76SJ5HB8R;
-					};
 					EEBC2AD4D8CDF7D506189DDC = {
 						DevelopmentTeam = "";
 					};
@@ -772,7 +769,7 @@
 			mainGroup = 5E8701C57E31F0CC8563BF71;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				2414E76CC096449E4EEFB357 /* XCRemoteSwiftPackageReference "GRDB.swift" */,
+				2414E76CC096449E4EEFB357 /* XCRemoteSwiftPackageReference "GRDB" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = B6D381267B64BF9569E972CA /* Products */;
@@ -1075,8 +1072,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = A76SJ5HB8R;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = DX9NU5G8Y4;
 				INFOPLIST_FILE = PlaySpot/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Play Spot";
+				INFOPLIST_KEY_NSCameraUsageDescription = "AR 화면에서 카메라를 사용합니다.";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "미션 플레이를 위해 위치 정보가 필요합니다.";
+				INFOPLIST_KEY_NSMotionUsageDescription = "AR 화면과 미니게임에서 모션 센서를 사용합니다.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
@@ -1084,9 +1086,14 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.ejola.playspot.dev;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ejola.playspot;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -1197,8 +1204,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = A76SJ5HB8R;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = DX9NU5G8Y4;
 				INFOPLIST_FILE = PlaySpot/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Play Spot";
+				INFOPLIST_KEY_NSCameraUsageDescription = "AR 화면에서 카메라를 사용합니다.";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "미션 플레이를 위해 위치 정보가 필요합니다.";
+				INFOPLIST_KEY_NSMotionUsageDescription = "AR 화면과 미니게임에서 모션 센서를 사용합니다.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
@@ -1206,9 +1218,14 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.ejola.playspot.dev;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ejola.playspot;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -1254,7 +1271,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		2414E76CC096449E4EEFB357 /* XCRemoteSwiftPackageReference "GRDB.swift" */ = {
+		2414E76CC096449E4EEFB357 /* XCRemoteSwiftPackageReference "GRDB" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/groue/GRDB.swift";
 			requirement = {
@@ -1267,7 +1284,7 @@
 /* Begin XCSwiftPackageProductDependency section */
 		D80C8AD85D7822D6576DFDF9 /* GRDB */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 2414E76CC096449E4EEFB357 /* XCRemoteSwiftPackageReference "GRDB.swift" */;
+			package = 2414E76CC096449E4EEFB357 /* XCRemoteSwiftPackageReference "GRDB" */;
 			productName = GRDB;
 		};
 /* End XCSwiftPackageProductDependency section */

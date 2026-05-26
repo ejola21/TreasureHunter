@@ -519,11 +519,14 @@ final class GameEngine {
     }
 
     /// 현재 알림을 닫고 큐에서 다음 알림 꺼내 표시. ItemAcquiredPopup 의 OK 핸들러에서 호출.
+    /// 큐에서 다음 알림이 표시될 때 `.itemGet` 사운드를 재생 — Gambling → lucky bonus 같이
+    /// 한 acquireItem 에서 여러 alert 가 누적된 경우 popup 전환 시점에 사운드가 안 나는 문제 해결.
     func dismissCurrentAlert() {
         if pendingAlertQueue.isEmpty {
             pendingAlert = nil
         } else {
             pendingAlert = pendingAlertQueue.removeFirst()
+            SoundService.shared.play(.itemGet)
         }
     }
 

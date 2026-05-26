@@ -22,7 +22,20 @@
     "%@" : {
 
     },
+    "%@ · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · %2$@"
+          }
+        }
+      }
+    },
     "%@ m" : {
+
+    },
+    "✦" : {
 
     },
     "💡" : {
@@ -2216,6 +2229,9 @@
       }
     },
     "ITEM · DISPLAY · VISIBLE RANGE" : {
+
+    },
+    "ITEM ACQUIRED · 아이템 획득" : {
 
     },
     "item_message" : {

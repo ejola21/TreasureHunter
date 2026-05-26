@@ -76,19 +76,23 @@ struct MissionRowView: View {
     private var badgeTile: some View {
         ZStack {
             RoundedRectangle(cornerRadius: DuoRadius.lg).fill(tint.bg)
-                .overlay(
-                    RoundedRectangle(cornerRadius: DuoRadius.lg)
-                        .stroke(tint.border, lineWidth: 2)
-                )
 
             AsyncImage(url: mission.badgeImageURL) { image in
-                image.resizable().scaledToFit().padding(6)
+                // 여백 없이 컨테이너 꽉 차게 — fill 로 잘라내고 cornerRadius 로 클립.
+                image
+                    .resizable()
+                    .scaledToFill()
             } placeholder: {
                 Image(systemName: "rosette")
                     .font(.system(size: 28, weight: .bold))
                     .foregroundColor(tint.deep)
             }
         }
+        .clipShape(RoundedRectangle(cornerRadius: DuoRadius.lg))
+        .overlay(
+            RoundedRectangle(cornerRadius: DuoRadius.lg)
+                .stroke(tint.border, lineWidth: 2)
+        )
     }
 }
 

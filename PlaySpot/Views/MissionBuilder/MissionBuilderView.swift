@@ -273,10 +273,6 @@ private struct DesignRowV2: View {
                     )
                 }
                 .buttonStyle(.plain)
-
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(.duoHare)
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 12)

@@ -36,17 +36,21 @@ struct ARRadarView: View {
             .frame(width: discSize, height: discSize)
 
             if !suppressArrows {
-                // 디바이스 방향 (radar_myway PNG, 원본 비율 28×24 유지) — discSize 비례.
-                // anchor=.bottom + offset=-height/2 → 화살표 바닥이 disc 중심에 정확히 위치, 끝이 disc 반경의 ~84%.
-                let mywayH = discSize * 0.42
-                Image("Radar/radar_myway")
-                    .resizable()
-                    .aspectRatio(28.0 / 24.0, contentMode: .fit)
-                    .frame(height: mywayH)
-                    .rotationEffect(.radians(deviceBearingRadians), anchor: .bottom)
-                    .offset(y: -mywayH / 2)
+                // 디바이스 방향 wedge — 안쪽은 뾰족, 바깥쪽은 disc 곡률과 같은 호로 둥글게.
+                // 각도 50° 로 호의 sagitta 가 ~3pt 까지 부풀어 시각적으로 명확히 둥근 모양.
+                // 투명도 0.65 — disc 의 conic sweep / 동심원이 살짝 비침.
+                RadarSectorWedge(radiusRatio: 0.86, angleDegrees: 50)
+                    .fill(Color.white.opacity(0.65))
+                    .overlay(
+                        RadarSectorWedge(radiusRatio: 0.86, angleDegrees: 50)
+                            .stroke(Color.duoEel2.opacity(0.45), lineWidth: 1)
+                    )
+                    .frame(width: discSize, height: discSize)
+                    .rotationEffect(.radians(deviceBearingRadians))
+                    .shadow(color: Color.white.opacity(0.35), radius: 3)
 
-                // 최근접 필수 아이템 방향 (radar_item PNG, 원본 비율 9×21 유지) — discSize 비례.
+                // 최근접 필수 아이템 방향 — 기존 radar_item PNG 바늘 디자인 유지.
+                // 원본 비율 9×21 유지, discSize 비례로 disc 반경의 ~89% 까지 도달.
                 if let itemBearing = nearestMandatoryBearing {
                     let itemH = discSize * 0.45
                     Image("Radar/radar_item")
@@ -91,5 +95,33 @@ struct ARRadarView: View {
             from: location.coordinate,
             to: target.coordinate
         )
+    }
+}
+
+// MARK: - Radar wedge shape
+
+/// 디스크 중심에서 위로 향하는 부채꼴(pie sector).
+/// 바깥 끝단이 디스크와 같은 곡률의 호(arc)로 끝나서 disc 원형과 시각적으로 일관됨.
+/// 회전은 `.rotationEffect(angle)` (default anchor=.center) 으로 disc 중심 기준 회전.
+private struct RadarSectorWedge: Shape {
+    /// 디스크 반경 대비 wedge 외측 반경 (0…1). 0.84 → 디스크 보더 안쪽 16% 마진.
+    var radiusRatio: CGFloat
+    /// 꼭지각 (도). 좁을수록 needle 같음.
+    var angleDegrees: CGFloat
+
+    func path(in rect: CGRect) -> Path {
+        var p = Path()
+        let center = CGPoint(x: rect.midX, y: rect.midY)
+        let r = min(rect.width, rect.height) / 2 * radiusRatio
+        let halfAngle = Double(angleDegrees) / 2
+        // 12시(위)가 0°. 좌측 가장자리 → 우측 가장자리로 시계방향 호.
+        let startAngle = Angle.degrees(-90 - halfAngle)
+        let endAngle = Angle.degrees(-90 + halfAngle)
+        p.move(to: center)
+        p.addArc(center: center, radius: r,
+                 startAngle: startAngle, endAngle: endAngle,
+                 clockwise: false)
+        p.closeSubpath()
+        return p
     }
 }
