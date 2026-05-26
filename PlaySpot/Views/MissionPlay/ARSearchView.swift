@@ -260,115 +260,17 @@ struct ARSearchView: View {
         }
     }
 
-    // MARK: - 하단 HUD
+    // MARK: - 하단 HUD — 흰 pill (미니게임/AR Play 와 통일)
 
     private var bottomHUD: some View {
-        ZStack(alignment: .top) {
-            HStack(spacing: 0) {
-                // 좌 — 깃발 outline + "Start / 2m" (값 노란)
-                HStack(spacing: 12) {
-                    Image(systemName: "flag")
-                        .font(.system(size: 28, weight: .heavy))
-                        .foregroundColor(.white)
-                    VStack(alignment: .leading, spacing: 0) {
-                        Text("Start")
-                            .font(.duoDisplay(size: 16))
-                            .foregroundColor(.white)
-                        Text("2m")
-                            .font(.duoDisplay(size: 22))
-                            .foregroundColor(Color.duoBee)
-                    }
-                }
-                .padding(.leading, 18)
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-                Spacer().frame(width: 90)
-
-                // 우 — 마커 + "유효 반경 / 100m" (값 노란)
-                HStack(spacing: 12) {
-                    VStack(alignment: .trailing, spacing: 0) {
-                        Text("유효 반경")
-                            .font(.duoDisplay(size: 14))
-                            .foregroundColor(.white)
-                        Text("100m")
-                            .font(.duoDisplay(size: 22))
-                            .foregroundColor(Color.duoBee)
-                    }
-                    // 녹색 마커 with disc base
-                    ZStack {
-                        Ellipse()
-                            .fill(Color.white.opacity(0.18))
-                            .frame(width: 30, height: 10)
-                            .offset(y: 14)
-                        Image(systemName: "mappin.circle.fill")
-                            .font(.system(size: 30, weight: .heavy))
-                            .foregroundStyle(.white, Color.duoGreen500)
-                    }
-                }
-                .padding(.trailing, 18)
-                .frame(maxWidth: .infinity, alignment: .trailing)
-            }
-            .frame(height: 96)
-            .background(
-                LinearGradient(
-                    colors: [Color(hex: 0x1A5E69), Color(hex: 0x0B2A32)],
-                    startPoint: .top, endPoint: .bottom
-                )
-                .ignoresSafeArea(edges: .bottom)
-            )
-
-            // 떠있는 레이더
-            floatingRadar
-                .offset(y: -34)
+        RadarPillHUD(
+            leftLabel: "HINT", leftValue: "2m",
+            rightLabel: "유효 반경", rightValue: "100m"
+        ) {
+            ARRadar(size: 72)
         }
-    }
-
-    private var floatingRadar: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { ctx in
-            ZStack {
-                Circle()
-                    .fill(RadialGradient.radarDisc)
-                    .overlay(Circle().stroke(Color.white, lineWidth: 2.5))
-                    .overlay(Circle().inset(by: 3).stroke(Color.black.opacity(0.3), lineWidth: 1.5))
-
-                Circle().inset(by: 12).stroke(Color.white.opacity(0.35), lineWidth: 1)
-                Circle().inset(by: 22).stroke(Color.white.opacity(0.3), lineWidth: 1)
-                Path { p in
-                    p.move(to: CGPoint(x: 0, y: 36)); p.addLine(to: CGPoint(x: 72, y: 36))
-                    p.move(to: CGPoint(x: 36, y: 0)); p.addLine(to: CGPoint(x: 36, y: 72))
-                }
-                .stroke(Color.white.opacity(0.35), lineWidth: 1)
-
-                let sweepRot = (ctx.date.timeIntervalSinceReferenceDate
-                                .truncatingRemainder(dividingBy: 6)) / 6.0 * 360.0
-                Circle()
-                    .fill(
-                        AngularGradient(
-                            gradient: Gradient(stops: [
-                                .init(color: Color.radarGreenLight.opacity(0.55), location: 0),
-                                .init(color: .clear, location: 0.22)
-                            ]),
-                            center: .center,
-                            startAngle: .degrees(0),
-                            endAngle: .degrees(360)
-                        )
-                    )
-                    .rotationEffect(.degrees(sweepRot))
-
-                NeedleArrow()
-                    .fill(Color.duoBee)
-                    .frame(width: 9, height: 30)
-                    .offset(y: -11)
-                    .rotationEffect(.degrees(35))
-                    .shadow(color: Color.duoBee.opacity(0.7), radius: 3)
-
-                Circle().fill(Color.duoBee)
-                    .frame(width: 10, height: 10)
-                    .overlay(Circle().stroke(Color.duoEel2, lineWidth: 1.2))
-            }
-            .frame(width: 72, height: 72)
-            .shadow(color: Color.black.opacity(0.5), radius: 8, x: 0, y: 4)
-        }
+        .padding(.horizontal, 14)
+        .padding(.bottom, 18)
     }
 }
 

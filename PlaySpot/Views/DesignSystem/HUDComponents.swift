@@ -157,6 +157,96 @@ struct StatChip: View {
     }
 }
 
+// MARK: - 흰 pill 하단 HUD (HINT · 떠있는 레이더 · 유효 반경)
+// AR Searching / AR Play / 미니게임 공용.
+// 좌: 파란 깃발 박스 + 라벨/값 — 우: 라벨/값 + 녹색 핀 박스 — 가운데: 떠있는 레이더.
+
+struct RadarPillHUD<Radar: View>: View {
+    let leftLabel: String
+    let leftValue: String
+    var leftValueColor: Color = .duoFox
+
+    let rightLabel: String
+    let rightValue: String
+    var rightValueColor: Color = .duoGreen500
+
+    @ViewBuilder var radar: () -> Radar
+
+    var body: some View {
+        ZStack {
+            HStack(spacing: 0) {
+                // 좌 — 파란 깃발 박스 + 라벨/값
+                HStack(spacing: 10) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 9)
+                            .fill(Color.duoMacawBg)
+                            .frame(width: 38, height: 38)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 9)
+                                    .stroke(Color.duoMacawBorder, lineWidth: 1.5)
+                            )
+                        Image(systemName: "flag.fill")
+                            .font(.system(size: 18, weight: .heavy))
+                            .foregroundColor(.duoMacaw)
+                    }
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(leftLabel)
+                            .font(.duoBody(size: 11, weight: .heavy))
+                            .foregroundColor(.duoHare)
+                            .lineLimit(1)
+                        Text(leftValue)
+                            .font(.duoDisplay(size: 20))
+                            .foregroundColor(leftValueColor)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                    }
+                }
+                .padding(.leading, 16)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                Spacer().frame(width: 72)
+
+                // 우 — 라벨/값 + 녹색 핀 박스
+                HStack(spacing: 10) {
+                    VStack(alignment: .trailing, spacing: 0) {
+                        Text(rightLabel)
+                            .font(.duoBody(size: 11, weight: .heavy))
+                            .foregroundColor(.duoHare)
+                            .lineLimit(1)
+                        Text(rightValue)
+                            .font(.duoDisplay(size: 20))
+                            .foregroundColor(rightValueColor)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                    }
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 9)
+                            .fill(Color.duoGreen500)
+                            .frame(width: 38, height: 38)
+                        Image(systemName: "mappin.and.ellipse")
+                            .font(.system(size: 18, weight: .heavy))
+                            .foregroundColor(.white)
+                    }
+                }
+                .padding(.trailing, 16)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+            }
+            .frame(height: 72)
+            .background(
+                RoundedRectangle(cornerRadius: 22)
+                    .fill(Color.white)
+                    .shadow(color: Color.black.opacity(0.25), radius: 10, x: 0, y: 4)
+            )
+
+            // 가운데 — 떠있는 레이더 (살짝 위로). 레이더 자체에 흰 외곽 stroke 가 있으므로
+            // 별도 흰 halo 없이 그림자만 적용 (미니게임/AR Play 통일).
+            radar()
+                .shadow(color: Color.black.opacity(0.25), radius: 6, x: 0, y: 3)
+                .offset(y: -8)
+        }
+    }
+}
+
 #if DEBUG
 #Preview("HUDComponents") {
     VStack(spacing: 16) {

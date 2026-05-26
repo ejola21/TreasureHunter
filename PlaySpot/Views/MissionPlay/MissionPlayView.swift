@@ -15,6 +15,8 @@ struct MissionPlayView: View {
     let missionID: String
     let isNewStart: Bool
     let isVirtualMode: Bool
+    /// 디자인 테스트 모드에선 false — 완료 팝업의 별점/후기 입력 UI를 숨긴다.
+    var allowReply: Bool = true
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -124,7 +126,8 @@ struct MissionPlayView: View {
                     onSkip: {
                         engine.stopTimer()
                         dismiss()
-                    }
+                    },
+                    allowReply: allowReply
                 )
             }
         }
@@ -322,6 +325,7 @@ private struct LegacyTopChrome: View {
 }
 
 // MARK: - 레거시 하단 상태바 (Mine | 남은필수 | (camera 갭) | Hide Map | Stealth)
+// AR HUD 와 동일한 떠있는 라운드 pill 스타일 — 높이/cornerRadius/그림자 모두 RadarPillHUD 와 일치.
 
 private struct LegacyBottomBar: View {
     let mineCount: Int
@@ -331,42 +335,41 @@ private struct LegacyBottomBar: View {
     let onCamera: () -> Void
 
     var body: some View {
-        ZStack(alignment: .top) {
-            // 흰 카드 — 5컬럼 chip 그리드 + 카메라 자리 (높이 ARGameView 와 동일)
+        ZStack {
+            // 흰 pill — 4 chip 그리드 + 가운데 카메라 자리
             HStack(spacing: 6) {
                 StatChip(label: "지형",     value: mineCount,          style: .blue)
                 StatChip(label: "필수",     value: mandatoryRemaining, style: .orange)
-                Spacer().frame(width: 80)  // 카메라 자리 (AR 레이더와 동일)
+                Spacer().frame(width: 72)  // 카메라 자리 (AR 레이더와 동일 폭)
                 StatChip(label: "HIDDEN",  value: hiddenCount,         style: .neutral)
                 StatChip(label: "STEALTH", value: stealthCount,        style: .purple)
             }
             .padding(.horizontal, 12)
-            .padding(.vertical, 14)
-            .frame(maxWidth: .infinity, minHeight: 80)
+            .frame(height: 72)
             .background(
-                Color.white
-                    .overlay(
-                        Rectangle().fill(Color.duoSwan).frame(height: 1),
-                        alignment: .top
-                    )
-                    .ignoresSafeArea(edges: .bottom)
+                RoundedRectangle(cornerRadius: 22)
+                    .fill(Color.white)
+                    .shadow(color: Color.black.opacity(0.25), radius: 10, x: 0, y: 4)
             )
 
-            // 카메라 버튼 — 64px 녹색 원, 3px 흰 보더 (offset 통일)
+            // 카메라 버튼 — AR 레이더와 동일 offset (-8) 로 가운데 떠있는 느낌.
             Button(action: onCamera) {
                 ZStack {
                     Circle()
                         .fill(Color.duoGreen500)
-                        .frame(width: 64, height: 64)
+                        .frame(width: 76, height: 76)
                         .overlay(Circle().stroke(Color.white, lineWidth: 3))
                     Image(systemName: "camera.fill")
-                        .font(.system(size: 24, weight: .heavy))
+                        .font(.system(size: 26, weight: .heavy))
                         .foregroundColor(.white)
                 }
+                .shadow(color: Color.black.opacity(0.25), radius: 6, x: 0, y: 3)
             }
             .buttonStyle(.plain)
-            .offset(y: -24)
+            .offset(y: -8)
         }
+        .padding(.horizontal, 14)
+        .padding(.bottom, 18)
     }
 }
 

@@ -66,9 +66,14 @@ enum MissionValidator {
                                 fallbackMessage: "Run Start 와 Run End 는 짝이 맞아야 합니다.",
                                 field: .items, isBlocking: true))
         } else {
-            // 양방향 페어 매칭
+            // 페어 매칭 — 어느 한 방향이라도 링크되어 있으면 통과.
+            // 서버 응답이 Run End → Run Start 단방향만 채워주는 경우가 있어 (legacy 데이터),
+            // AND 로 검사하면 사용자가 페어를 정상 배치했는데도 오류로 표시됨.
+            // 반대 방향(End → Start) 의 완전성은 아래 rule 14 (data_check_message_13) 가 별도로 보장.
             for s in runStarts {
-                guard runEnds.contains(where: { $0.itemID == s.relationItemID && $0.relationItemID == s.itemID }) else {
+                guard runEnds.contains(where: {
+                    $0.itemID == s.relationItemID || $0.relationItemID == s.itemID
+                }) else {
                     errors.append(.init(messageKey: "data_check_message_6",
                                         fallbackMessage: "Run Start (#\(s.itemID)) 의 페어가 없습니다.",
                                         field: .item(s.itemID), isBlocking: true))

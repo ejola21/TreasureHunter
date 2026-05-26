@@ -1,9 +1,8 @@
 // Views/MissionPlay/MiniGameView.swift
-// Phase 4 — Candy 디자인.
-// 외곽선 PLAY SPOT 워드마크 (progress 0→100 에 따라 brightness/saturate/glow 증가)
-//   + shake_0/1 or touch_0/1 일러스트 토글
-//   + SparkleBurst (tap 마다 진행도 + 파티클)
-//   + Hint reveal overlay (성공 시).
+// 디자인 핸드오프 — AR-Touch / AR-Found mockup 매칭.
+// 상단: 녹색 candy MAP 버튼 + 흰 pill 타이머 (가운데)
+// 무대: PLAY SPOT 워드마크 + 손-폰 일러스트 (화면 꽉 차게) + SparkleBurst
+// 하단: 라벨/진행도 + 흰 pill HUD 카드 (HINT · 떠있는 레이더 · 유효 반경)
 // 게임 로직 (shakeGain / decay / completion) 은 보존.
 import SwiftUI
 
@@ -32,12 +31,12 @@ struct MiniGameView: View {
         ZStack {
             Color.black.ignoresSafeArea()
 
-            // 워드마크 + 손-폰 일러스트 + 파티클
+            // 워드마크 + 손-폰 일러스트 + 파티클 (화면 꽉 차게)
             stage
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .ignoresSafeArea()
 
             // 상단 + 하단 HUD
-            VStack {
+            VStack(spacing: 0) {
                 topHUD
                 Spacer()
                 bottomHUD
@@ -50,6 +49,7 @@ struct MiniGameView: View {
             }
         }
         .statusBarHidden(true)
+        .contentShape(Rectangle())
         .onAppear { motionService.startUpdates() }
         .onDisappear { motionService.stopUpdates() }
         .onChange(of: motionService.isShaking) { _, shaking in
@@ -69,102 +69,101 @@ struct MiniGameView: View {
     // MARK: - Stage (워드마크 + 일러스트 + 파티클 + 글로우)
 
     private var stage: some View {
-        ZStack {
-            // 외곽선 워드마크 — progress 에 따라 점등.
-            WordmarkPlaySpot(progress: progress / 100, variant: .outline)
-                .frame(maxWidth: 280, maxHeight: 200)
-                .padding(.top, 80)
+        GeometryReader { geo in
+            let illustrationSide = min(geo.size.width * 0.86, geo.size.height * 0.55)
+            let wordmarkW = min(geo.size.width * 1.05, illustrationSide * 1.45)
+            let sparkleR = illustrationSide * 0.85
+            ZStack {
+                // 외곽선 워드마크 — progress 에 따라 점등. 일러스트 뒤 큰 배경.
+                WordmarkPlaySpot(progress: progress / 100, variant: .outline)
+                    .frame(width: wordmarkW, height: wordmarkW * 0.75)
 
-            // 글로우 halo (progress 50% 이상)
-            if progress > 50 {
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [Color.duoBee.opacity(0.35), .clear],
-                            center: .center, startRadius: 20, endRadius: 160
+                // 글로우 halo (progress 50% 이상)
+                if progress > 50 {
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                colors: [Color.duoBee.opacity(0.4), .clear],
+                                center: .center, startRadius: 20, endRadius: sparkleR
+                            )
                         )
-                    )
-                    .frame(width: 300, height: 300)
-                    .blendMode(.screen)
+                        .frame(width: sparkleR * 2, height: sparkleR * 2)
+                        .blendMode(.screen)
+                }
+
+                // Sparkle burst — registerShake 마다 트리거
+                SparkleBurst(trigger: sparkleTrigger, radius: sparkleR)
+
+                // 손-폰 일러스트 (shake/touch × 0/1 토글) — 화면 꽉차게
+                let asset = isShakeMode
+                    ? "Minigame/\(animationToggle ? "shake_1" : "shake_0")"
+                    : "Minigame/\(animationToggle ? "touch_1" : "touch_0")"
+                Image(asset)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: illustrationSide, height: illustrationSide)
+                    .rotationEffect(.degrees(isShakeMode ? (animationToggle ? 6 : -6) : 0))
+                    .opacity(shakeOverlayOpacity)
+                    .animation(.easeInOut(duration: 0.18), value: animationToggle)
             }
-
-            // 손-폰 일러스트 (shake/touch × 0/1 토글)
-            let asset = isShakeMode
-                ? "Minigame/\(animationToggle ? "shake_1" : "shake_0")"
-                : "Minigame/\(animationToggle ? "touch_1" : "touch_0")"
-            Image(asset)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 220, height: 220)
-                .rotationEffect(.degrees(isShakeMode ? (animationToggle ? 6 : -6) : 0))
-                .offset(y: 40)
-                .opacity(shakeOverlayOpacity)
-                .animation(.easeInOut(duration: 0.18), value: animationToggle)
-
-            // Sparkle burst — registerShake 마다 트리거
-            SparkleBurst(trigger: sparkleTrigger, radius: 140)
-                .offset(y: 40)
+            .frame(width: geo.size.width, height: geo.size.height)
         }
     }
 
     // MARK: - HUD
 
     private var topHUD: some View {
-        HStack(spacing: 8) {
-            Button {
-                dismiss()
-            } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: "map.fill")
-                    Text("MAP")
-                        .font(.duoDisplay(size: 13))
-                        .kerning(0.6)
+        ZStack {
+            // 가운데 — 흰 pill 타이머
+            WhitePillTimer(seconds: elapsedSeconds / 10)
+
+            // 좌측 — MAP 버튼 (candy 녹색)
+            HStack {
+                CandyIconButton(
+                    systemImage: "map.fill",
+                    size: 44,
+                    tint: .duoGreen500,
+                    fg: .white,
+                    shadowColor: .duoGreen700
+                ) {
+                    dismiss()
                 }
-                .foregroundColor(.white)
-                .padding(.horizontal, 12)
-                .frame(height: 36)
-                .background(
-                    RoundedRectangle(cornerRadius: 10).fill(Color.hudDarkEnd)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10).stroke(Color.white.opacity(0.18), lineWidth: 1.5)
-                )
+                Spacer()
             }
-
-            Spacer()
-
-            DigitClock(seconds: elapsedSeconds / 10, style: .dark,
-                       digitFontSize: 16, digitWidth: 16, digitHeight: 26)
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 8)
+        .padding(.horizontal, 14)
+        .padding(.top, 36)
     }
 
     private var bottomHUD: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
+        VStack(spacing: 14) {
+            // 라벨 + 진행도 (검정 배경 위)
+            HStack(alignment: .firstTextBaseline) {
                 Text(isShakeMode ? "흔드세요!" : "터치하세요!")
-                    .font(.duoDisplay(size: 14))
+                    .font(.duoDisplay(size: 22))
                     .foregroundColor(.white)
-                Text(isShakeMode ? "Shake!" : "Tap!")
-                    .font(.duoBody(size: 10, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.7))
+                Spacer()
+                HStack(spacing: 6) {
+                    Text("\(Int(progress))")
+                        .font(.duoDisplay(size: 26))
+                        .foregroundColor(.duoBee)
+                    Text("/ 100")
+                        .font(.duoDisplay(size: 22))
+                        .foregroundColor(.duoSwan.opacity(0.55))
+                }
             }
+            .padding(.horizontal, 22)
 
-            Spacer()
-
-            HStack(spacing: 2) {
-                Text("\(Int(progress))")
-                    .font(.duoDisplay(size: 18))
-                    .foregroundColor(.duoBee)
-                Text("/ 100")
-                    .font(.duoDisplay(size: 14))
-                    .foregroundColor(.white.opacity(0.6))
+            // 떠있는 레이더 + 흰 pill HUD 카드
+            RadarPillHUD(
+                leftLabel: "HINT",  leftValue: "0m",
+                rightLabel: "유효 반경", rightValue: "100m"
+            ) {
+                ARRadar(size: 76)
             }
+            .padding(.horizontal, 14)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .background(LinearGradient.hudDark)
+        .padding(.bottom, 18)
     }
 
     // MARK: - Hint 공개

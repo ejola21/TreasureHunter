@@ -40,11 +40,8 @@ struct MissionDetailView: View {
             VStack(alignment: .leading, spacing: 20) {
                 heroCard
                 infoRowsCard
-                if !displayMission.items.isEmpty {
-                    itemsPreviewCard
-                }
                 rankingsCard
-                if showReplies && !replies.isEmpty {
+                if showReplies {
                     reviewsCard
                 }
                 Spacer(minLength: 24)
@@ -74,11 +71,20 @@ struct MissionDetailView: View {
             MissionPlayView(
                 missionID: config.mission.id,
                 isNewStart: true,
-                isVirtualMode: config.isVirtual
+                isVirtualMode: config.isVirtual,
+                allowReply: showReplies
             )
         }
         .task {
             await AuthBootstrap.ensureAuthenticated()
+            // items 가 비어 있으면 상세 fetch — list 응답엔 items 없음.
+            if displayMission.items.isEmpty {
+                if let detail = try? await dataSource.fetchMissionDetail(missionID: mission.id) {
+                    var merged = detail.0
+                    merged.items = detail.1
+                    liveMission = merged
+                }
+            }
             guard showReplies else { return }
             do {
                 let fresh = try await dataSource.fetchReplies(missionID: mission.id)
@@ -146,8 +152,7 @@ struct MissionDetailView: View {
         VStack(spacing: 0) {
             infoRow(icon: "mappin.and.ellipse", tint: .duoMacaw, label: "Place", value: displayMission.place)
             divider
-            infoRow(icon: "list.bullet.rectangle", tint: .duoGreen500,
-                    label: "Items", value: "\(displayMission.items.count) items")
+            itemsRow
             divider
             infoRow(icon: "clock.fill", tint: .duoFox,
                     label: "Time Limit",
@@ -160,6 +165,44 @@ struct MissionDetailView: View {
         }
         .background(RoundedRectangle(cornerRadius: 14).fill(Color.white))
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.duoSwan2, lineWidth: 2))
+    }
+
+    private var itemsRow: some View {
+        let total = displayMission.items.count
+        let mandatory = displayMission.items.filter(\.isMandatory).count
+        return HStack(spacing: 12) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 8).fill(Color.duoGreen500.opacity(0.18))
+                    .frame(width: 32, height: 32)
+                Image(systemName: "list.bullet.rectangle")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.duoGreen500)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Items")
+                    .font(.duoDisplay(size: 10))
+                    .kerning(0.6)
+                    .foregroundColor(.duoHare)
+                HStack(spacing: 8) {
+                    itemsCountChip(label: "필수", count: mandatory, tint: .duoCardinal)
+                    itemsCountChip(label: "전체", count: total, tint: .duoEel2)
+                }
+            }
+            Spacer()
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+    }
+
+    private func itemsCountChip(label: String, count: Int, tint: Color) -> some View {
+        HStack(spacing: 4) {
+            Text(label)
+                .font(.duoBody(size: 11, weight: .semibold))
+                .foregroundColor(.duoHare)
+            Text("\(count)")
+                .font(.duoBody(size: 14, weight: .bold))
+                .foregroundColor(tint)
+        }
     }
 
     private func infoRow(icon: String, tint: Color, label: String, value: String) -> some View {
@@ -189,29 +232,6 @@ struct MissionDetailView: View {
 
     private var divider: some View {
         Rectangle().fill(Color.duoSwan).frame(height: 1).padding(.leading, 58)
-    }
-
-    // MARK: - 핀 프리뷰
-
-    private var itemsPreviewCard: some View {
-        let preview = Array(displayMission.items.prefix(6))
-        return VStack(alignment: .leading, spacing: 10) {
-            DuoKicker(text: "Items in Mission")
-            HStack(spacing: 12) {
-                ForEach(preview, id: \.itemID) { item in
-                    ItemPin(item.itemType, size: 36, active: item.isMandatory)
-                }
-                if displayMission.items.count > 6 {
-                    Text("+\(displayMission.items.count - 6)")
-                        .font(.duoDisplay(size: 14))
-                        .foregroundColor(.duoHare)
-                }
-                Spacer()
-            }
-        }
-        .padding(14)
-        .background(RoundedRectangle(cornerRadius: 14).fill(Color.white))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.duoSwan2, lineWidth: 2))
     }
 
     // MARK: - 랭킹
@@ -259,29 +279,37 @@ struct MissionDetailView: View {
     private var reviewsCard: some View {
         VStack(alignment: .leading, spacing: 10) {
             DuoKicker(text: "Reviews")
-            ForEach(replies) { reply in
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack(spacing: 8) {
-                        StarRatingView(rating: reply.score ?? 0, starSize: 12)
-                        if let nick = reply.nickname, !nick.isEmpty {
-                            Text(nick)
-                                .font(.duoDisplay(size: 11))
-                                .foregroundColor(.duoEel2)
+            if replies.isEmpty {
+                Text("아직 작성된 댓글이 없습니다.")
+                    .font(.duoBody(size: 13))
+                    .foregroundColor(.duoHare)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 6)
+            } else {
+                ForEach(replies) { reply in
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(spacing: 8) {
+                            StarRatingView(rating: reply.score ?? 0, starSize: 12)
+                            if let nick = reply.nickname, !nick.isEmpty {
+                                Text(nick)
+                                    .font(.duoDisplay(size: 11))
+                                    .foregroundColor(.duoEel2)
+                            }
+                            Spacer()
+                            if let d = reply.writeDate {
+                                Text(Self.dateFmt.string(from: d))
+                                    .font(.duoBody(size: 10))
+                                    .foregroundColor(.duoHare)
+                            }
                         }
-                        Spacer()
-                        if let d = reply.writeDate {
-                            Text(Self.dateFmt.string(from: d))
-                                .font(.duoBody(size: 10))
-                                .foregroundColor(.duoHare)
-                        }
+                        Text(reply.text)
+                            .font(.duoBody(size: 13))
+                            .foregroundColor(.duoWolf2)
                     }
-                    Text(reply.text)
-                        .font(.duoBody(size: 13))
-                        .foregroundColor(.duoWolf2)
+                    .padding(10)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(RoundedRectangle(cornerRadius: 10).fill(Color.duoSnow))
                 }
-                .padding(10)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(RoundedRectangle(cornerRadius: 10).fill(Color.duoSnow))
             }
         }
         .padding(14)
@@ -367,7 +395,9 @@ struct MissionDetailView: View {
             }
         }
         if let detail = try? await dataSource.fetchMissionDetail(missionID: mission.id) {
-            liveMission = detail.0
+            var merged = detail.0
+            merged.items = detail.1
+            liveMission = merged
         }
     }
 

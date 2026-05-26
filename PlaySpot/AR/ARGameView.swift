@@ -77,8 +77,9 @@ struct ARGameView: View {
                 Spacer()
 
                 radarBar
+                    .padding(.horizontal, 14)
+                    .padding(.bottom, 18)
             }
-            .ignoresSafeArea(.container, edges: .bottom)
         }
         .onAppear {
             motionService.startUpdates()
@@ -157,48 +158,30 @@ struct ARGameView: View {
         engine.isTimeOutActive || engine.missionLimitSeconds > 0
     }
 
-    /// 하단 HUD — 흰 카드 + 깃발 chip + 부유 레이더 + 마커 chip (mockup v4).
-    /// 높이/패딩/오프셋은 MissionPlayView.LegacyBottomBar 와 통일.
+    /// 하단 HUD — 흰 pill 카드 + 부유 레이더 (미니게임/AR Searching 와 통일).
     private var radarBar: some View {
-        ZStack(alignment: .top) {
-            HStack(spacing: 6) {
-                leftInfoBlock
-                Spacer().frame(width: 80)   // 부유 레이더 자리 (Map Play 카메라 자리와 동일)
-                rightInfoBlock
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 14)
-            .frame(maxWidth: .infinity, minHeight: 80)
-            .background(
-                Color.white
-                    .overlay(
-                        Rectangle().fill(Color.duoSwan).frame(height: 1),
-                        alignment: .top
-                    )
-                    .ignoresSafeArea(edges: .bottom)
-            )
-
-            // 부유 candy 레이더 — Map Play 의 카메라와 동일 offset.
+        let (leftLabel, leftValue) = leftLabelValue
+        let (rightLabel, rightValue) = rightLabelValue
+        return RadarPillHUD(
+            leftLabel: leftLabel.uppercased(),
+            leftValue: leftValue.isEmpty ? "—" : leftValue,
+            rightLabel: rightLabel,
+            rightValue: rightValue.isEmpty ? "—" : rightValue
+        ) {
             ARRadarView(
                 items: items,
                 itemStatuses: itemStatuses,
                 locationService: locationService,
                 suppressArrows: nearestItemIsHiddenByShowType
             )
-            .frame(width: 64, height: 64)
-            .background(
-                Circle().fill(Color.white)
-                    .frame(width: 70, height: 70)
-                    .shadow(color: Color.black.opacity(0.18), radius: 6, x: 0, y: 4)
-            )
-            .offset(y: -24)
+            .frame(width: 76, height: 76)
         }
     }
 
     /// "Quiz:12m" 같은 nearestItemInfoText 를 (label, value) 로 분리. Stealth 안내일 땐 단일 라벨.
     private var leftLabelValue: (String, String) {
         let text = nearestItemInfoText
-        if text.isEmpty { return ("—", "") }
+        if text.isEmpty { return ("HINT", "") }
         let parts = text.split(separator: ":", maxSplits: 1).map(String.init)
         if parts.count == 2 { return (parts[0], parts[1]) }
         return (text, "")
@@ -211,56 +194,6 @@ struct ARGameView: View {
         let parts = text.split(separator: ":", maxSplits: 1).map(String.init)
         if parts.count == 2 { return (parts[0], parts[1]) }
         return (text, "")
-    }
-
-    private var leftInfoBlock: some View {
-        let (label, value) = leftLabelValue
-        return HStack(spacing: 10) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 10).fill(Color.duoMacawBg)
-                    .frame(width: 40, height: 40)
-                Image(systemName: "flag.fill")
-                    .font(.system(size: 18, weight: .heavy))
-                    .foregroundColor(.duoMacaw)
-            }
-            VStack(alignment: .leading, spacing: 0) {
-                Text(label.uppercased())
-                    .font(.duoBody(size: 10, weight: .heavy))
-                    .foregroundColor(.duoHare)
-                    .lineLimit(1)
-                Text(value.isEmpty ? "—" : value)
-                    .font(.duoDisplay(size: 18))
-                    .foregroundColor(.duoFox)
-                    .lineLimit(1)
-            }
-            Spacer(minLength: 0)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private var rightInfoBlock: some View {
-        let (label, value) = rightLabelValue
-        return HStack(spacing: 10) {
-            Spacer(minLength: 0)
-            VStack(alignment: .trailing, spacing: 0) {
-                Text(label)
-                    .font(.duoBody(size: 10, weight: .heavy))
-                    .foregroundColor(.duoHare)
-                    .lineLimit(1)
-                Text(value.isEmpty ? "—" : value)
-                    .font(.duoDisplay(size: 18))
-                    .foregroundColor(.duoGreen800)
-                    .lineLimit(1)
-            }
-            ZStack {
-                RoundedRectangle(cornerRadius: 10).fill(Color.duoGreen100)
-                    .frame(width: 40, height: 40)
-                Image(systemName: "mappin.and.ellipse")
-                    .font(.system(size: 16, weight: .heavy))
-                    .foregroundColor(.duoGreen500)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .trailing)
     }
 
     /// 좌하단 라벨 — 레거시 ar_infoView 포팅 ([`ARViewController.m:1615-1653`](Classes/ARViewController.m#L1615-L1653)).

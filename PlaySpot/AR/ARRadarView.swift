@@ -12,7 +12,7 @@ struct ARRadarView: View {
     /// nearest 아이템이 Stealth/Hidden + 레이더 없음 상태일 때 화살표 숨김.
     var suppressArrows: Bool = false
 
-    private let discSize: CGFloat = 64
+    private let discSize: CGFloat = 76
 
     var body: some View {
         ZStack {
@@ -36,18 +36,25 @@ struct ARRadarView: View {
             .frame(width: discSize, height: discSize)
 
             if !suppressArrows {
-                // 디바이스 방향 (radar_myway PNG 회전 보존)
+                // 디바이스 방향 (radar_myway PNG, 원본 비율 28×24 유지) — discSize 비례.
+                // anchor=.bottom + offset=-height/2 → 화살표 바닥이 disc 중심에 정확히 위치, 끝이 disc 반경의 ~84%.
+                let mywayH = discSize * 0.42
                 Image("Radar/radar_myway")
-                    .frame(width: 28, height: 24)
+                    .resizable()
+                    .aspectRatio(28.0 / 24.0, contentMode: .fit)
+                    .frame(height: mywayH)
                     .rotationEffect(.radians(deviceBearingRadians), anchor: .bottom)
-                    .offset(y: -12)
+                    .offset(y: -mywayH / 2)
 
-                // 최근접 필수 아이템 방향 (radar_item PNG 회전 보존)
+                // 최근접 필수 아이템 방향 (radar_item PNG, 원본 비율 9×21 유지) — discSize 비례.
                 if let itemBearing = nearestMandatoryBearing {
+                    let itemH = discSize * 0.45
                     Image("Radar/radar_item")
-                        .frame(width: 9, height: 21)
+                        .resizable()
+                        .aspectRatio(9.0 / 21.0, contentMode: .fit)
+                        .frame(height: itemH)
                         .rotationEffect(.radians(itemBearing), anchor: .bottom)
-                        .offset(y: -10.5)
+                        .offset(y: -itemH / 2)
                 }
             }
 
