@@ -68,16 +68,24 @@ class MapPlay extends StatelessWidget {
     );
   }
 
-  Widget _pin(MissionItem it, bool acquired) => Container(
-        width: 32, height: 32,
-        decoration: BoxDecoration(
-          color: acquired ? DuoColors.hare : (it.isMandatory ? DuoColors.fox : DuoColors.green500),
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.white, width: 2),
+  Widget _pin(MissionItem it, bool acquired) => Opacity(
+        opacity: acquired ? 0.5 : 1.0,
+        child: Image.asset(
+          it.mapIconName,
+          width: 40,
+          height: 40,
+          errorBuilder: (_, _, _) => Container(
+            width: 32, height: 32,
+            decoration: BoxDecoration(
+              color: it.isMandatory ? DuoColors.fox : DuoColors.green500,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 2),
+            ),
+            alignment: Alignment.center,
+            child: Text(it.itemType.displayLabel.characters.first,
+                style: const TextStyle(color: Colors.white, fontFamily: DuoFonts.display, fontSize: 13)),
+          ),
         ),
-        alignment: Alignment.center,
-        child: Text(it.itemType.displayLabel.characters.first,
-            style: const TextStyle(color: Colors.white, fontFamily: DuoFonts.display, fontSize: 13)),
       );
 }
 

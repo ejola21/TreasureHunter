@@ -28,6 +28,16 @@ class _ItemAcquiredPopupState extends State<ItemAcquiredPopup> with TickerProvid
     super.dispose();
   }
 
+  Widget _fallbackIcon() => Container(
+        width: 64, height: 64,
+        decoration: BoxDecoration(
+          color: DuoColors.green500, shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: 3),
+          boxShadow: [BoxShadow(color: DuoColors.bee.withValues(alpha: 0.6), blurRadius: 18)],
+        ),
+        child: const Icon(Icons.card_giftcard, color: Colors.white, size: 30),
+      );
+
   @override
   Widget build(BuildContext context) {
     final scale = CurvedAnimation(parent: _pop, curve: Curves.elasticOut);
@@ -65,15 +75,10 @@ class _ItemAcquiredPopupState extends State<ItemAcquiredPopup> with TickerProvid
                     ),
                   ),
                 ),
-                Container(
-                  width: 64, height: 64,
-                  decoration: BoxDecoration(
-                    color: DuoColors.green500, shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 3),
-                    boxShadow: [BoxShadow(color: DuoColors.bee.withValues(alpha: 0.6), blurRadius: 18)],
-                  ),
-                  child: const Icon(Icons.card_giftcard, color: Colors.white, size: 30),
-                ),
+                widget.alert.itemIconName.isNotEmpty
+                    ? Image.asset(widget.alert.itemIconName, width: 72, height: 72,
+                        errorBuilder: (_, _, _) => _fallbackIcon())
+                    : _fallbackIcon(),
                 const Positioned(
                   bottom: 10,
                   child: Text('ITEM ACQUIRED · 아이템 획득',

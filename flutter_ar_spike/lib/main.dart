@@ -1,6 +1,7 @@
 // main.dart — PlaySpot Flutter 진입점 (plan_playspot_flutter.md Phase 0).
 // AR 파일럿 자산은 lib/ar/ 에 보존 (후속 Play 단계에서 연결).
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app/main_tab.dart';
@@ -19,6 +20,12 @@ class PlaySpotApp extends StatelessWidget {
       title: 'PlaySpot',
       debugShowCheckedModeBanner: false,
       theme: buildPlaySpotTheme(),
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('en'), Locale('ko')],
       home: const MainTab(),
     );
   }
