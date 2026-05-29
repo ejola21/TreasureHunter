@@ -203,4 +203,42 @@ class RestRemoteDataSource implements MissionDataSource {
     await _client.send('DELETE', '/api/v1/missions/${Uri.encodeComponent(missionID)}');
     return true;
   }
+
+  // 플레이 기록 — KST "yyyy-MM-dd HH:mm:ss", best-effort.
+  static String _kst(DateTime d) {
+    final l = d.toLocal();
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${l.year}-${two(l.month)}-${two(l.day)} ${two(l.hour)}:${two(l.minute)}:${two(l.second)}';
+  }
+
+  Future<bool> _recordPlay(String missionID, String path, Map<String, dynamic> body) async {
+    try {
+      await _client.send('POST', '/api/v1/missions/${Uri.encodeComponent(missionID)}/plays/$path', body: body);
+      return true;
+    } catch (e) {
+      _log('recordPlay/$path: $e');
+      return false;
+    }
+  }
+
+  @override
+  Future<bool> recordPlayStart(
+      {required String missionID, required String playerID, required DateTime startTime, required bool isVirtual}) {
+    return _recordPlay(missionID, 'start',
+        {'playerId': playerID, 'startTime': _kst(startTime), 'isVirtual': isVirtual ? 1 : 0});
+  }
+
+  @override
+  Future<bool> recordPlayFinish(
+      {required String missionID, required String playerID, required DateTime startTime, required DateTime endTime, required bool isVirtual}) {
+    return _recordPlay(missionID, 'finish',
+        {'playerId': playerID, 'startTime': _kst(startTime), 'endTime': _kst(endTime), 'isVirtual': isVirtual ? 1 : 0});
+  }
+
+  @override
+  Future<bool> recordPlayFail(
+      {required String missionID, required String playerID, required DateTime startTime, required DateTime endTime, required bool isVirtual}) {
+    return _recordPlay(missionID, 'fail',
+        {'playerId': playerID, 'startTime': _kst(startTime), 'endTime': _kst(endTime), 'isVirtual': isVirtual ? 1 : 0});
+  }
 }

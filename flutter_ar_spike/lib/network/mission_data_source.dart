@@ -34,4 +34,12 @@ abstract interface class MissionDataSource {
   Future<String> createMission(BuilderMissionReq req); // 반환: missionID
   Future<bool> updateMission(String missionID, BuilderMissionReq req);
   Future<bool> deleteMission(String missionID);
+
+  // 플레이 기록 (best-effort)
+  Future<bool> recordPlayStart(
+      {required String missionID, required String playerID, required DateTime startTime, required bool isVirtual});
+  Future<bool> recordPlayFinish(
+      {required String missionID, required String playerID, required DateTime startTime, required DateTime endTime, required bool isVirtual});
+  Future<bool> recordPlayFail(
+      {required String missionID, required String playerID, required DateTime startTime, required DateTime endTime, required bool isVirtual});
 }
