@@ -48,6 +48,7 @@ dependencies:
   flutter_map: ^7.0.0           # 디자인 빌더 지도 (OSM)
   latlong2: ^0.9.1              # 좌표 (flutter_map)
   intl: ^0.20.0                 # 날짜/LimitTime 파싱·포맷
+  shared_preferences: ^2.3.0    # 아이템 카운트/설정 영속 (Phase 10)
 
 dev_dependencies:
   flutter_test:

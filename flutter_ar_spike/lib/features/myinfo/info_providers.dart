@@ -1,5 +1,6 @@
 // features/myinfo/info_providers.dart — 플레이 기록 + 아이템 카운트 provider.
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/mission.dart';
 import '../../network/app_config.dart';
 
@@ -20,16 +21,42 @@ class UserCounts {
 }
 
 class UserCountsNotifier extends Notifier<UserCounts> {
+  SharedPreferences? _prefs;
+
   @override
-  UserCounts build() => const UserCounts();
+  UserCounts build() {
+    _load();
+    return const UserCounts();
+  }
 
-  void addSolution(int n) => state = state.copyWith(solution: state.solution + n);
-  void addTimeAdd(int n) => state = state.copyWith(timeAdd: state.timeAdd + n);
+  Future<void> _load() async {
+    _prefs = await SharedPreferences.getInstance();
+    state = UserCounts(
+      solution: _prefs!.getInt('solution') ?? 0,
+      timeAdd: _prefs!.getInt('timeAdd') ?? 0,
+    );
+  }
 
-  /// Hint 사용 — solution 1 차감. 잔여 없으면 false.
+  void _save() {
+    _prefs?.setInt('solution', state.solution);
+    _prefs?.setInt('timeAdd', state.timeAdd);
+  }
+
+  void addSolution(int n) {
+    state = state.copyWith(solution: state.solution + n);
+    _save();
+  }
+
+  void addTimeAdd(int n) {
+    state = state.copyWith(timeAdd: state.timeAdd + n);
+    _save();
+  }
+
+  /// Hint/Solution 사용 — solution 1 차감. 잔여 없으면 false.
   bool useSolution() {
     if (state.solution <= 0) return false;
     state = state.copyWith(solution: state.solution - 1);
+    _save();
     return true;
   }
 }

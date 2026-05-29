@@ -1,10 +1,12 @@
 // features/myinfo/my_info_page.dart — 내 정보 (프로필 + ITEMS + DESIGNED + PLAYED).
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../design_system/candy_button.dart';
 import '../../design_system/duo_tokens.dart';
 import '../../design_system/form_group.dart';
 import '../../models/mission.dart';
 import '../../network/app_config.dart';
+import '../../services/store_service.dart';
 import '../design/design_providers.dart';
 import 'info_providers.dart';
 
@@ -30,13 +32,55 @@ class MyInfoPage extends ConsumerWidget {
           const SizedBox(height: 16),
           FormGroup(title: 'ITEMS', children: [
             FormRow(label: 'Solutions', value: '${counts.solution}'),
-            FormRow(label: 'Time Add', value: '${counts.timeAdd}', isLast: true),
+            FormRow(
+              label: 'Time Add',
+              value: '${counts.timeAdd}',
+              isLast: true,
+              trailing: TextButton(
+                onPressed: () => _showStore(context, ref),
+                child: const Text('상점'),
+              ),
+            ),
           ]),
           const SizedBox(height: 16),
           _missionGroup('DESIGNED', designed),
           const SizedBox(height: 16),
           _missionGroup('PLAYED', played),
         ],
+      ),
+    );
+  }
+
+  void _showStore(BuildContext context, WidgetRef ref) {
+    final store = StoreService(ref.read(userCountsProvider.notifier));
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            const Text('상점 (로컬 시뮬)',
+                style: TextStyle(fontFamily: DuoFonts.display, fontSize: 18, color: DuoColors.eel2)),
+            const SizedBox(height: 4),
+            const Text('출시 시 in_app_purchase 로 연결됩니다.', style: TextStyle(fontSize: 12, color: DuoColors.hare)),
+            const SizedBox(height: 16),
+            for (final p in StoreProduct.values) ...[
+              CandyButton(
+                label: p.label,
+                tint: DuoColors.macaw,
+                shadowColor: DuoColors.macawDeep,
+                onPressed: () async {
+                  await store.purchase(p);
+                  if (ctx.mounted) Navigator.pop(ctx);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${p.label} 획득')));
+                  }
+                },
+              ),
+              const SizedBox(height: 10),
+            ],
+          ]),
+        ),
       ),
     );
   }
