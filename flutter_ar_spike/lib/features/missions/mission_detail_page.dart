@@ -6,6 +6,7 @@ import '../../design_system/duo_tokens.dart';
 import '../../models/mission.dart';
 import '../../models/parse_utils.dart';
 import '../../network/app_config.dart';
+import '../play/start_game_page.dart';
 import 'mission_providers.dart';
 
 class MissionDetailPage extends ConsumerWidget {
@@ -43,8 +44,8 @@ class MissionDetailPage extends ConsumerWidget {
         const SizedBox(height: 16),
         CandyButton(
           label: '플레이 시작',
-          onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('AR 플레이는 후속 단계에서 연결됩니다 (파일럿 자산 재사용)')),
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => StartGamePage(mission: m)),
           ),
         ),
         const SizedBox(height: 24),
