@@ -26,6 +26,12 @@ flutter run -d chrome           # 또는 -d <android-id> / -d <iphone-id>
 3플랫폼 빌드 검증: `flutter build web` / `flutter build apk --debug` / `flutter build ios --no-codesign` 모두 통과.
 (iOS pod install 시 로케일 에러나면 `LANG=en_US.UTF-8` prefix)
 
+**플레이(GameEngine) 회귀 단위테스트**: `flutter test test/game_engine_test.dart`
+(완료 게이트 / End 핀 가시성 / 지뢰 손실 / Defense 흡수 / Dark zone / Run 타임아웃 7케이스 — 타이머·네트워크 비의존)
+
+**로컬라이즈 재생성**: SwiftUI 의 `PlaySpot/Resources/Localizable.xcstrings` 변경 시
+`python3 scripts/xcstrings_to_arb.py` → `lib/l10n/app_{en,ko}.arb` 재생성(식별자 키 277개).
+
 ---
 
 ## AR 파일럿 (카메라+나침반) 테스트
