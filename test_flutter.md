@@ -1,10 +1,38 @@
 # test_flutter.md — flutter_ar_spike 테스트 방법 (Android / Web)
 
-PlaySpot AR 스파이크(`flutter_ar_spike/`) 를 실 기기에서 테스트하는 간단 런북.
+`flutter_ar_spike/` 는 두 가지를 담고 있다:
+1. **PlaySpot 앱 (미션·디자인 탭)** — plan_playspot_flutter.md Phase 0~4 (아래 §0).
+2. **AR 파일럿** (`lib/ar/`) — plan_flutter.md 검증 자산 (아래 §A/§B, 카메라+나침반).
+
 공통 준비: `cd flutter_ar_spike && flutter pub get`
+
+---
+
+## 0. PlaySpot 앱 (미션·디자인 탭) — 실서버 연동
+
+```sh
+flutter run -d chrome           # 또는 -d <android-id> / -d <iphone-id>
+```
+앱 시작 시 게스트 자동 가입(`Guest@<ts>`) + JWT 발급 → iOS 앱과 **같은 /api/v1/** 백엔드/데이터** 공유.
+
+**미션 탭**: 인기/신규/내 주변/전체 4세그 → 카드 탭 → 상세(정보/랭킹/리뷰). 리뷰 작성(별점+글) 가능.
+**디자인 탭**: 우상단 `+` → 새 미션(제목/장소/제한시간) 생성 → 빌더 맵에서 길게눌러 아이템 배치,
+핀 탭 편집(필수/표시/반경/문구/삭제), 저장. 목록 행 메뉴로 공개/해제/삭제.
+
+확인 포인트:
+- 미션 탭에 실서버 미션(예: "튜토리얼: 기본 미션") 표시
+- 디자인 탭에서 만든 미션 공개 → 미션 탭(전체)에 노출 (iOS 앱과 데이터 공유 교차 확인)
+
+3플랫폼 빌드 검증: `flutter build web` / `flutter build apk --debug` / `flutter build ios --no-codesign` 모두 통과.
+(iOS pod install 시 로케일 에러나면 `LANG=en_US.UTF-8` prefix)
+
+---
+
+## AR 파일럿 (카메라+나침반) 테스트
 
 확인 포인트(공통): START → 카메라/위치 허용 → 폰 돌리면 HUD `heading` 갱신 +
 북쪽 향하면 초록 깃발 화면 중앙, 좌우로 돌리면 추적.
+(현재 앱 홈은 미션/디자인 탭이라, AR 화면은 `lib/ar/ar_overlay_view.dart` 를 직접 home 으로 띄워 테스트)
 
 ---
 
