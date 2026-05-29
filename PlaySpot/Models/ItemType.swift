@@ -142,10 +142,10 @@ enum ItemType: String, Codable, CaseIterable {
                     "미니게임을 추가해서 획득 난이도를 조절하세요.")
         case .radarAR:
             return ("획득 후 AR 화면에서 숨겨둔 아이템들이 보이게 돼요.",
-                    "미션에 1개만. AR 숨김 아이템과 함께 사용하세요.")
+                    "미션에 1개만. Stealth 아이템과 함께 사용하세요.")
         case .radarMap:
             return ("획득 후 지도 화면에서 숨겨둔 아이템들이 보이게 돼요.",
-                    "미션에 1개만. MAP 숨김 아이템과 함께 사용하세요.")
+                    "미션에 1개만. Hidden 아이템과 함께 사용하세요.")
         case .radarMine:
             return ("획득 후 지도에 지뢰 위치와 폭발 반경이 표시돼요.",
                     "미션에 1개만. 지뢰가 많은 코스라면 꼭 하나 두는 걸 추천!")

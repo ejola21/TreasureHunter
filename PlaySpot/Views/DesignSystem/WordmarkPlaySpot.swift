@@ -24,19 +24,50 @@ struct WordmarkPlaySpot: View {
     }
 
     var body: some View {
-        let brightness = 0.55 + (1.05 - 0.55) * progress.clamped01
-        let saturation = 0.4 + (1.8 - 0.4) * progress.clamped01
-        let glowOpacity = max(0, (progress.clamped01 - 0.5) * 2.0)  // >50% 부터 점등
+        switch variant {
+        case .color:
+            // 팝업/프리뷰 — 풀컬러 워드마크 (채움 연출 없음).
+            Image(variant.assetName)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+        case .outline:
+            fillingWordmark
+        }
+    }
 
-        Image(variant.assetName)
+    /// 미니게임 — 색이 아래에서 위로 차오르는 워드마크.
+    /// 회색 베이스(로고 모양) 위로 Duo 테마 그린 그라데이션을 로고 모양으로 클립해
+    /// progress 만큼 하단부터 reveal. 같은 에셋을 마스크로 재사용해 자기정렬.
+    private var fillingWordmark: some View {
+        let p = progress.clamped01
+        let glowOpacity = max(0, (p - 0.5) * 2.0)  // >50% 부터 점등
+        let logoShape = Image(variant.assetName)
             .resizable()
             .aspectRatio(contentMode: .fit)
-            .brightness(brightness - 1.0)
-            .saturation(saturation)
-            .shadow(color: Color.duoBee.opacity(0.6 * glowOpacity),
-                    radius: 18 * glowOpacity, x: 0, y: 0)
-            .shadow(color: Color.duoFox.opacity(0.3 * glowOpacity),
-                    radius: 32 * glowOpacity, x: 0, y: 0)
+        return logoShape
+            // 베이스 — 채도 제거 + 어둡게 (아직 안 채워진 부분)
+            .saturation(0)
+            .brightness(-0.35)
+            .opacity(0.55)
+            .overlay {
+                // 채움 — Duo 테마 그린 그라데이션, 로고 모양 클립 + 하단부터 progress 만큼 reveal
+                LinearGradient(
+                    colors: [.duoGreen750, .duoGreen500, .duoGreen400],
+                    startPoint: .bottom, endPoint: .top
+                )
+                .mask { logoShape }
+                .mask(alignment: .bottom) {
+                    GeometryReader { geo in
+                        Rectangle()
+                            .frame(height: geo.size.height * p)
+                            .frame(maxHeight: .infinity, alignment: .bottom)
+                    }
+                }
+                .shadow(color: Color.duoBee.opacity(0.6 * glowOpacity),
+                        radius: 18 * glowOpacity, x: 0, y: 0)
+                .shadow(color: Color.duoGreen400.opacity(0.4 * glowOpacity),
+                        radius: 32 * glowOpacity, x: 0, y: 0)
+            }
             .animation(.easeOut(duration: 0.25), value: progress)
     }
 }

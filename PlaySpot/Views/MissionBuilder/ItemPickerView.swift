@@ -21,13 +21,8 @@ struct ItemPickerView: View {
         .radarAR, .radarMap, .radarMine,
     ]
 
-    /// showType 라벨. showType 1(전체 숨김)은 미사용 — picker 에 노출하지 않는다.
-    /// 2=AR 숨김 / 3=MAP 숨김 / 4=숨김없음 (item_design2.md).
-    private static let showTypeOptions: [(ShowType, String)] = [
-        (.all,     "숨김없음"),    // 4 — 지도/AR 모두 노출
-        (.arOnly,  "AR 숨김"),    // 2
-        (.mapOnly, "MAP 숨김"),   // 3
-    ]
+    /// showType 라벨은 ShowType.displayName 단일 진실 출처 사용.
+    /// transparent(1)=전체 숨김은 미노출 — selectableCases 가 [Visible / Hidden / Stealth].
 
     /// rangeAR 프리셋 — 레거시 AppDelegate.rangeAR 동일.
     private static let rangePresets: [Int] = [10, 20, 30, 40, 50, 60, 70, 80, 100, 150, 200, 300, 500]
@@ -96,6 +91,11 @@ struct ItemPickerView: View {
                         DuoChip.blue(Self.label(for: showType))
                         DuoChip.green("\(rangeAR) m")
                     }
+                    Text(showType.helpText)
+                        .font(.duoBody(size: 11))
+                        .foregroundColor(.duoHare)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             } else {
                 Text("아이템을 선택하세요")
@@ -126,8 +126,8 @@ struct ItemPickerView: View {
                 .clipped()
 
                 Picker("Display", selection: $showType) {
-                    ForEach(Self.showTypeOptions, id: \.0) { pair in
-                        Text(pair.1).tag(pair.0)
+                    ForEach(ShowType.selectableCases, id: \.self) { type in
+                        Text(type.displayName).tag(type)
                     }
                 }
                 .pickerStyle(.wheel)
@@ -148,7 +148,7 @@ struct ItemPickerView: View {
     }
 
     private static func label(for show: ShowType) -> String {
-        showTypeOptions.first { $0.0 == show }?.1 ?? "숨김없음"
+        show.displayName
     }
 }
 

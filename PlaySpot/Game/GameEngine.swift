@@ -185,6 +185,7 @@ final class GameEngine {
                let endItem = loadedItems.first(where: { $0.itemType == .timeoutEnd && $0.relationItemID == startItem.itemID }) {
                 timeOutLimitTime = endItem.effectiveTime
                 isTimeOutActive = true
+                activeTimeoutStartID = startItem.itemID
             }
         }
 
@@ -282,10 +283,40 @@ final class GameEngine {
         if isTimeOutActive, let timeoutStart = timeOutStartTime {
             remainingRunTime = Double(timeOutLimitTime) - Date().timeIntervalSince(timeoutStart)
             if remainingRunTime <= 0 {
-                isTimeOutActive = false
-                SoundService.shared.play(.timeOver)
+                handleRunTimeExpired()
             }
         }
+    }
+
+    /// Run End 제한 시간 초과 처리.
+    /// 활성 Run Start 를 미획득 상태로 되돌려 사용자가 다시 잡을 수 있게 한다
+    /// (레거시는 만료 후 그대로 두지만, 신규는 재시도 허용).
+    private func handleRunTimeExpired() {
+        let expiredLimit = timeOutLimitTime
+        let startID = activeTimeoutStartID
+        let startItem = startID.flatMap { id in items.first(where: { $0.itemID == id }) }
+
+        isTimeOutActive = false
+        activeTimeoutStartID = nil
+        timeOutStartTime = nil
+        remainingRunTime = 0
+
+        // 활성 Run Start 복구 — dicItemEnd, DB, acquisitionOrder 모두 되돌림.
+        if let startID, let missionID = mission?.id {
+            dicItemEnd[startID] = "N"
+            var revert = MissionItemInPlay(
+                missionID: missionID, playerID: playerID, itemID: startID)
+            revert.endYN = "N"
+            try? playRepo.updateItemInPlay(revert)
+            acquisitionOrder.removeAll { $0 == startID }
+            updateCounters()
+        }
+
+        SoundService.shared.play(.timeOver)
+        enqueueAlert(ItemAcquiredAlert(
+            title: NSLocalizedString("mission_play_9", comment: ""),
+            message: "\(NSLocalizedString("mission_play_10", comment: "")): \(TimerFormatter.format(TimeInterval(expiredLimit)))",
+            itemIconName: startItem?.arIconName ?? ""))
     }
 
     // MARK: - 지뢰 폭발 (기존: mineBlast:)
@@ -690,7 +721,10 @@ final class GameEngine {
             enqueueAlert(ItemAcquiredAlert(title: "Hint Item acquired!", message: msg, itemIconName: icon))
 
         case .timeoutStart:
-            let msg = item.info.isEmpty ? "Acquire Run End Item in time limit" : item.info
+            // 실제 제한시간은 페어 Run End 의 effectiveTime (디자이너가 편집 가능한 단일 진실 출처).
+            // item.info 는 stale 한 "60초" 같은 값이 박혀 있을 수 있어 표시하지 않는다.
+            let limit = items.first(where: { $0.itemType == .timeoutEnd && $0.relationItemID == item.itemID })?.effectiveTime ?? timeOutLimitTime
+            let msg = "제한 시간 \(TimerFormatter.format(TimeInterval(limit))) 안에 Run End 아이템을 획득하세요."
             enqueueAlert(ItemAcquiredAlert(title: "Run Start Item acquired!", message: msg, itemIconName: icon))
 
         case .timeoutEnd:

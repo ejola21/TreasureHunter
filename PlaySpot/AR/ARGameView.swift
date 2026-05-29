@@ -26,6 +26,9 @@ struct ARGameView: View {
     /// AR 화면에서 mine 자동 폭발 처리 중인지 (cover 닫히는 사이 onChange 중복 발화 방지)
     @State private var mineBlastTriggered = false
 
+    /// 화면 설명 오버레이 표시 여부 (상단 ? 버튼).
+    @State private var showHelp = false
+
     var body: some View {
         ZStack {
             // 카메라 피드
@@ -69,6 +72,15 @@ struct ARGameView: View {
                             onMapTapped?()
                         }
                         Spacer()
+                        CandyIconButton(
+                            systemImage: "questionmark",
+                            size: 44,
+                            tint: .duoMacaw,
+                            fg: .white,
+                            shadowColor: .duoHumpback
+                        ) {
+                            withAnimation(.easeOut(duration: 0.2)) { showHelp = true }
+                        }
                     }
                 }
                 .padding(.horizontal, 14)
@@ -79,6 +91,20 @@ struct ARGameView: View {
                 radarBar
                     .padding(.horizontal, 14)
                     .padding(.bottom, 18)
+            }
+
+            // 화면 설명 오버레이 (상단 ? 버튼)
+            if showHelp {
+                let (itemLabel, itemValue) = leftLabelValue
+                let (rangeLabel, rangeValue) = rightLabelValue
+                ARHelpOverlay(
+                    itemKicker: itemValue.isEmpty ? itemLabel : "\(itemLabel) · \(itemValue)",
+                    rangeKicker: rangeValue.isEmpty ? rangeLabel : "\(rangeLabel) · \(rangeValue)"
+                ) {
+                    withAnimation(.easeOut(duration: 0.2)) { showHelp = false }
+                }
+                .transition(.opacity)
+                .zIndex(10)
             }
         }
         .onAppear {
@@ -158,72 +184,120 @@ struct ARGameView: View {
         engine.isTimeOutActive || engine.missionLimitSeconds > 0
     }
 
-    /// 하단 HUD — 흰 pill 카드 + 부유 레이더 (미니게임/AR Searching 와 통일).
+    /// 하단 HUD. Stealth 아이템이 nearest 면 전용 레이아웃(글자 공간 확보 + 스텔스 레이더 강조),
+    /// 그 외는 공용 RadarPillHUD (미니게임/AR Searching 와 통일).
+    @ViewBuilder
     private var radarBar: some View {
-        let (leftLabel, leftValue) = leftLabelValue
-        let (rightLabel, rightValue) = rightLabelValue
-        return RadarPillHUD(
-            leftLabel: leftLabel.uppercased(),
-            leftValue: leftValue.isEmpty ? "—" : leftValue,
-            rightLabel: rightLabel,
-            rightValue: rightValue.isEmpty ? "—" : rightValue
-        ) {
+        if nearestItemIsHiddenByShowType {
+            stealthHUD
+        } else {
+            let (leftLabel, leftValue) = leftLabelValue
+            let (rightLabel, rightValue) = rightLabelValue
+            RadarPillHUD(
+                leftLabel: leftLabel.uppercased(),
+                leftValue: leftValue.isEmpty ? "—" : leftValue,
+                rightLabel: rightLabel,
+                rightValue: rightValue.isEmpty ? "—" : rightValue
+            ) {
+                ARRadarView(
+                    items: items,
+                    itemStatuses: itemStatuses,
+                    locationService: locationService,
+                    suppressArrows: false
+                )
+                .frame(width: 76, height: 76)
+            }
+        }
+    }
+
+    /// Stealth 전용 하단 HUD — 레이더(화살표 숨김) + 아이템 이름/속성 + "스텔스 레이더" 강조 안내.
+    /// 좌우 분할 대신 가로 전체를 안내문에 할애해 글자가 잘리지 않음.
+    private var stealthHUD: some View {
+        HStack(spacing: 12) {
             ARRadarView(
                 items: items,
                 itemStatuses: itemStatuses,
                 locationService: locationService,
-                suppressArrows: nearestItemIsHiddenByShowType
+                suppressArrows: true
             )
-            .frame(width: 76, height: 76)
+            .frame(width: 58, height: 58)
+            .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
+
+            VStack(alignment: .leading, spacing: 5) {
+                HStack(spacing: 6) {
+                    Text(nearestCandidateItem?.itemType.displayLabel ?? "Item")
+                        .font(.duoDisplay(size: 18))
+                        .foregroundColor(.duoEel2)
+                        .lineLimit(1)
+                    DuoChip.purple(NSLocalizedString("ar_stealth_attr", comment: ""))
+                }
+                stealthRotatingMessage
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity, minHeight: 72)
+        .background(
+            RoundedRectangle(cornerRadius: 22)
+                .fill(Color.white)
+                .shadow(color: Color.black.opacity(0.25), radius: 10, x: 0, y: 4)
+        )
+    }
+
+    /// 2.5초마다 두 문구를 교차: ①스텔스 레이더 획득 시 거리/방향 표시 ②지금도 폰을 움직여 획득.
+    /// TimelineView 자체 스케줄로 토글 — AR 화면의 잦은 리렌더와 무관하게 확실히 전환.
+    private var stealthRotatingMessage: some View {
+        TimelineView(.periodic(from: .now, by: 2.5)) { context in
+            let idx = Int(context.date.timeIntervalSinceReferenceDate / 2.5) % 2
+            ZStack(alignment: .leading) {
+                stealthRadarText.opacity(idx == 0 ? 1 : 0)
+                stealthActionText.opacity(idx == 1 ? 1 : 0)
+            }
+            .animation(.easeInOut(duration: 0.35), value: idx)
         }
     }
 
-    /// "Quiz:12m" 같은 nearestItemInfoText 를 (label, value) 로 분리. Stealth 안내일 땐 단일 라벨.
+    /// 교차 문구 ① — 스텔스 레이더(green 강조) + 획득 시 거리/방향 표시.
+    private var stealthRadarText: some View {
+        (
+            Text(NSLocalizedString("ar_stealth_radar", comment: ""))
+                .foregroundColor(.duoGreen500)
+            + Text(" " + NSLocalizedString("ar_stealth_reveal", comment: ""))
+                .foregroundColor(.duoWolf)
+        )
+        .font(.duoBody(size: 13, weight: .bold))
+        .lineLimit(2)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
+    /// 교차 문구 ② — 지금도 폰을 움직여 거리·방향을 맞추면 획득.
+    private var stealthActionText: some View {
+        Text(NSLocalizedString("ar_stealth_action", comment: ""))
+            .font(.duoBody(size: 13, weight: .bold))
+            .foregroundColor(.duoFox)
+            .lineLimit(2)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    /// 좌하단 HUD (label, value) — 일반 아이템. (Stealth 는 stealthHUD 가 처리)
+    /// - 후보 없음 → ("HINT", "")
+    /// - 일반 → 라벨 = 아이템 타입 / 값 = 거리 (예: "Quiz" / "732m")
     private var leftLabelValue: (String, String) {
-        let text = nearestItemInfoText
-        if text.isEmpty { return ("HINT", "") }
-        let parts = text.split(separator: ":", maxSplits: 1).map(String.init)
-        if parts.count == 2 { return (parts[0], parts[1]) }
-        return (text, "")
-    }
-
-    /// "Visible range:50m" 같은 effectiveRangeText 를 (label, value) 로 분리.
-    private var rightLabelValue: (String, String) {
-        let text = effectiveRangeText
-        if text.isEmpty { return ("—", "") }
-        let parts = text.split(separator: ":", maxSplits: 1).map(String.init)
-        if parts.count == 2 { return (parts[0], parts[1]) }
-        return (text, "")
-    }
-
-    /// 좌하단 라벨 — 레거시 ar_infoView 포팅 ([`ARViewController.m:1615-1653`](Classes/ARViewController.m#L1615-L1653)).
-    /// **viewport 무관** — `nearestCandidateItem` 의 displayLabel 과 거리를 항상 표시.
-    /// - 후보 없음 (모든 필수 획득) → 빈 문자열 (레거시 `setTitle:@""`)
-    /// - Stealth/Hidden + radar 없음 → `ar_clear1` ("Stealth disvoery!")
-    /// - 일반 → `"{타입}:{거리}m"` (예: "Quiz:732m")
-    private var nearestItemInfoText: String {
         guard let item = nearestCandidateItem,
-              let location = locationService.currentLocation else { return "" }
-        if nearestItemIsHiddenByShowType {
-            return NSLocalizedString("ar_clear1", comment: "")
-        }
+              let location = locationService.currentLocation else { return ("HINT", "") }
         let distance = Int(location.distance(from: item.location))
-        return "\(item.itemType.displayLabel):\(distance)m"
+        return (item.itemType.displayLabel, "\(distance)m")
     }
 
-    /// 우하단 라벨 — 레거시 ar_infoView1 포팅 ([`ARViewController.m:1615-1653`](Classes/ARViewController.m#L1615-L1653)).
-    /// **viewport 무관** — `nearestCandidateItem` 의 rangeAR 항상 표시.
-    /// - 후보 없음 → `mission_completed` ("미션 종료!" / "Mission Complete!")
-    /// - Stealth/Hidden + radar 없음 → `ar_clear2` ("Stealth Radar needed!")
-    /// - 일반 → `"{Visible range}:{rangeAR}m"`
-    private var effectiveRangeText: String {
+    /// 우하단 HUD (label, value) — 일반 아이템.
+    /// - 후보 없음 → ("미션 종료!", "")
+    /// - 일반 → 라벨 "Visible range" / 값 = rangeAR (예: "Visible range" / "50m")
+    private var rightLabelValue: (String, String) {
         guard let item = nearestCandidateItem else {
-            return NSLocalizedString("mission_completed", comment: "")
+            return (NSLocalizedString("mission_completed", comment: ""), "")
         }
-        if nearestItemIsHiddenByShowType {
-            return NSLocalizedString("ar_clear2", comment: "")
-        }
-        return "\(NSLocalizedString("radius_of_visibility", comment: "")):\(item.rangeAR)m"
+        return (NSLocalizedString("radius_of_visibility", comment: ""), "\(item.rangeAR)m")
     }
 
     /// 레거시 ARViewController 의 `minDistItem` 선정 로직 포팅.
@@ -338,5 +412,176 @@ struct ARGameView: View {
         guard let distance = locationService.distance(to: item.coordinate) else { return 1.0 }
         let scale = 1.0 - (min(distance, maximumScaleDistance) / maximumScaleDistance) * 0.7
         return CGFloat(max(scale, 0.3))
+    }
+}
+
+// MARK: - 화면 설명 오버레이 (상단 ? 버튼)
+
+/// AR 화면 HUD 요소를 말풍선으로 가리키는 반투명 오버레이. 어디든 탭하면 닫힘.
+/// 실제 HUD(타이머·레이더·START/유효반경)는 dim 너머로 비치고, 말풍선이 위에서 지목.
+private struct ARHelpOverlay: View {
+    /// 좌하단 HUD 의 현재 값 (예: "START · 0m") — 하드코딩 대신 실데이터 반영.
+    let itemKicker: String
+    /// 우하단 HUD 의 현재 값 (예: "유효 반경 · 50m").
+    let rangeKicker: String
+    let onClose: () -> Void
+
+    var body: some View {
+        ZStack(alignment: .top) {
+            Color.black.opacity(0.5).ignoresSafeArea()
+
+            // 상단 우측 X 닫기 (타이머 줄과 정렬)
+            HStack {
+                Spacer()
+                Button(action: onClose) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 16, weight: .heavy))
+                        .foregroundColor(.duoEel2)
+                        .frame(width: 44, height: 44)
+                        .background(RoundedRectangle(cornerRadius: 12).fill(Color.white))
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 14)
+            .padding(.top, 36)
+
+            VStack(spacing: 16) {
+                // 화면 설명 pill — 타이머 바로 아래
+                Text("화면 설명")
+                    .font(.duoDisplay(size: 16))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 22)
+                    .padding(.vertical, 10)
+                    .background(Capsule().fill(Color.duoMacaw))
+                    .padding(.top, 92)
+
+                // Shake 안내 (좌측, 아이템 등장 영역 지목)
+                HStack {
+                    bubble {
+                        VStack(spacing: 2) {
+                            Text("아이템이 나오면")
+                                .font(.duoDisplay(size: 17))
+                                .foregroundColor(.duoEel2)
+                            Text("Shake it!!")
+                                .font(.duoDisplay(size: 28))
+                                .foregroundColor(.duoCardinal)
+                        }
+                    }
+                    Spacer()
+                }
+
+                Spacer()
+
+                // 거리 두 개 (좌: 아이템 거리 / 우: 유효 반경) — 레이더 말풍선 바로 위.
+                // kicker 는 현재 HUD 실데이터 반영 (하드코딩 제거).
+                HStack(alignment: .top, spacing: 12) {
+                    bubble {
+                        infoContent(kicker: itemKicker,
+                                    kickerColor: .duoFoxDeep,
+                                    title: "아이템과 사용자\n간의 거리")
+                    }
+                    Spacer(minLength: 16)
+                    bubble {
+                        infoContent(kicker: rangeKicker,
+                                    kickerColor: .duoGreen800,
+                                    title: "아이템 화면\n표시 거리")
+                    }
+                }
+
+                // 레이더 범례 (가운데) — 하단 레이더 디스크 지목
+                bubble {
+                    VStack(alignment: .leading, spacing: 12) {
+                        DuoKicker(text: "레이더", color: .duoHare)
+                        legendRow(icon: itemArrow, title: "노란 바늘 · 아이템 방향", sub: "ITEM")
+                        legendRow(icon: phoneDisc, title: "흰색 반경 · 폰 방향", sub: "PHONE")
+                    }
+                }
+                .padding(.bottom, 120)
+            }
+            .padding(.horizontal, 18)
+        }
+        .contentShape(Rectangle())
+        .onTapGesture { onClose() }
+    }
+
+    // MARK: 말풍선 (아래로 향한 꼬리)
+
+    private func bubble<C: View>(@ViewBuilder content: () -> C) -> some View {
+        VStack(spacing: -0.5) {
+            content()
+                .padding(.horizontal, 16)
+                .padding(.vertical, 13)
+                .background(RoundedRectangle(cornerRadius: 16).fill(Color.white))
+            DownTriangle()
+                .fill(Color.white)
+                .frame(width: 20, height: 11)
+        }
+        .shadow(color: Color.black.opacity(0.22), radius: 7, x: 0, y: 3)
+    }
+
+    private func infoContent(kicker: String, kickerColor: Color, title: String) -> some View {
+        VStack(spacing: 6) {
+            DuoKicker(text: kicker, color: kickerColor)
+            Text(title)
+                .font(.duoDisplay(size: 15))
+                .foregroundColor(.duoEel2)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func legendRow<Icon: View>(icon: Icon, title: String, sub: String) -> some View {
+        HStack(spacing: 12) {
+            icon.frame(width: 34, height: 34)
+            VStack(alignment: .leading, spacing: 0) {
+                Text(title)
+                    .font(.duoDisplay(size: 15))
+                    .foregroundColor(.duoEel2)
+                Text(sub)
+                    .font(.duoBody(size: 10, weight: .heavy))
+                    .foregroundColor(.duoHare)
+            }
+        }
+    }
+
+    private var itemArrow: some View {
+        Image(systemName: "arrow.up")
+            .font(.system(size: 22, weight: .black))
+            .foregroundColor(.duoBee)
+    }
+
+    private var phoneDisc: some View {
+        ZStack {
+            Circle().fill(Color.duoGreen500)
+            // 레이더의 '폰 방향' 흰 부채꼴 (위로 향함)
+            PhoneWedge()
+                .fill(Color.white)
+                .padding(4)
+        }
+    }
+}
+
+/// 말풍선 아래쪽 꼬리 삼각형.
+private struct DownTriangle: Shape {
+    func path(in rect: CGRect) -> Path {
+        var p = Path()
+        p.move(to: CGPoint(x: rect.minX, y: rect.minY))
+        p.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+        p.addLine(to: CGPoint(x: rect.midX, y: rect.maxY))
+        p.closeSubpath()
+        return p
+    }
+}
+
+/// 레이더 디스크의 '폰 방향' 흰 부채꼴 — 중심(꼭지점)에서 위(12시)로 벌어지는 wedge.
+private struct PhoneWedge: Shape {
+    func path(in rect: CGRect) -> Path {
+        var p = Path()
+        let halfWidth = rect.width * 0.34
+        p.move(to: CGPoint(x: rect.midX, y: rect.midY))               // 중심 = 꼭지점
+        p.addLine(to: CGPoint(x: rect.midX - halfWidth, y: rect.minY)) // 좌상
+        p.addLine(to: CGPoint(x: rect.midX + halfWidth, y: rect.minY)) // 우상
+        p.closeSubpath()
+        return p
     }
 }

@@ -33,8 +33,7 @@ struct MissionBuilderView: View {
                                     mission: m,
                                     statusKind: .privateMission,
                                     isLast: idx == drafts.count - 1,
-                                    onTap: { actionTarget = m },
-                                    onTest: { testTarget = m }
+                                    onTap: { actionTarget = m }
                                 )
                             }
                         }
@@ -50,8 +49,7 @@ struct MissionBuilderView: View {
                                     mission: m,
                                     statusKind: .publicMission,
                                     isLast: idx == uploaded.count - 1,
-                                    onTap: { actionTarget = m },
-                                    onTest: { testTarget = m }
+                                    onTap: { actionTarget = m }
                                 )
                             }
                         }
@@ -230,50 +228,29 @@ private struct DesignRowV2: View {
     let statusKind: StatusKind
     let isLast: Bool
     let onTap: () -> Void
-    let onTest: () -> Void
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 12) {
-                Button(action: onTap) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack(spacing: 6) {
-                            Text(mission.title.isEmpty ? "Untitled" : mission.title)
-                                .font(.duoDisplay(size: 14))
-                                .foregroundColor(.duoEel2)
-                                .lineLimit(1)
-                            statusChip
-                        }
-                        Text(mission.place.isEmpty
-                             ? "장소 미설정 · 아이템 \(mission.items.count)개"
-                             : "\(mission.place) · 아이템 \(mission.items.count)개")
-                            .font(.duoBody(size: 11))
-                            .foregroundColor(.duoHare)
+            Button(action: onTap) {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 6) {
+                        Text(mission.title.isEmpty ? "Untitled" : mission.title)
+                            .font(.duoDisplay(size: 14))
+                            .foregroundColor(.duoEel2)
                             .lineLimit(1)
+                        statusChip
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .contentShape(Rectangle())
+                    Text(mission.place.isEmpty
+                         ? "장소 미설정 · 아이템 \(mission.items.count)개"
+                         : "\(mission.place) · 아이템 \(mission.items.count)개")
+                        .font(.duoBody(size: 11))
+                        .foregroundColor(.duoHare)
+                        .lineLimit(1)
                 }
-                .buttonStyle(.plain)
-
-                Button(action: onTest) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "play.fill")
-                            .font(.system(size: 11, weight: .heavy))
-                        Text("테스트")
-                            .font(.duoDisplay(size: 11))
-                            .kerning(0.6)
-                    }
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 10)
-                    .frame(height: 32)
-                    .background(RoundedRectangle(cornerRadius: 8).fill(Color.duoGreen500))
-                    .background(
-                        RoundedRectangle(cornerRadius: 8).fill(Color.duoGreen700).offset(y: 3)
-                    )
-                }
-                .buttonStyle(.plain)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
 

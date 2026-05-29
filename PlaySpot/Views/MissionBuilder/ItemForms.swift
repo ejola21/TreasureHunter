@@ -19,17 +19,17 @@ private struct RangeARField: View {
     }
 }
 
-/// 표시 방식 — showType Picker (숨김없음 / AR 숨김 / MAP 숨김).
+/// 표시 방식 — showType Picker (Visible / Hidden / Stealth).
 private struct ShowTypeField: View {
     @Binding var item: MissionItem
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             Picker("표시 방식", selection: $item.showType) {
-                Text("숨김없음").tag(ShowType.all)         // 4
-                Text("AR 숨김").tag(ShowType.arOnly)      // 2
-                Text("MAP 숨김").tag(ShowType.mapOnly)    // 3
+                ForEach(ShowType.selectableCases, id: \.self) { type in
+                    Text(type.displayName).tag(type)
+                }
             }
-            Text("지도·AR 화면에서 보일지 안 보일지 설정해요.")
+            Text(item.showType.helpText)
                 .font(.caption2).foregroundColor(.secondary)
         }
     }

@@ -51,11 +51,11 @@ struct HelpItemsView: View {
         VStack(alignment: .leading, spacing: 6) {
             DuoKicker(text: "Properties · 아이템 속성")
             VStack(spacing: 0) {
-                legendRow(emoji: "👁️", label: "Normal", desc: "지도/AR 모두 표시", isLast: false)
+                legendRow(emoji: "👁️", label: "Visible", desc: "지도와 AR 화면에서 모두 표시", isLast: false)
                 rowDivider
-                legendRow(emoji: "🗺️", label: "Hidden", desc: "AR 화면에서만 보임 (지도 숨김)", isLast: false)
+                legendRow(emoji: "🗺️", label: "Hidden", desc: "지도에서 숨김 (AR 에서만 보임)", isLast: false)
                 rowDivider
-                legendRow(emoji: "🥷", label: "Stealth", desc: "AR 까지도 숨김 — Stealth Radar 필요", isLast: false)
+                legendRow(emoji: "🥷", label: "Stealth", desc: "지도에는 표시, AR 거리·방향 정보 숨김", isLast: false)
                 rowDivider
                 legendRow(emoji: "⭐", label: "필수", desc: "획득해야 미션 클리어", isLast: true)
             }
