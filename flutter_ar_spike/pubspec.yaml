@@ -35,11 +35,19 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
 
-  # 스파이크 핵심 의존성 (plan_flutter.md §5)
+  # AR 파일럿 의존성 (plan_flutter.md §5)
   camera: ^0.11.0          # 카메라 피드 (camera_web 포함)
   geolocator: ^13.0.0      # GPS 좌표 스트림 (web fallback 포함)
   web: ^1.1.0              # DeviceOrientationEvent JS interop (웹 나침반)
   flutter_compass: ^0.8.1  # 모바일(Android/iOS 네이티브) 나침반
+
+  # PlaySpot 전환 의존성 (plan_playspot_flutter.md §3)
+  dio: ^5.7.0                    # HTTP (JWT 인터셉터 + 401 재로그인)
+  flutter_riverpod: ^2.6.0      # 상태관리 / DI
+  flutter_secure_storage: ^9.2.0 # JWT 토큰·자격증명 보안 저장
+  flutter_map: ^7.0.0           # 디자인 빌더 지도 (OSM)
+  latlong2: ^0.9.1              # 좌표 (flutter_map)
+  intl: ^0.20.0                 # 날짜/LimitTime 파싱·포맷
 
 dev_dependencies:
   flutter_test:
@@ -62,6 +70,13 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  # assets/items, assets/ar, assets/ui 는 Phase 3(아이콘 마이그레이션) 에서 등록.
+
+  fonts:
+    - family: Jalnan2          # 디스플레이 폰트 (PlaySpot Jalnan2TTF 이식)
+      fonts:
+        - asset: assets/fonts/Jalnan2.ttf
 
   # To add assets to your application, add an assets section, like this:
   # assets:

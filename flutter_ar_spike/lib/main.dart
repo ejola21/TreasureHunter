@@ -1,21 +1,25 @@
-// main.dart — PlaySpot Flutter AR 스파이크 진입점 (Web 우선).
+// main.dart — PlaySpot Flutter 진입점 (plan_playspot_flutter.md Phase 0).
+// AR 파일럿 자산은 lib/ar/ 에 보존 (후속 Play 단계에서 연결).
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'ar_overlay_view.dart';
+import 'app/main_tab.dart';
+import 'app/theme.dart';
 
 void main() {
-  runApp(const ArSpikeApp());
+  runApp(const ProviderScope(child: PlaySpotApp()));
 }
 
-class ArSpikeApp extends StatelessWidget {
-  const ArSpikeApp({super.key});
+class PlaySpotApp extends StatelessWidget {
+  const PlaySpotApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      title: 'PlaySpot AR Spike',
+    return MaterialApp(
+      title: 'PlaySpot',
       debugShowCheckedModeBanner: false,
-      home: ArOverlayView(),
+      theme: buildPlaySpotTheme(),
+      home: const MainTab(),
     );
   }
 }
