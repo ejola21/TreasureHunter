@@ -38,7 +38,8 @@ dependencies:
   # 스파이크 핵심 의존성 (plan_flutter.md §5)
   camera: ^0.11.0          # 카메라 피드 (camera_web 포함)
   geolocator: ^13.0.0      # GPS 좌표 스트림 (web fallback 포함)
-  web: ^1.1.0              # DeviceOrientationEvent JS interop (나침반)
+  web: ^1.1.0              # DeviceOrientationEvent JS interop (웹 나침반)
+  flutter_compass: ^0.8.1  # 모바일(Android/iOS 네이티브) 나침반
 
 dev_dependencies:
   flutter_test:

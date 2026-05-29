@@ -44,6 +44,22 @@ ngrok http 8080          # 발급된 https URL 을 폰 브라우저에서 열기
 iOS Safari: "시작" 버튼(사용자 제스처) 안에서 `DeviceOrientationEvent.requestPermission()` 가 호출됨.
 거부 시 heading 0 → 안내. 데스크톱은 자동으로 mock 슬라이더 표시.
 
+### Android 실기기 (네이티브, plan Phase 6)
+
+HTTPS 불필요. 나침반은 `flutter_compass`(플랫폼 회전벡터 센서) 사용 — 권한 프롬프트 없음.
+
+```sh
+# 1) 폰: 개발자 옵션 → USB 디버깅 ON, USB 연결 후 "USB 디버깅 허용" 수락
+flutter devices                 # 기기가 목록에 뜨는지 확인
+flutter run -d <device-id>      # 빌드 + 설치 + 실행 (디버그)
+# 또는 이미 빌드한 APK 설치만:
+flutter install -d <device-id>  # build/app/outputs/flutter-apk/app-debug.apk
+```
+
+- 첫 빌드는 Gradle/NDK/SDK(Build-Tools·Platform 36, CMake) 자동 설치로 수 분 소요.
+- 실행 후 START → 카메라·위치 권한 허용. heading 은 폰을 돌리면 `src flutter_compass` 로 갱신.
+- 나침반 센서 없는 기기/에뮬레이터는 2초 후 mock 슬라이더로 폴백 (에뮬레이터 GPS/나침반은 부정확 — 실기기 권장).
+
 ## 동작
 
 1. **시작** 버튼 → 카메라 / 위치 권한 프롬프트 → (iOS) 모션 권한.
@@ -77,8 +93,12 @@ iOS Safari: "시작" 버튼(사용자 제스처) 안에서 `DeviceOrientationEve
 - **핵심 발견 2**: `flutter run -d web-server`(디버그/DDC) 는 브라우저별 부트스트랩 편차로
   Chrome 에서 화면이 안 뜨는 경우가 있었음. **릴리스 빌드(`flutter build web`, CanvasKit) 를
   정적 서빙** 하니 Safari·Chrome 모두 정상. → 실 기기 검증은 릴리스 빌드로 할 것.
-- heading 떨림 완화용 원형 EMA(α=0.2) 적용 (compass_service.dart).
-- 남음: W6(fps) 측정, Android Chrome(`alpha` 경로, Android 기기 필요), Phase 6/7 네이티브.
+- heading 떨림 완화용 원형 EMA(α=0.2) 적용.
+- **Android 네이티브 (plan Phase 6 / A1) PASS** — 실 SM-G950N(Android 9):
+  W1 카메라 / W2 GPS(±12m) / W3 heading(`flutter_compass`) / W4 투영 전부 동작.
+  나침반은 플랫폼 분기(`compass_service_web.dart` / `compass_service_mobile.dart`, 조건부 export)로
+  웹=DeviceOrientation, 모바일=flutter_compass 사용. flutter_compass 0.8.1 은 AGP8 namespace 이슈 없이 빌드됨.
+- 남음: W6(fps) 측정, Android Chrome(`alpha` 경로), Phase 7 네이티브 iOS.
 
 ## 알려진 함정 (plan §8 발췌)
 

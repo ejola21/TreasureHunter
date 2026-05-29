@@ -5,6 +5,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -169,14 +170,35 @@ class _ArOverlayViewState extends State<ArOverlayView> {
     if (cam == null || !cam.value.isInitialized) {
       return Container(color: Colors.black);
     }
-    final preview = cam.value.previewSize;
-    return FittedBox(
-      fit: BoxFit.cover,
-      child: SizedBox(
-        width: preview?.width ?? 1,
-        height: preview?.height ?? 1,
-        child: CameraPreview(cam),
-      ),
+    if (kIsWeb) {
+      // 웹: previewSize 가 이미 세로(예 720x1280)이고 CameraPreview 는 회전하지 않는다.
+      // 회전 보정 없이 previewSize 비율 그대로 cover 하면 똑바로 + 세로 화면 꽉 참.
+      final preview = cam.value.previewSize;
+      return ClipRect(
+        child: FittedBox(
+          fit: BoxFit.cover,
+          child: SizedBox(
+            width: preview?.width ?? 1,
+            height: preview?.height ?? 1,
+            child: CameraPreview(cam),
+          ),
+        ),
+      );
+    }
+    // 네이티브: CameraPreview 가 자동 회전해 세로로 표시됨 → aspectRatio 기반 cover.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        var scale =
+            (constraints.maxWidth / constraints.maxHeight) * cam.value.aspectRatio;
+        if (scale < 1) scale = 1 / scale;
+        return ClipRect(
+          child: Transform.scale(
+            scale: scale,
+            alignment: Alignment.center,
+            child: Center(child: CameraPreview(cam)),
+          ),
+        );
+      },
     );
   }
 
@@ -210,6 +232,11 @@ class _ArOverlayViewState extends State<ArOverlayView> {
         'item ${coord.radialDistance.toStringAsFixed(0)}m  az ${(coord.azimuth * 180 / pi).toStringAsFixed(0)}°'
       else
         'item -',
+      // 진단: 카메라가 보고하는 원본 해상도/비율 (웹 vs 네이티브 비교용)
+      if (_camera?.value.isInitialized ?? false)
+        'cam ${_camera!.value.previewSize?.width.toStringAsFixed(0)}x${_camera!.value.previewSize?.height.toStringAsFixed(0)}  ar ${_camera!.value.aspectRatio.toStringAsFixed(2)}'
+      else
+        'cam -',
     ];
     return Positioned(
       top: 0,
