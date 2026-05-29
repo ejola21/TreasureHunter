@@ -13,7 +13,8 @@ const _dist = Distance();
 class ArPlay extends StatefulWidget {
   final GameEngine engine;
   final LatLng? player;
-  const ArPlay({super.key, required this.engine, this.player});
+  final void Function(MissionItem) onAcquire;
+  const ArPlay({super.key, required this.engine, this.player, required this.onAcquire});
 
   @override
   State<ArPlay> createState() => _ArPlayState();
@@ -97,7 +98,7 @@ class _ArPlayState extends State<ArPlay> {
           ]),
         ),
         FilledButton(
-          onPressed: inRange ? () => widget.engine.acquireItem(it) : null,
+          onPressed: inRange ? () => widget.onAcquire(it) : null,
           child: Text(inRange ? '획득' : '접근'),
         ),
       ]),

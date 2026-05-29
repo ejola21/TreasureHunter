@@ -12,7 +12,8 @@ const _dist = Distance();
 class MapPlay extends StatelessWidget {
   final GameEngine engine;
   final LatLng? player;
-  const MapPlay({super.key, required this.engine, this.player});
+  final void Function(MissionItem) onAcquire;
+  const MapPlay({super.key, required this.engine, this.player, required this.onAcquire});
 
   void _tryAcquire(BuildContext context, MissionItem it) {
     if (engine.dicItemEnd[it.itemID] == 'Y') return;
@@ -22,7 +23,7 @@ class MapPlay extends StatelessWidget {
       );
       return;
     }
-    engine.acquireItem(it);
+    onAcquire(it);
   }
 
   @override

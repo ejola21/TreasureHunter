@@ -8,12 +8,18 @@ import '../../design_system/duo_tokens.dart';
 import '../../design_system/play_hud.dart';
 import '../../game/game_engine.dart';
 import '../../game/play_state_store.dart';
+import '../../models/item_type.dart';
 import '../../models/mission.dart';
+import '../../models/mission_item.dart';
+import '../../models/parse_utils.dart';
 import '../../network/app_config.dart';
 import '../../services/haptic_service.dart';
 import '../../services/sound_service.dart';
 import 'ar_play.dart';
 import 'map_play.dart';
+import 'minigame_view.dart';
+import 'popups.dart';
+import 'quiz_view.dart';
 
 class MissionPlayPage extends ConsumerStatefulWidget {
   final Mission mission;
@@ -67,6 +73,21 @@ class _MissionPlayPageState extends ConsumerState<MissionPlayPage> {
     if (mounted) setState(() => _ready = true);
   }
 
+  // 아이템 획득 라우팅: 퀴즈→QuizView, 미니게임→MiniGameView, 그 외 직접.
+  Future<void> _requestAcquire(MissionItem it) async {
+    if (it.itemType == ItemType.quiz || it.itemType == ItemType.quiz20) {
+      final ok = await Navigator.of(context).push<bool>(
+          MaterialPageRoute(builder: (_) => QuizView(item: it, engine: _engine)));
+      if (ok == true) _engine.acquireItem(it);
+    } else if (it.itemType == ItemType.simple && it.itemGame > 0) {
+      final ok = await Navigator.of(context).push<bool>(
+          MaterialPageRoute(builder: (_) => MiniGameView(item: it)));
+      if (ok == true) _engine.acquireItem(it);
+    } else {
+      _engine.acquireItem(it);
+    }
+  }
+
   Future<LatLng?> _currentLatLng() async {
     try {
       var perm = await Geolocator.checkPermission();
@@ -88,11 +109,8 @@ class _MissionPlayPageState extends ConsumerState<MissionPlayPage> {
       final a = _engine.pendingAlert!;
       showDialog<void>(
         context: context,
-        builder: (ctx) => AlertDialog(
-          title: Text(a.title, style: const TextStyle(fontFamily: DuoFonts.display)),
-          content: Text(a.message),
-          actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('확인'))],
-        ),
+        barrierColor: Colors.black54,
+        builder: (ctx) => ItemAcquiredPopup(alert: a, onOK: () => Navigator.pop(ctx)),
       ).then((_) {
         _alertShowing = false;
         _engine.dismissCurrentAlert();
@@ -107,15 +125,11 @@ class _MissionPlayPageState extends ConsumerState<MissionPlayPage> {
         showDialog<void>(
           context: context,
           barrierDismissible: false,
-          builder: (ctx) => AlertDialog(
-            title: Text(done ? '미션 완료! 🎉' : '시간 초과', style: const TextStyle(fontFamily: DuoFonts.display)),
-            content: Text(done ? '모든 필수 아이템을 모았습니다.' : '제한 시간이 지났습니다.'),
-            actions: [
-              TextButton(
-                onPressed: () { Navigator.pop(ctx); Navigator.pop(context); },
-                child: const Text('나가기'),
-              ),
-            ],
+          barrierColor: Colors.black54,
+          builder: (ctx) => MissionResultPopup(
+            success: done,
+            elapsedText: hmsString(_engine.elapsedTime.toInt()),
+            onClose: () { Navigator.pop(ctx); Navigator.pop(context); },
           ),
         );
       });
@@ -148,7 +162,11 @@ class _MissionPlayPageState extends ConsumerState<MissionPlayPage> {
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(children: [
-        Positioned.fill(child: _tab == 0 ? MapPlay(engine: _engine, player: _player) : ArPlay(engine: _engine, player: _player)),
+        Positioned.fill(
+          child: _tab == 0
+              ? MapPlay(engine: _engine, player: _player, onAcquire: _requestAcquire)
+              : ArPlay(engine: _engine, player: _player, onAcquire: _requestAcquire),
+        ),
         // 상단: 나가기 + 타이머 + 탭 전환
         SafeArea(
           child: Padding(
