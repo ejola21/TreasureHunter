@@ -209,21 +209,10 @@ class GameEngine extends ChangeNotifier {
   }
 
   // MARK: 아이템 획득
+  // SwiftUI GameEngine.swift acquireItem 1:1 — Run End pre-check 없음(SwiftUI 동등).
   void acquireItem(MissionItem item) {
     final mid = missionID;
     if (mid.isEmpty) return;
-
-    // Run End 사전 검사
-    if (item.itemType == ItemType.timeoutEnd) {
-      if (!isTimeOutActive) {
-        _enqueueAlert(ItemAcquiredAlert(title: '획득 실패', message: 'Run Start 아이템을 먼저 획득하세요.', itemIconName: item.arIconName));
-        return;
-      }
-      if (activeTimeoutStartID != null && item.relationItemID != activeTimeoutStartID) {
-        _enqueueAlert(ItemAcquiredAlert(title: '획득 실패', message: 'Run Start 와 Run End 가 짝이 맞아야 합니다.', itemIconName: item.arIconName));
-        return;
-      }
-    }
 
     dicItemEnd[item.itemID] = 'Y';
     _store.upsertItemInPlay(MissionItemInPlay(
@@ -449,43 +438,79 @@ class GameEngine extends ChangeNotifier {
     return false;
   }
 
-  // MARK: 획득 팝업 문구
+  // MARK: 획득 팝업 문구 — SwiftUI GameEngine.swift `_setAcquiredAlert` (line 712-781) 1:1 이식.
+  // 모든 title/message 는 SwiftUI 영문 그대로 (xcstrings 키 아님, 하드코딩).
   void _setAcquiredAlert(MissionItem item, MissionItem? bonus) {
     final icon = item.arIconName;
     switch (item.itemType) {
       case ItemType.start:
-        _enqueueAlert(ItemAcquiredAlert(title: 'Start Item!', message: item.info.isEmpty ? '미션을 시작합니다' : item.info, itemIconName: icon));
+        final msg = item.info.isEmpty ? 'If you touch OK, the item will be released Mission.' : item.info;
+        _enqueueAlert(ItemAcquiredAlert(title: 'Start Item acquired!', message: msg, itemIconName: icon));
+
       case ItemType.simple:
         if (item.itemGame == 0) {
-          _enqueueAlert(ItemAcquiredAlert(title: 'Hint!', message: item.info.isEmpty ? '힌트' : item.info, itemIconName: icon));
+          final msg = item.info.isEmpty ? 'Lose the draw!! No hint.' : item.info;
+          _enqueueAlert(ItemAcquiredAlert(title: 'Hint Item acquired!', message: msg, itemIconName: icon));
         }
+
       case ItemType.timeoutStart:
+        // 실제 제한시간은 페어 Run End 의 effectiveTime — TimerFormatter MM:SS.
         final limit = items.where((it) => it.itemType == ItemType.timeoutEnd && it.relationItemID == item.itemID).firstOrNull?.effectiveTime ?? timeOutLimitTime;
-        _enqueueAlert(ItemAcquiredAlert(title: 'Run Start!', message: '제한 시간 $limit초 안에 Run End 를 획득하세요.', itemIconName: icon));
+        final msg = '제한 시간 ${_formatMmss(limit)} 안에 Run End 아이템을 획득하세요.';
+        _enqueueAlert(ItemAcquiredAlert(title: 'Run Start Item acquired!', message: msg, itemIconName: icon));
+
       case ItemType.timeoutEnd:
-        _enqueueAlert(ItemAcquiredAlert(title: 'Run End!', message: item.info.isEmpty ? '타임어택 성공!' : item.info, itemIconName: icon));
+        final msg = item.info.isEmpty ? 'Run time ended successfully.' : item.info;
+        _enqueueAlert(ItemAcquiredAlert(title: 'Run End Item acquired!', message: msg, itemIconName: icon));
+
       case ItemType.solution:
-        _enqueueAlert(ItemAcquiredAlert(title: 'Solution!', message: '퀴즈 정답을 확인할 수 있어요', itemIconName: icon));
+        final msg = item.info.isEmpty ? 'You can get an answer if you win mission quiz or quiz item.' : item.info;
+        _enqueueAlert(ItemAcquiredAlert(title: 'Solution Item acquired!', message: msg, itemIconName: icon));
+
       case ItemType.radarAR:
-        _enqueueAlert(ItemAcquiredAlert(title: 'Stealth Radar!', message: 'AR 에서 스텔스 아이템이 보입니다', itemIconName: icon));
+        final msg = item.info.isEmpty ? 'Stealth items are now visible in AR.' : item.info;
+        _enqueueAlert(ItemAcquiredAlert(title: 'Stealth Radar Item acquired!', message: msg, itemIconName: icon));
+
       case ItemType.radarMap:
-        _enqueueAlert(ItemAcquiredAlert(title: 'Map Radar!', message: '지도에서 숨은 아이템이 보입니다', itemIconName: icon));
+        final msg = item.info.isEmpty ? 'Hidden items are now visible on the map.' : item.info;
+        _enqueueAlert(ItemAcquiredAlert(title: 'Map Radar Item acquired!', message: msg, itemIconName: icon));
+
       case ItemType.radarMine:
-        _enqueueAlert(ItemAcquiredAlert(title: 'Mine Radar!', message: '지도에 지뢰가 표시됩니다', itemIconName: icon));
+        final msg = item.info.isEmpty ? 'Mine explosion radius is now shown on the map.' : item.info;
+        _enqueueAlert(ItemAcquiredAlert(title: 'Mine Radar Item acquired!', message: msg, itemIconName: icon));
+
       case ItemType.radarAll:
-        _enqueueAlert(ItemAcquiredAlert(title: 'All Radar!', message: '모든 숨은 아이템이 보입니다', itemIconName: icon));
+        final msg = item.info.isEmpty ? 'All hidden items are now revealed.' : item.info;
+        _enqueueAlert(ItemAcquiredAlert(title: 'All Radar Item acquired!', message: msg, itemIconName: icon));
+
       case ItemType.mineNoBomb:
-        _enqueueAlert(ItemAcquiredAlert(title: 'Defense!', message: '지뢰 피해를 1번 막아줍니다', itemIconName: icon));
+        final msg = item.info.isEmpty ? 'Mine damage can be avoided using this Defence item.' : item.info;
+        _enqueueAlert(ItemAcquiredAlert(title: 'Defence Item acquired!', message: msg, itemIconName: icon));
+
       case ItemType.coupon:
-        _enqueueAlert(ItemAcquiredAlert(title: 'Coupon!', message: item.info.isEmpty ? '쿠폰 획득' : item.info, itemIconName: icon));
+        final msg = item.info.isEmpty ? 'Coupon acquired. Check details with the designer.' : item.info;
+        _enqueueAlert(ItemAcquiredAlert(title: 'Coupon acquired!', message: msg, itemIconName: icon));
+
       case ItemType.random:
+        // SwiftUI: prepend=true — Gambling 알림을 큐 맨 앞에. 사용자 OK → 보너스 알림 표시.
+        final msg = bonus != null
+            ? 'You won: ${bonus.itemType.displayLabel}!'
+            : 'Gambling failed — no items left to win.';
         _enqueueAlert(
-          ItemAcquiredAlert(title: 'Gambling!', message: bonus != null ? '획득: ${bonus.itemType.displayLabel}!' : '꽝! 남은 아이템 없음', itemIconName: icon),
+          ItemAcquiredAlert(title: 'Gambling acquired!', message: msg, itemIconName: icon),
           prepend: true,
         );
+
       default:
         break;
     }
+  }
+
+  /// MM:SS 포맷 (SwiftUI TimerFormatter.format(TimeInterval) 동등).
+  String _formatMmss(int seconds) {
+    final m = (seconds ~/ 60).toString().padLeft(2, '0');
+    final s = (seconds % 60).toString().padLeft(2, '0');
+    return '$m:$s';
   }
 
   // MARK: 서버 기록

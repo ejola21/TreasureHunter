@@ -3,11 +3,11 @@ class ItemQuiz {
   final String missionID;
   final int itemID;
   final int seq;
-  final String quiz;
-  final String answer;
+  String quiz;
+  String answer;
   final int probability;
 
-  const ItemQuiz({
+  ItemQuiz({
     this.missionID = '',
     this.itemID = 0,
     this.seq = 0,

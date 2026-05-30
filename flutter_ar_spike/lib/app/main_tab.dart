@@ -1,20 +1,23 @@
 // app/main_tab.dart — 하단 5탭 (미션 / 디자인 / 내정보 / 뱃지 / 설정).
+// 앱 시작 시 AuthBootstrap.ensureAuthenticated() 호출 → 저장된 자격증명으로 자동 로그인.
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../design_system/duo_tokens.dart';
 import '../features/badge/badge_list_page.dart';
 import '../features/design/design_list_page.dart';
 import '../features/missions/mission_list_page.dart';
 import '../features/myinfo/my_info_page.dart';
 import '../features/settings/settings_page.dart';
+import '../network/app_config.dart';
 
-class MainTab extends StatefulWidget {
+class MainTab extends ConsumerStatefulWidget {
   const MainTab({super.key});
 
   @override
-  State<MainTab> createState() => _MainTabState();
+  ConsumerState<MainTab> createState() => _MainTabState();
 }
 
-class _MainTabState extends State<MainTab> {
+class _MainTabState extends ConsumerState<MainTab> {
   int _index = 0;
   static const _pages = [
     MissionListPage(),
@@ -23,6 +26,16 @@ class _MainTabState extends State<MainTab> {
     BadgeListPage(),
     SettingsPage(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    // 앱 시작 시 자동 로그인 — 저장된 자격증명 있으면 그걸로,
+    // 없으면 새 게스트로 자동 가입. 비동기 fire-and-forget (UI 막지 않음).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(authBootstrapProvider).ensureAuthenticated();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

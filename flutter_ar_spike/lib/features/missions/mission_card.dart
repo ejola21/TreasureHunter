@@ -24,15 +24,7 @@ class MissionCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: DuoColors.green100,
-                borderRadius: BorderRadius.circular(DuoRadius.md),
-              ),
-              child: const Icon(Icons.flag_rounded, color: DuoColors.green700),
-            ),
+            _Thumb(url: m.badgeImageUrl),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -76,6 +68,40 @@ class MissionCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// 미션 뱃지 썸네일 — SwiftUI MissionRowView AsyncImage 1:1.
+/// URL 없으면 깃발 placeholder, 로딩 중 회색 박스, 실패 시 깃발 fallback.
+class _Thumb extends StatelessWidget {
+  final String? url;
+  const _Thumb({required this.url});
+
+  Widget _placeholder({Color? bg, IconData icon = Icons.flag_rounded}) => Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: bg ?? DuoColors.green100,
+          borderRadius: BorderRadius.circular(DuoRadius.md),
+        ),
+        child: Icon(icon, color: DuoColors.green700),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    if (url == null) return _placeholder();
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(DuoRadius.md),
+      child: Image.network(
+        url!,
+        width: 44,
+        height: 44,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => _placeholder(),
+        loadingBuilder: (_, child, p) =>
+            p == null ? child : _placeholder(bg: DuoColors.swan2, icon: Icons.image_outlined),
       ),
     );
   }

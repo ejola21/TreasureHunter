@@ -104,3 +104,14 @@ cloudflared tunnel --url http://localhost:8080
 | 카메라 가로 늘어남 | `controller.aspectRatio` 기반 Transform.scale cover (코드 이미 반영) |
 
 상세 배경은 [plan_flutter.md](plan_flutter.md), 구현/결과는 [flutter_ar_spike/README.md](flutter_ar_spike/README.md) 참고.
+
+# 스크린샨
+저장 위치:
+✅ flutter_ar_spike/design_ref/swiftui_simulator/ — 47장 정식 이름
+📦 _capture_originals_20260530/ — 원본 48장 백업 (Desktop 정리됨)
+📖 design_ref/README.md — 카테고리별 매핑 표 + Flutter 파일 cross-link
+
+매핑표 참조해서 미션 디자인 모든 화면 똑같이 수정해줘 화면 하나하나 씩 단계별로 진행하고 시퀀셜 씽킹 mcp 이용하고 진행사항 체긐해줘
+
+
+design_ref/README.md

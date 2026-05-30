@@ -1,0 +1,13 @@
+# lefthook.yml — pre-push 게이트 (test_flutter_playspot.md §0-3).
+# 활성화: brew install lefthook && lefthook install
+# 비활성화: rm .git/hooks/pre-push (또는 lefthook uninstall)
+#
+# 게이트: analyze + 전체 테스트(단위/위젯/골든) — 모두 통과해야 push 허용.
+
+pre-push:
+  parallel: true
+  commands:
+    analyze:
+      run: cd flutter_ar_spike && flutter analyze
+    test:
+      run: cd flutter_ar_spike && flutter test

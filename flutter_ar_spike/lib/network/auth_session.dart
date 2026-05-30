@@ -1,9 +1,11 @@
 // network/auth_session.dart — AuthSession.swift 이식. JWT 토큰 + 자격증명(보안 저장).
+// ChangeNotifier — userId 변경 시 Settings/MyInfo 등 모든 watcher 가 자동 rebuild.
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 typedef Credentials = ({String userID, String password});
 
-class AuthSession {
+class AuthSession extends ChangeNotifier {
   static const _kToken = 'jwt.token';
   static const _kUserId = 'credential.userID';
   static const _kPassword = 'credential.password';
@@ -12,7 +14,13 @@ class AuthSession {
   String? _cachedToken;
 
   /// 현재 로그인 사용자 ID (메모리). AppState.userID 대응.
-  String? userId;
+  String? _userId;
+  String? get userId => _userId;
+  set userId(String? v) {
+    if (_userId == v) return;
+    _userId = v;
+    notifyListeners();
+  }
 
   AuthSession([FlutterSecureStorage? storage])
       : _storage = storage ?? const FlutterSecureStorage();
@@ -47,6 +55,14 @@ class AuthSession {
 
   Future<void> reset() async {
     await clearToken();
+    await _storage.delete(key: _kUserId);
+    await _storage.delete(key: _kPassword);
+    userId = null; // setter 가 notifyListeners 호출 → UI 갱신
+  }
+
+  /// 토큰(=현재 세션) 은 유지하면서 자동 로그인 자격증명만 삭제.
+  /// "자동 로그인 해제" 시 호출 — 다음 앱 실행 시 게스트로 시작.
+  Future<void> clearStoredCredentials() async {
     await _storage.delete(key: _kUserId);
     await _storage.delete(key: _kPassword);
   }

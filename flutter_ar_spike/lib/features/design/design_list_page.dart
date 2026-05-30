@@ -4,10 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../design_system/duo_chip.dart';
 import '../../design_system/duo_tokens.dart';
 import '../../models/game_state.dart';
+import '../../models/item_type.dart';
 import '../../models/mission.dart';
 import '../../network/app_config.dart';
 import '../../network/builder_mission_req.dart';
-import 'builder_page.dart';
+import '../missions/mission_detail_page.dart';
+import 'design_action_sheet.dart';
 import 'design_providers.dart';
 import 'mission_setup_page.dart';
 
@@ -77,6 +79,7 @@ class DesignListPage extends ConsumerWidget {
         border: Border.all(color: DuoColors.swan2, width: 2),
       ),
       child: ListTile(
+        leading: _DesignThumb(url: m.badgeImageUrl),
         title: Row(children: [
           Flexible(child: Text(m.title.isEmpty ? 'Untitled' : m.title,
               overflow: TextOverflow.ellipsis,
@@ -88,35 +91,38 @@ class DesignListPage extends ConsumerWidget {
           '${m.place.isEmpty ? "장소 미설정" : m.place} · 아이템 ${m.items.length}개',
           style: const TextStyle(fontSize: 12, color: DuoColors.hare),
         ),
-        trailing: PopupMenuButton<String>(
-          onSelected: (v) => _onAction(context, ref, m, v),
-          itemBuilder: (_) => [
-            const PopupMenuItem(value: 'edit', child: Text('수정')),
-            PopupMenuItem(value: 'toggle', child: Text(published ? '공개 해제' : '공개')),
-            PopupMenuItem(
-              value: 'delete',
-              enabled: !published,
-              child: Text('삭제', style: TextStyle(color: published ? DuoColors.hare : DuoColors.cardinal)),
-            ),
-          ],
-        ),
-        onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => BuilderPage(missionID: m.id, initial: m))),
+        trailing: const Icon(Icons.chevron_right, color: DuoColors.hare),
+        onTap: () => _openActionSheet(context, ref, m),
       ),
     );
   }
 
-  Future<void> _onAction(BuildContext context, WidgetRef ref, Mission m, String action) async {
-    final ds = ref.read(dataSourceProvider);
+  /// SwiftUI DesignActionSheet 1:1 — View / Modify / Test / Publish/Unpublish / Delete.
+  Future<void> _openActionSheet(BuildContext context, WidgetRef ref, Mission m) async {
+    final action = await showDesignActionSheet(context, m);
+    if (action == null || !context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
+    final ds = ref.read(dataSourceProvider);
     switch (action) {
-      case 'edit':
-        Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => BuilderPage(missionID: m.id, initial: m)));
-      case 'toggle':
-        // 공개/해제 — 최신 아이템 포함 위해 detail 로드 후 status 변경.
+      case DesignAction.modify:
+        // SwiftUI 1:1 — Modify 는 MissionSetupView(편집 폼). 거기서 "아이템 배치 (지도 진입)" 으로 빌더로.
+        Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => MissionSetupPage(mission: m)));
+      case DesignAction.test:
+        // SwiftUI 1:1 — Test 액션이 MissionDetailView 풀스크린.
+        // 거기서 "Play · 미션 시작" 버튼으로 실제 플레이 시작.
+        Navigator.of(context).push(MaterialPageRoute(
+            fullscreenDialog: true,
+            builder: (_) => MissionDetailPage(missionID: m.id, fallback: m)));
+      case DesignAction.togglePublish:
         try {
-          final (mission, items, _) = await ds.fetchMissionDetail(m.id);
+          final (mission, items, quizzes) = await ds.fetchMissionDetail(m.id);
+          // Quiz 아이템에 변형 attach — 서버 PATCH 시 quizzes 가 빠지면 안 됨.
+          for (final it in items) {
+            if (it.itemType == ItemType.quiz || it.itemType == ItemType.quiz20) {
+              it.quizzes = quizzes.where((q) => q.itemID == it.itemID).toList();
+            }
+          }
           mission.items = items;
           mission.status = m.status == MissionStatus.published
               ? MissionStatus.unpublished
@@ -128,11 +134,7 @@ class DesignListPage extends ConsumerWidget {
         } catch (e) {
           messenger.showSnackBar(SnackBar(content: Text('실패: $e')));
         }
-      case 'delete':
-        if (m.status == MissionStatus.published) {
-          messenger.showSnackBar(const SnackBar(content: Text('먼저 공개 해제 후 삭제하세요')));
-          return;
-        }
+      case DesignAction.delete:
         try {
           await ds.deleteMission(m.id);
           ref.invalidate(myDesignedProvider);
@@ -149,4 +151,37 @@ class DesignListPage extends ConsumerWidget {
           child: Center(child: Text(t, textAlign: TextAlign.center, style: const TextStyle(color: DuoColors.hare))),
         ),
       ]);
+}
+
+/// 내 디자인 행 좌측 작은 뱃지 — 없으면 책갈피 placeholder.
+class _DesignThumb extends StatelessWidget {
+  final String? url;
+  const _DesignThumb({required this.url});
+
+  Widget _placeholder({Color? bg, IconData icon = Icons.bookmark_rounded}) => Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: bg ?? DuoColors.green100,
+          borderRadius: BorderRadius.circular(DuoRadius.md),
+        ),
+        child: Icon(icon, color: DuoColors.green700),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    if (url == null) return _placeholder();
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(DuoRadius.md),
+      child: Image.network(
+        url!,
+        width: 40,
+        height: 40,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => _placeholder(),
+        loadingBuilder: (_, child, p) =>
+            p == null ? child : _placeholder(bg: DuoColors.swan2, icon: Icons.image_outlined),
+      ),
+    );
+  }
 }

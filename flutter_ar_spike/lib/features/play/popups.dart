@@ -1,6 +1,7 @@
 // features/play/popups.dart — ItemAcquiredPopup V2(쇼케이스) + 미션 결과 팝업 (디자인 이식).
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show HapticFeedback;
 import '../../design_system/candy_button.dart';
 import '../../design_system/duo_tokens.dart';
 import '../../game/play_alert.dart';
@@ -20,6 +21,18 @@ class _ItemAcquiredPopupState extends State<ItemAcquiredPopup> with TickerProvid
       AnimationController(vsync: this, duration: const Duration(seconds: 4))..repeat();
   late final AnimationController _pop =
       AnimationController(vsync: this, duration: const Duration(milliseconds: 500))..forward();
+
+  @override
+  void initState() {
+    super.initState();
+    // SwiftUI ItemAcquiredPopup onAppear: HapticService.shared.success()
+    WidgetsBinding.instance.addPostFrameCallback((_) => HapticFeedback.heavyImpact());
+  }
+
+  void _confirm() {
+    HapticFeedback.heavyImpact(); // SwiftUI OK 버튼: vibrate(.heavy)
+    widget.onOK();
+  }
 
   @override
   void dispose() {
@@ -97,7 +110,7 @@ class _ItemAcquiredPopupState extends State<ItemAcquiredPopup> with TickerProvid
                     textAlign: TextAlign.center,
                     style: const TextStyle(fontSize: 14, color: DuoColors.wolf2)),
                 const SizedBox(height: 16),
-                CandyButton(label: 'OK · 확인', tint: DuoColors.fox, shadowColor: DuoColors.foxDeep, onPressed: widget.onOK),
+                CandyButton(label: 'OK · 확인', tint: DuoColors.fox, shadowColor: DuoColors.foxDeep, onPressed: _confirm),
               ]),
             ),
           ]),
@@ -107,7 +120,108 @@ class _ItemAcquiredPopupState extends State<ItemAcquiredPopup> with TickerProvid
   }
 }
 
-/// 미션 결과 팝업 (완료/시간초과).
+/// SwiftUI MissionCompletePopup.swift 이식 — 별점 + 후기 입력 + 건너뛰기/제출.
+/// 트로피 아이콘(bee) + "Mission Cleared" kicker + 별점 + 후기 입력.
+class MissionCompletePopup extends StatefulWidget {
+  final void Function(int score, String reply) onSubmit;
+  final VoidCallback onSkip;
+  const MissionCompletePopup({super.key, required this.onSubmit, required this.onSkip});
+
+  @override
+  State<MissionCompletePopup> createState() => _MissionCompletePopupState();
+}
+
+class _MissionCompletePopupState extends State<MissionCompletePopup> {
+  int _rating = 0;
+  final _reply = TextEditingController();
+
+  @override
+  void dispose() {
+    _reply.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Material 래퍼 — TextField 가 ink/Material ancestor 를 요구하므로 필수.
+    // 키보드 올라올 때 팝업이 가려지지 않도록 viewInsets.bottom 으로 위로 이동 + 스크롤 가능.
+    final keyboard = MediaQuery.viewInsetsOf(context).bottom;
+    return Padding(
+      padding: EdgeInsets.only(bottom: keyboard),
+      child: Center(
+        child: Material(
+          color: Colors.transparent,
+          child: SingleChildScrollView(
+            child: Container(
+              width: 320,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+          // 트로피 — 80×80 beeBg + 40pt bee 트로피 + glow.
+          Container(
+            width: 80, height: 80,
+            decoration: BoxDecoration(
+              color: DuoColors.beeBg, shape: BoxShape.circle,
+              boxShadow: [BoxShadow(color: DuoColors.bee.withValues(alpha: 0.4), blurRadius: 12)],
+            ),
+            child: const Icon(Icons.emoji_events, size: 40, color: DuoColors.bee),
+          ),
+          const SizedBox(height: 14),
+          const Text('MISSION CLEARED',
+              style: TextStyle(fontFamily: DuoFonts.display, fontSize: 12, color: DuoColors.bee, letterSpacing: 1.5)),
+          const SizedBox(height: 6),
+          const Text('미션 완료!',
+              style: TextStyle(fontFamily: DuoFonts.display, fontSize: 26, color: DuoColors.eel2)),
+          const SizedBox(height: 14),
+          const Text('이 미션은 어땠나요?',
+              style: TextStyle(fontSize: 14, color: DuoColors.wolf2)),
+          const SizedBox(height: 10),
+          // 별점 5개.
+          Row(mainAxisAlignment: MainAxisAlignment.center, children: List.generate(5, (i) {
+            final on = i < _rating;
+            return IconButton(
+              onPressed: () => setState(() => _rating = i + 1),
+              icon: Icon(on ? Icons.star : Icons.star_border, color: on ? DuoColors.bee : DuoColors.hare, size: 32),
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+            );
+          })),
+          const SizedBox(height: 8),
+          // 후기 입력 (선택).
+          Container(
+            decoration: BoxDecoration(color: DuoColors.snow, borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: DuoColors.swan2, width: 1.5)),
+            child: TextField(
+              controller: _reply,
+              minLines: 2, maxLines: 3, maxLength: 100,
+              decoration: const InputDecoration(
+                hintText: '간단한 한 줄 후기를 적어주세요 (선택)',
+                hintStyle: TextStyle(fontSize: 12, color: DuoColors.hare),
+                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                border: InputBorder.none, counterText: '',
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(children: [
+            Expanded(
+              child: CandyButton(label: '건너뛰기', tint: DuoColors.swan, shadowColor: DuoColors.hare, onPressed: widget.onSkip),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: CandyButton(label: '제출', tint: DuoColors.bee, shadowColor: DuoColors.beeDeep,
+                  onPressed: () => widget.onSubmit(_rating, _reply.text.trim())),
+            ),
+          ]),
+        ]),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 미션 결과 팝업 (시간초과 전용 — 완료는 MissionCompletePopup 사용).
 class MissionResultPopup extends StatelessWidget {
   final bool success;
   final String elapsedText;

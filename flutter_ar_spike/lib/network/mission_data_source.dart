@@ -35,6 +35,15 @@ abstract interface class MissionDataSource {
   Future<bool> updateMission(String missionID, BuilderMissionReq req);
   Future<bool> deleteMission(String missionID);
 
+  /// `POST /api/v1/badges` — 레거시 뱃지 endpoint. (현재는 uploadFile 권장)
+  /// 응답 fileName 을 mission.badgeImageName 에 저장.
+  Future<String?> uploadBadgeImage(List<int> bytes, String fileName);
+
+  /// `POST /api/v1/files/upload` — 범용 파일 업로드. SwiftUI MissionBuilderViewModel.save() 가 사용.
+  /// 응답 `fileUrl` (S3 전체 URL) 을 그대로 mission.badgeImageName 에 저장하면 됨.
+  /// 실패 시 throw.
+  Future<String?> uploadFile(List<int> bytes, String fileName);
+
   // 플레이 기록 (best-effort)
   Future<bool> recordPlayStart(
       {required String missionID, required String playerID, required DateTime startTime, required bool isVirtual});

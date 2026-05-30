@@ -58,6 +58,21 @@ class RestApiClient {
     return r.data;
   }
 
+  /// multipart POST — 파일 1개 업로드. SwiftUI RestAPIClient.uploadFile 동등.
+  /// `contentType` 지정하지 않음 — dio 가 boundary 포함한 헤더를 자동 생성.
+  Future<dynamic> uploadFile(String path,
+      {required String fieldName,
+      required String fileName,
+      required String mimeType,
+      required List<int> bytes}) async {
+    final form = FormData.fromMap({
+      fieldName: MultipartFile.fromBytes(bytes,
+          filename: fileName, contentType: DioMediaType.parse(mimeType)),
+    });
+    final r = await _dio.post(path, data: form);
+    return r.data;
+  }
+
   /// 저장된 자격증명으로 /auth/login 재호출 (직접). 성공 시 토큰 갱신.
   Future<bool> _tryReLogin() async {
     final creds = await _auth.storedCredentials();

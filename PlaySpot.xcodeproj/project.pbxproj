@@ -1072,7 +1072,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = DX9NU5G8Y4;
 				INFOPLIST_FILE = PlaySpot/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Play Spot";
@@ -1204,7 +1204,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = DX9NU5G8Y4;
 				INFOPLIST_FILE = PlaySpot/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Play Spot";

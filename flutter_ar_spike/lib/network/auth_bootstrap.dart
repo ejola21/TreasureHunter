@@ -25,24 +25,34 @@ class AuthBootstrap {
   }
 
   Future<void> _run() async {
-    if (await _auth.token() != null) {
-      dev.log('ensureAuth: token present — skip', name: 'AuthBootstrap');
-      return;
-    }
-    // (1) 저장된 자격증명
+    // (1) 저장된 자격증명 — userId 즉시 복원 → UI 갱신 (token 유무 무관 선행).
     final creds = await _auth.storedCredentials();
-    if (creds != null && await _ds.login(creds.userID, creds.password)) {
+    if (creds != null) {
       _auth.userId = creds.userID;
-      dev.log('ensureAuth: stored-cred login success', name: 'AuthBootstrap');
+      if (await _auth.token() != null) {
+        dev.log('ensureAuth: token+userId restored from storage', name: 'AuthBootstrap');
+        return;
+      }
+      // 토큰 만료/없음 → 자격증명으로 재로그인.
+      if (await _ds.login(creds.userID, creds.password)) {
+        dev.log('ensureAuth: stored-cred re-login success', name: 'AuthBootstrap');
+        return;
+      }
+      // 재로그인 실패 → 게스트 흐름으로 폴백.
+      dev.log('ensureAuth: stored-cred login failed — falling back to guest', name: 'AuthBootstrap');
+    }
+    // (2) 토큰만 있고 자격증명 없는 경우 — 익명 세션 유지 (이 흐름은 매우 드묾).
+    if (creds == null && await _auth.token() != null) {
+      dev.log('ensureAuth: token only — anonymous session', name: 'AuthBootstrap');
       return;
     }
-    // (2) 신규 게스트
+    // (3) 신규 게스트.
     final guestId = 'Guest@${DateTime.now().millisecondsSinceEpoch}';
     final guestPw = _random32();
     dev.log('ensureAuth: registering guest $guestId', name: 'AuthBootstrap');
     await _ds.register(guestId, guestPw);
     if (await _ds.login(guestId, guestPw)) {
-      _auth.userId = guestId;
+      // login 내부에서 saveCredentials + userId 설정 함.
       dev.log('ensureAuth: guest login success', name: 'AuthBootstrap');
     } else {
       dev.log('ensureAuth: guest login FAILED', name: 'AuthBootstrap');

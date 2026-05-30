@@ -51,6 +51,9 @@ dependencies:
   latlong2: ^0.9.1              # 좌표 (flutter_map)
   intl: ^0.20.0                 # 날짜/LimitTime 파싱·포맷
   shared_preferences: ^2.3.0    # 아이템 카운트/설정 영속 (Phase 10)
+  audioplayers: ^6.1.0          # 사운드 재생 (game_finish/itemGet/timeOver/...)
+  sensors_plus: ^6.1.0          # 흔들기(가속도) 감지 — AR/미니게임
+  image_picker: ^1.1.2          # 미션 디자인 뱃지 이미지 선택
 
 dev_dependencies:
   flutter_test:
@@ -78,6 +81,9 @@ flutter:
     - assets/items/
     - assets/ar/
     - assets/ui/
+    - assets/sounds/
+    - assets/radar/
+    - assets/minigame/
 
   fonts:
     - family: Jalnan2          # 디스플레이 폰트 (PlaySpot Jalnan2TTF 이식)

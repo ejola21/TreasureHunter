@@ -4,9 +4,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/mission.dart';
 import '../../network/app_config.dart';
 
+// `ref.watch` 로 AuthSession 의 ChangeNotifier 알림 구독 →
+// 로그인/로그아웃으로 userId 가 바뀌면 자동 재실행.
 final myPlayedProvider = FutureProvider<List<Mission>>((ref) async {
   await ref.read(authBootstrapProvider).ensureAuthenticated();
-  final uid = ref.read(authSessionProvider).userId ?? '';
+  final uid = ref.watch(authSessionProvider).userId ?? '';
   if (uid.isEmpty) return [];
   return ref.read(dataSourceProvider).fetchMyPlayed(uid);
 });

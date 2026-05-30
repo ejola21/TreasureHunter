@@ -159,14 +159,16 @@ void main() {
     e.dispose();
   });
 
-  test('Run End 는 Run Start 활성 전에는 획득 불가', () async {
+  test('Run End 비활성에서 acquire — SwiftUI 동등 (거부 없이 Y 처리)', () async {
+    // SwiftUI GameEngine.swift acquireItem 은 timeoutEnd pre-check 없음.
+    // dicItemEnd[id]='Y' 만 setting 되고 isTimeOutActive 는 false(이미 false) 유지.
     final start = _item(1, ItemType.start);
     final runEnd = _item(2, ItemType.timeoutEnd, relation: 99, effectiveTime: 20);
     final e = await _engine([start, runEnd]);
 
-    e.acquireItem(runEnd); // Run Start 없음 → 거부 (첫 알림이 실패여야 함)
-    expect(e.dicItemEnd[runEnd.itemID], isNot('Y'));
-    expect(e.pendingAlert?.title, '획득 실패');
+    e.acquireItem(runEnd);
+    expect(e.dicItemEnd[runEnd.itemID], 'Y');
+    expect(e.isTimeOutActive, isFalse);
     e.dispose();
   });
 

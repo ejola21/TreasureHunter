@@ -111,4 +111,16 @@ class Mission {
       badgeImageName: j['BadgeImageName'] as String?,
     );
   }
+
+  /// 뱃지 다운로드 URL.
+  /// - http(s):// 시작 → 그대로 사용
+  /// - "/badge/..." 절대경로 → 호스트(43.201.188.35:8080) + path
+  /// - "badge-xxx.png" 단순 파일명 → `…/playspot/badge/<name>` (레거시 경로)
+  String? get badgeImageUrl {
+    final name = badgeImageName;
+    if (name == null || name.isEmpty) return null;
+    if (name.startsWith('http://') || name.startsWith('https://')) return name;
+    if (name.startsWith('/')) return 'http://43.201.188.35:8080$name';
+    return 'http://43.201.188.35:8080/playspot/badge/$name';
+  }
 }

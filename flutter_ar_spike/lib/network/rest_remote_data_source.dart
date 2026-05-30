@@ -1,5 +1,6 @@
 // network/rest_remote_data_source.dart — RestRemoteDataSource.swift 이식 (/api/v1/**).
 import 'dart:developer' as dev;
+import 'package:flutter/foundation.dart' show kDebugMode;
 import '../models/mission.dart';
 import '../models/mission_item.dart';
 import '../models/item_quiz.dart';
@@ -155,8 +156,22 @@ class RestRemoteDataSource implements MissionDataSource {
   }
 
   // 인증
+  /// 디버그 빌드 한정 테스트 계정 (서버 우회).
+  static const _devEmail = 'test@gmail.com';
+  static const _devPassword = '1234';
+  bool _isDevAccount(String e, String p) =>
+      kDebugMode && e == _devEmail && p == _devPassword;
+
   @override
   Future<bool> login(String email, String password) async {
+    // 디버그 테스트 계정 — 서버 호출 없이 즉시 성공.
+    if (_isDevAccount(email, password)) {
+      await _auth.setToken('dev_test_token');
+      await _auth.saveCredentials(email, password);
+      _auth.userId = email;
+      _log('login: dev bypass for $email');
+      return true;
+    }
     try {
       final res = await _client.send('POST', '/api/v1/auth/login',
           body: {'userId': email, 'password': password}) as Map<String, dynamic>;
@@ -164,6 +179,7 @@ class RestRemoteDataSource implements MissionDataSource {
       if (token == null) return false;
       await _auth.setToken(token);
       await _auth.saveCredentials(email, password);
+      _auth.userId = email; // setter 가 notifyListeners → Settings 등 자동 갱신
       return true;
     } catch (e) {
       _log('login: $e');
@@ -173,6 +189,11 @@ class RestRemoteDataSource implements MissionDataSource {
 
   @override
   Future<bool> register(String email, String password) async {
+    // 디버그 테스트 계정 — 서버 호출 없이 즉시 가입 성공 (이후 login 호출도 통과).
+    if (_isDevAccount(email, password)) {
+      _log('register: dev bypass for $email');
+      return true;
+    }
     try {
       await _client.send('POST', '/api/v1/auth/register',
           body: {'userId': email, 'password': password});
@@ -202,6 +223,53 @@ class RestRemoteDataSource implements MissionDataSource {
   Future<bool> deleteMission(String missionID) async {
     await _client.send('DELETE', '/api/v1/missions/${Uri.encodeComponent(missionID)}');
     return true;
+  }
+
+  /// SwiftUI RestRemoteDataSource.uploadFile 1:1 — POST /api/v1/files/upload (multipart `file`).
+  /// 응답 `fileUrl` (S3 전체 https URL) 을 그대로 반환. mission.badgeImageName 에 저장하면 됨.
+  /// `BadgeImageName: "https://playspot-badge-dev.s3.amazonaws.com/file/..."`
+  @override
+  Future<String?> uploadFile(List<int> bytes, String fileName) async {
+    final lower = fileName.toLowerCase();
+    final mime = lower.endsWith('.jpg') || lower.endsWith('.jpeg')
+        ? 'image/jpeg'
+        : lower.endsWith('.webp')
+            ? 'image/webp'
+            : 'image/png';
+    final res = await _client.uploadFile('/api/v1/files/upload',
+        fieldName: 'file', fileName: fileName, mimeType: mime, bytes: bytes);
+    if (res is Map) {
+      final url = (res['fileUrl'] as String?) ?? (res['fileName'] as String?);
+      if (url != null && url.isNotEmpty) return url;
+    }
+    _log('uploadFile: unexpected response: $res');
+    return null;
+  }
+
+  /// 레거시 `POST /api/v1/badges` — 호환용. 신규 흐름은 uploadFile 사용.
+  @override
+  Future<String?> uploadBadgeImage(List<int> bytes, String fileName) async {
+    final lower = fileName.toLowerCase();
+    final mime = lower.endsWith('.jpg') || lower.endsWith('.jpeg')
+        ? 'image/jpeg'
+        : lower.endsWith('.webp')
+            ? 'image/webp'
+            : 'image/png';
+    try {
+      final res = await _client.uploadFile('/api/v1/badges',
+          fieldName: 'file', fileName: fileName, mimeType: mime, bytes: bytes);
+      if (res is Map) {
+        final n = (res['fileName'] as String?) ??
+            (res['fileUrl'] as String?) ??
+            (res['url'] as String?);
+        if (n != null && n.isNotEmpty) return n;
+      }
+      _log('uploadBadgeImage: unexpected response shape: $res');
+      return null;
+    } catch (e) {
+      _log('uploadBadgeImage: $e');
+      rethrow; // 호출자가 사용자에게 정확한 에러 메시지 전달.
+    }
   }
 
   // 플레이 기록 — KST "yyyy-MM-dd HH:mm:ss", best-effort.
