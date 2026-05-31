@@ -34,6 +34,8 @@ class _ItemDetailSheet extends StatefulWidget {
 class _ItemDetailSheetState extends State<_ItemDetailSheet> {
   late MissionItem _item;
   late final TextEditingController _info;
+  final FocusNode _infoFocus = FocusNode();
+  final GlobalKey _infoFieldKey = GlobalKey();
   bool _deleteRequested = false;
 
   @override
@@ -61,11 +63,28 @@ class _ItemDetailSheetState extends State<_ItemDetailSheet> {
       quizzes: widget.original.quizzes,
     );
     _info = TextEditingController(text: _item.info);
+    // 안내문 TextField 포커스 시 키보드 등장 후 ensureVisible 로 정확히 가운데 정렬.
+    _infoFocus.addListener(() {
+      if (!_infoFocus.hasFocus) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        // 키보드 애니메이션 완료까지 잠시 대기.
+        await Future<void>.delayed(const Duration(milliseconds: 280));
+        final ctx = _infoFieldKey.currentContext;
+        if (ctx == null || !ctx.mounted) return;
+        await Scrollable.ensureVisible(
+          ctx,
+          alignment: 0.3, // 화면 상단 30% 위치 — TextField 가 키보드 위에 여유롭게 보이게.
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOut,
+        );
+      });
+    });
   }
 
   @override
   void dispose() {
     _info.dispose();
+    _infoFocus.dispose();
     super.dispose();
   }
 
@@ -84,27 +103,36 @@ class _ItemDetailSheetState extends State<_ItemDetailSheet> {
   @override
   Widget build(BuildContext context) {
     final guide = _item.itemType.detailGuide;
-    final maxH = MediaQuery.of(context).size.height * 0.88;
-    return Container(
-      constraints: BoxConstraints(maxHeight: maxH),
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        _toolbar(),
-        Flexible(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              _infoCard(guide),
-              const SizedBox(height: 16),
-              _tipCard(guide),
-              const SizedBox(height: 16),
-              _formCard(),
-              const SizedBox(height: 16),
-              _deleteButton(),
-              const SizedBox(height: 16),
-            ]),
+    final mq = MediaQuery.of(context);
+    // 키보드 회피 — outer Padding 으로 키보드 높이만큼 sheet 를 위로 밀어 올림.
+    // sheet 자체 크기는 그대로(88%), 키보드 위에 그대로 떠 있음. TextField 포커스 시
+    // SingleChildScrollView 가 cursor 위치까지 자동 스크롤 → 안내문 입력란 가시.
+    final keyboard = mq.viewInsets.bottom;
+    return AnimatedPadding(
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.easeOut,
+      padding: EdgeInsets.only(bottom: keyboard),
+      child: Container(
+        constraints: BoxConstraints(maxHeight: mq.size.height * 0.88),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          _toolbar(),
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                _infoCard(guide),
+                const SizedBox(height: 16),
+                _tipCard(guide),
+                const SizedBox(height: 16),
+                _formCard(),
+                const SizedBox(height: 16),
+                _deleteButton(),
+                const SizedBox(height: 16),
+              ]),
+            ),
           ),
-        ),
-      ]),
+        ]),
+      ),
     );
   }
 
@@ -521,12 +549,14 @@ class _ItemDetailSheetState extends State<_ItemDetailSheet> {
 
   Widget _infoField(String label) {
     return Padding(
+      key: _infoFieldKey, // 포커스 시 Scrollable.ensureVisible 대상.
       padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(label, style: const TextStyle(fontSize: 12, color: DuoColors.hare)),
         const SizedBox(height: 4),
         TextField(
           controller: _info,
+          focusNode: _infoFocus,
           minLines: 2, maxLines: 4,
           decoration: InputDecoration(
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: DuoColors.swan2)),

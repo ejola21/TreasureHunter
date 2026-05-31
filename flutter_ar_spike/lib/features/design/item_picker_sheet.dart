@@ -6,6 +6,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../design_system/duo_tokens.dart';
 import '../../models/item_type.dart';
+import '../../models/item_type_detail.dart';
 import '../../models/show_type.dart';
 
 /// SwiftUI ItemPickerView.pickableTypes 와 동일 순서 + 동일 15개.
@@ -119,14 +120,20 @@ class _ItemPickerSheetState extends State<ItemPickerSheet> {
             Text(_type.displayLabel,
                 style: const TextStyle(fontFamily: DuoFonts.display, fontSize: 16, color: DuoColors.eel2)),
             const SizedBox(height: 4),
+            // 아이템 설명 — Help 화면 detailGuide.effect 와 동일. 이름 바로 아래.
+            Text(_type.detailGuide.effect,
+                style: const TextStyle(fontSize: 12, color: DuoColors.wolf2, fontWeight: FontWeight.w600),
+                maxLines: 3, overflow: TextOverflow.ellipsis),
+            const SizedBox(height: 6),
             Row(children: [
               _chip(_show.displayName, DuoColors.macawBg, DuoColors.macawDeep),
               const SizedBox(width: 6),
               _chip('$_range m', DuoColors.green100, DuoColors.green800),
             ]),
             const SizedBox(height: 4),
+            // 표시 방식 보조 설명 (회색 보조).
             Text(_show.helpText,
-                style: const TextStyle(fontSize: 11, color: DuoColors.hare), maxLines: 2),
+                style: const TextStyle(fontSize: 11, color: DuoColors.hare), maxLines: 1, overflow: TextOverflow.ellipsis),
           ]),
         ),
       ]),
