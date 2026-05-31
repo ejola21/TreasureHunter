@@ -1,9 +1,10 @@
-// features/help/help_root.dart — SwiftUI Help/* 4 파일 통합 이식.
+// features/help/help_root.dart — SwiftUI Help/* 4 파일 1:1 이식.
 // HelpRoot (라우터, 3 탭) + HelpItemsView + HelpHowToView + HelpDesignView.
-// FoxMascot/ItemPin 일러스트는 emoji/IconData 로 대체.
+// SwiftUI SegmentedTabs (green theme) / SwiftUI HelpRoot.header / 각 view 의 hero+groups 그대로.
 import 'package:flutter/material.dart';
 import '../../design_system/duo_tokens.dart';
 import '../../models/item_type.dart';
+import '../../models/item_type_detail.dart';
 
 enum HelpTab { items, howto, design }
 
@@ -32,13 +33,16 @@ class _HelpRootState extends State<HelpRoot> {
       body: SafeArea(
         child: Column(children: [
           _header(),
-          _tabs(),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: _segmentedTabs(),
+          ),
           Expanded(
             child: SingleChildScrollView(
               child: switch (_tab) {
                 HelpTab.items => const _HelpItemsView(),
                 HelpTab.howto => const _HelpHowToView(),
-                HelpTab.design => _HelpDesignView(onStart: widget.onStartDesign),
+                HelpTab.design => _HelpDesignView(onStartDesign: widget.onStartDesign),
               },
             ),
           ),
@@ -47,9 +51,10 @@ class _HelpRootState extends State<HelpRoot> {
     );
   }
 
+  /// SwiftUI HelpRoot.header — 동그란 흰 ← 버튼 + kicker "Help · 도움말" + 큰 제목.
   Widget _header() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
       child: Row(children: [
         GestureDetector(
           onTap: () => Navigator.pop(context),
@@ -73,40 +78,43 @@ class _HelpRootState extends State<HelpRoot> {
     );
   }
 
-  Widget _tabs() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: Container(
-        padding: const EdgeInsets.all(3),
-        decoration: BoxDecoration(color: DuoColors.swan2, borderRadius: BorderRadius.circular(12)),
-        child: Row(children: HelpTab.values.map((t) {
-          final on = t == _tab;
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _tab = t),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(
-                  color: on ? DuoColors.macaw : Colors.transparent,
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                alignment: Alignment.center,
-                child: Text(_label(t),
-                    style: TextStyle(
-                      fontFamily: DuoFonts.display, fontSize: 12,
-                      color: on ? Colors.white : DuoColors.eel2,
-                    )),
+  /// SwiftUI SegmentedTabs (theme=green500/bg=green100/deep=green800).
+  /// 활성: green100 fill + green500 2pt border + green800 텍스트. 비활성: 흰 fill + swan2 border + hare 텍스트.
+  /// 텍스트 UPPERCASE + kerning 0.6 + height 44.
+  Widget _segmentedTabs() {
+    return Row(children: HelpTab.values.map((t) {
+      final active = t == _tab;
+      return Expanded(
+        child: Padding(
+          padding: const EdgeInsets.only(right: 6),
+          child: GestureDetector(
+            onTap: () => setState(() => _tab = t),
+            child: Container(
+              height: 44,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: active ? DuoColors.green100 : Colors.white,
+                borderRadius: BorderRadius.circular(DuoRadius.lg),
+                border: Border.all(
+                  color: active ? DuoColors.green500 : DuoColors.swan2, width: 2),
               ),
+              child: Text(_label(t).toUpperCase(),
+                  style: TextStyle(
+                    fontFamily: DuoFonts.display,
+                    fontSize: 12,
+                    letterSpacing: 0.6,
+                    color: active ? DuoColors.green800 : DuoColors.hare,
+                  )),
             ),
-          );
-        }).toList()),
-      ),
-    );
+          ),
+        ),
+      );
+    }).toList());
   }
 }
 
-// ─── §14 Item Glossary ───────────────────────────────────────────────
+// ─── §14 Item Glossary ───────────────────────────────────────────────────────
+// SwiftUI HelpItemsView 1:1 — Property legend + 5 그룹 카드 (Mission/Quiz/Radar/Time/Special).
 class _HelpItemsView extends StatelessWidget {
   const _HelpItemsView();
 
@@ -240,31 +248,13 @@ class _ItemRow extends StatelessWidget {
   final ItemType type;
   const _ItemRow({required this.type});
 
-  String _effect() => switch (type) {
-        ItemType.start => '미션 시작점',
-        ItemType.end => '미션 종료점 — 필수 아이템 다 모으면 클리어',
-        ItemType.simple => '힌트 또는 미니게임',
-        ItemType.mine => '범위 들어가면 폭발, 최근 획득 1개 손실',
-        ItemType.mineNoBomb => 'Defense — 지뢰 폭발 1회 흡수',
-        ItemType.random => 'Gambling — 무작위 다른 아이템 1개 획득',
-        ItemType.quiz || ItemType.quiz20 => '정답을 맞춰야 획득',
-        ItemType.solution => '퀴즈 답을 알 수 있게 해주는 보조 아이템',
-        ItemType.radarMap => 'Hidden 아이템을 지도에서 보이게',
-        ItemType.radarAR => 'Stealth 아이템을 AR에서 보이게',
-        ItemType.radarMine => '지뢰 범위를 지도에 표시',
-        ItemType.radarAll => '모든 숨김 아이템 한 번에 공개',
-        ItemType.black => 'Dark zone — 범위 안 아이템 숨김',
-        ItemType.coupon => '쿠폰 정보 표시',
-        ItemType.store => '상점 (미구현)',
-        _ => '',
-      };
-
   @override
   Widget build(BuildContext context) {
+    // SwiftUI 와 동일하게 type.detailGuide.effect 사용 (item_type_detail.dart 의 정식 텍스트).
+    final effect = type.detailGuide.effect;
     return Padding(
       padding: const EdgeInsets.all(14),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        // 핀 (real PNG asset 사용)
         Image.asset(
           type.mapIcon(mandatory: false),
           width: 42, height: 42,
@@ -279,22 +269,27 @@ class _ItemRow extends StatelessWidget {
           Text(type.displayLabel,
               style: const TextStyle(fontFamily: DuoFonts.display, fontSize: 14, color: DuoColors.eel2)),
           const SizedBox(height: 4),
-          Text(_effect(), style: const TextStyle(fontSize: 11, color: DuoColors.wolf2)),
+          Text(effect, style: const TextStyle(fontSize: 11, color: DuoColors.wolf2)),
         ])),
       ]),
     );
   }
 }
 
-// ─── §15 How To Play ─────────────────────────────────────────────────
+// ─── §15 How To Play ─────────────────────────────────────────────────────────
+// SwiftUI HelpHowToView 1:1 — orange hero(PlaySpot?) + 2 modes + 4 steps + reward strip + fox bubble.
 class _HelpHowToView extends StatelessWidget {
   const _HelpHowToView();
 
   static const _steps = [
-    (id: 1, title: '미션 선택', body: '내 주변/인기/신규 미션 중에서 골라요.', icon: Icons.map, tint: DuoColors.macaw),
-    (id: 2, title: '근처로 이동', body: 'GPS로 거리를 확인하면서 가까이 다가가요.', icon: Icons.location_on, tint: DuoColors.fox),
-    (id: 3, title: '아이템 획득', body: 'AR에서 흔들거나 탭해서 아이템을 모아요.', icon: Icons.touch_app, tint: DuoColors.green500),
-    (id: 4, title: '미션 완료', body: '필수 아이템을 모두 모으면 클리어 + 보상!', icon: Icons.emoji_events, tint: DuoColors.bee),
+    (id: 1, title: '지도 열고 미션 찾기', body: '근처에 숨겨진 아이템을 지도에서 확인하세요.',
+        icon: Icons.map, tint: DuoColors.macaw),
+    (id: 2, title: '직접 걸어서 이동', body: '표시된 위치까지 직접 걸어가야 아이템이 활성화됩니다.',
+        icon: Icons.directions_walk, tint: DuoColors.fox),
+    (id: 3, title: 'AR로 흔들고 터치!', body: '거리 안에 들어가면 카메라를 켜고 흔들거나 터치해 획득.',
+        icon: Icons.auto_awesome, tint: DuoColors.beetle),
+    (id: 4, title: '퀴즈 풀고 클리어', body: '퀴즈 정답을 맞춰 모든 필수 아이템을 모으면 클리어!',
+        icon: Icons.emoji_events, tint: DuoColors.bee),
   ];
 
   @override
@@ -302,18 +297,20 @@ class _HelpHowToView extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _hero(),
+        _heroCard(),
         const SizedBox(height: 16),
         _modeCards(),
         const SizedBox(height: 16),
         _stepsList(),
         const SizedBox(height: 16),
         _rewardStrip(),
+        const SizedBox(height: 16),
+        _foxBubble(),
       ]),
     );
   }
 
-  Widget _hero() {
+  Widget _heroCard() {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -323,25 +320,28 @@ class _HelpHowToView extends StatelessWidget {
       ),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: const [
-          Text('HOW TO PLAY · 시작하기',
+          Text('WHAT IS · 플레이스팟이란?',
               style: TextStyle(fontFamily: DuoFonts.display, fontSize: 11, letterSpacing: 1.5, color: DuoColors.foxDeep)),
           SizedBox(height: 6),
-          Text('Quick Start',
-              style: TextStyle(fontFamily: DuoFonts.display, fontSize: 22, color: DuoColors.eel2)),
+          Text('PlaySpot?',
+              style: TextStyle(fontFamily: DuoFonts.display, fontSize: 26, color: DuoColors.eel2)),
           SizedBox(height: 4),
-          Text('4단계로 미션을 시작해보세요!',
+          Text('실제 위치를 돌아다니며 AR로 아이템을 모으는\n위치 기반 트레저 헌트 게임이에요.',
               style: TextStyle(fontSize: 13, color: DuoColors.wolf2, fontWeight: FontWeight.w600)),
         ])),
-        const Text('🎯', style: TextStyle(fontSize: 56)),
+        const SizedBox(width: 8),
+        const Text('🦊', style: TextStyle(fontSize: 56)),
       ]),
     );
   }
 
   Widget _modeCards() {
     return Row(children: [
-      Expanded(child: _modeCard(kicker: 'LIVE', title: '리얼 모드', desc: '실제 GPS로 직접 걸으면서 플레이', tint: DuoColors.green500, bg: DuoColors.green100)),
+      Expanded(child: _modeCard(kicker: 'LIVE', title: '리얼 모드', desc: '실제 GPS로 직접 걸으면서 플레이',
+          tint: DuoColors.green500, bg: DuoColors.green100)),
       const SizedBox(width: 10),
-      Expanded(child: _modeCard(kicker: 'HOME', title: '가상 모드', desc: '집에서도 위치를 시뮬레이션해 즐기기', tint: DuoColors.beetle, bg: const Color(0xFFF1DCFF))),
+      Expanded(child: _modeCard(kicker: 'HOME', title: '가상 모드', desc: '집에서도 위치를 시뮬레이션해 즐기기',
+          tint: DuoColors.beetle, bg: const Color(0xFFF1DCFF))),
     ]);
   }
 
@@ -351,7 +351,8 @@ class _HelpHowToView extends StatelessWidget {
       decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(14), border: Border.all(color: tint, width: 2)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          height: 22, alignment: Alignment.center,
           decoration: BoxDecoration(color: tint, borderRadius: BorderRadius.circular(999)),
           child: Text(kicker, style: const TextStyle(fontFamily: DuoFonts.display, fontSize: 10, color: Colors.white, letterSpacing: 0.66)),
         ),
@@ -410,6 +411,24 @@ class _HelpHowToView extends StatelessWidget {
       ]),
     );
   }
+
+  Widget _foxBubble() {
+    return Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+      Container(
+        width: 64, height: 64,
+        decoration: BoxDecoration(color: DuoColors.foxBg, shape: BoxShape.circle, border: Border.all(color: DuoColors.foxDeep, width: 2)),
+        alignment: Alignment.center,
+        child: const Text('🦊', style: TextStyle(fontSize: 32)),
+      ),
+      const SizedBox(width: 10),
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: DuoColors.swan2, width: 2)),
+        child: const Text('준비됐어요? 🎯',
+            style: TextStyle(fontFamily: DuoFonts.display, fontSize: 14, color: DuoColors.eel2)),
+      ),
+    ]);
+  }
 }
 
 class _PerkChip extends StatelessWidget {
@@ -432,16 +451,23 @@ class _PerkChip extends StatelessWidget {
   }
 }
 
-// ─── §16 Design (미션 디자이너) ───────────────────────────────────────
+// ─── §16 Design (미션 디자이너) ─────────────────────────────────────────────
+// SwiftUI HelpDesignView 1:1 — purple hero (Mission Designer) + 5 DesignStep (64x64 tint icon box) + CTA.
 class _HelpDesignView extends StatelessWidget {
-  final VoidCallback? onStart;
-  const _HelpDesignView({this.onStart});
+  final VoidCallback? onStartDesign;
+  const _HelpDesignView({this.onStartDesign});
 
   static const _steps = [
-    (id: 1, title: '장소 선택', body: '미션이 펼쳐질 지도 위치를 정해요.', icon: Icons.place, tint: DuoColors.beetle),
-    (id: 2, title: '아이템 배치', body: '핀을 찍어 시작·종료·퀴즈 아이템을 놓아요.', icon: Icons.add_location, tint: DuoColors.macaw),
-    (id: 3, title: '난이도 조정', body: '범위·시간·필수 여부 등을 설정해요.', icon: Icons.tune, tint: DuoColors.fox),
-    (id: 4, title: '공개 설정', body: '저장 후 공개하면 다른 플레이어가 만날 수 있어요.', icon: Icons.public, tint: DuoColors.green500),
+    (id: 1, title: '지도에 아이템 배치', body: '지도를 길게 눌러 시작/끝/퀴즈/지뢰 등 아이템을 놓아보세요.',
+        icon: Icons.map, tint: DuoColors.green500),
+    (id: 2, title: '아이템 탭해서 설정', body: '필수 여부·발견 거리·표시 방식(숨김/Stealth) 등을 조정.',
+        icon: Icons.tune, tint: DuoColors.macaw),
+    (id: 3, title: '미션 메타 정보 입력', body: '제목·장소·설명·시간 제한·뱃지 이미지를 채워주세요.',
+        icon: Icons.article, tint: DuoColors.fox),
+    (id: 4, title: '테스트 플레이', body: "내 디자인 목록에서 '테스트' 버튼으로 직접 플레이해보세요.",
+        icon: Icons.play_arrow, tint: DuoColors.beetle),
+    (id: 5, title: '업로드 — 신중하게!', body: "공개 후 직접 삭제는 불가. 먼저 '공개 해제' 후에만 삭제할 수 있어요.",
+        icon: Icons.warning_amber, tint: DuoColors.cardinal),
   ];
 
   @override
@@ -449,19 +475,19 @@ class _HelpDesignView extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _hero(),
+        _heroCard(),
         const SizedBox(height: 16),
         for (final s in _steps) ...[
           _stepRow(s),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
         ],
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
         _startButton(context),
       ]),
     );
   }
 
-  Widget _hero() {
+  Widget _heroCard() {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -480,6 +506,7 @@ class _HelpDesignView extends StatelessWidget {
           Text('당신만의 위치 기반 미션을 만들어 친구들과 공유해 보세요!',
               style: TextStyle(fontSize: 13, color: DuoColors.wolf2, fontWeight: FontWeight.w600)),
         ])),
+        const SizedBox(width: 8),
         const Text('🤔', style: TextStyle(fontSize: 56)),
       ]),
     );
@@ -490,44 +517,69 @@ class _HelpDesignView extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: DuoColors.swan2, width: 2)),
       child: Row(children: [
-        Container(
-          width: 40, height: 40,
-          decoration: BoxDecoration(
-            color: s.tint, shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 3),
-            boxShadow: [BoxShadow(color: s.tint.withValues(alpha: 0.4), blurRadius: 8)],
+        // 번호 원 (흰 테 3px + tint 60% inner stroke 1px)
+        Stack(alignment: Alignment.center, children: [
+          Container(
+            width: 40, height: 40,
+            decoration: BoxDecoration(
+              color: s.tint, shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 3),
+            ),
           ),
-          alignment: Alignment.center,
-          child: Text('${s.id}', style: const TextStyle(fontFamily: DuoFonts.display, fontSize: 16, color: Colors.white)),
-        ),
+          Container(
+            width: 40, height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: s.tint.withValues(alpha: 0.6), width: 1),
+            ),
+          ),
+          Text('${s.id}', style: const TextStyle(fontFamily: DuoFonts.display, fontSize: 16, color: Colors.white)),
+        ]),
         const SizedBox(width: 12),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(s.title, style: const TextStyle(fontFamily: DuoFonts.display, fontSize: 14, color: DuoColors.eel2)),
           const SizedBox(height: 2),
           Text(s.body, style: const TextStyle(fontSize: 12, color: DuoColors.wolf2)),
         ])),
+        const SizedBox(width: 8),
+        // 우측 큰 아이콘 박스 (64x64 tint 18% bg + tint icon)
         Container(
           width: 64, height: 64,
           decoration: BoxDecoration(color: s.tint.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(12)),
+          alignment: Alignment.center,
           child: Icon(s.icon, color: s.tint, size: 24, weight: 900),
         ),
       ]),
     );
   }
 
+  /// SwiftUI candy 버튼 — beetle fill + beetleDeep 그림자 offset 4.
   Widget _startButton(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.pop(context);
-        onStart?.call();
-      },
-      child: Container(
-        height: 52,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(color: DuoColors.beetle, borderRadius: BorderRadius.circular(14)),
-        child: const Text('미션 만들기 시작!',
-            style: TextStyle(fontFamily: DuoFonts.display, fontSize: 14, color: Colors.white, letterSpacing: 0.84)),
+    return Stack(children: [
+      Container(
+        height: 56,
+        margin: const EdgeInsets.only(top: 4),
+        decoration: BoxDecoration(color: DuoColors.beetleDeep, borderRadius: BorderRadius.circular(14)),
       ),
-    );
+      Material(
+        color: DuoColors.beetle,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onStartDesign,
+          child: Container(
+            height: 52,
+            alignment: Alignment.center,
+            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: const [
+              Icon(Icons.edit, color: Colors.white, size: 16),
+              SizedBox(width: 8),
+              Text('미션 만들기 시작!',
+                  style: TextStyle(
+                      fontFamily: DuoFonts.display, fontSize: 14, color: Colors.white, letterSpacing: 0.84)),
+            ]),
+          ),
+        ),
+      ),
+    ]);
   }
 }

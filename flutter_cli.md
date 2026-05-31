@@ -124,4 +124,4 @@ cd /Users/root1/Documents/workspace/TreasureHunter/flutter_ar_spike
 flutter devices
 
 3.
-flutter run -d xxxx
+flutter run -d ce10171a43e9930a04

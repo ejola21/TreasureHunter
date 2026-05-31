@@ -85,13 +85,10 @@ class _TutorialViewState extends State<TutorialView> {
   }
 
   Widget _topBar() {
+    // SKIP 제거 — X 한 개로 통일. 좌측에 X 와 동일 폭 spacer 두어 3-dot 가운데 정렬 유지.
+    const closeBoxSize = 44.0;
     return Row(children: [
-      // SKIP
-      GestureDetector(
-        onTap: _close,
-        child: const Text('SKIP',
-            style: TextStyle(fontFamily: DuoFonts.display, fontSize: 11, letterSpacing: 0.66, color: DuoColors.hare)),
-      ),
+      const SizedBox(width: closeBoxSize),
       // 3-dot progress (가운데 정렬)
       Expanded(
         child: Center(
@@ -109,12 +106,18 @@ class _TutorialViewState extends State<TutorialView> {
           })),
         ),
       ),
-      // X 닫기
+      // X 닫기 — 44×44 흰 둥근 박스 + 어두운 X 아이콘 (탭 영역 확장 + 시인성 강화).
       GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: _close,
         child: Container(
-          width: 28, height: 28, alignment: Alignment.center,
-          child: const Icon(Icons.close, size: 14, weight: 900, color: DuoColors.hare),
+          width: closeBoxSize, height: closeBoxSize,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: Colors.white, shape: BoxShape.circle,
+            border: Border.all(color: DuoColors.swan2, width: 2),
+          ),
+          child: const Icon(Icons.close, size: 22, weight: 900, color: DuoColors.eel2),
         ),
       ),
     ]);
@@ -190,6 +193,7 @@ class _TutorialViewState extends State<TutorialView> {
         Expanded(
           child: CandyButton(
             label: 'BACK', tint: Colors.white, shadowColor: DuoColors.swan2,
+            fg: DuoColors.wolf, // 흰 배경에서 보이게 어두운 회색 (SwiftUI duoWolf 동일).
             onPressed: () => setState(() => _step -= 1),
           ),
         ),
