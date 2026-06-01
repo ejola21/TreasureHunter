@@ -4,7 +4,8 @@ import 'package:dio/dio.dart';
 import 'auth_session.dart';
 
 class RestApiClient {
-  static const baseUrl = 'http://43.201.188.35:8080';
+  /// 신규 API host (HTTPS). 레거시 `http://43.201.188.35:8080` 대체.
+  static const baseUrl = 'https://playapi.letsbidding.com';
 
   final AuthSession _auth;
   late final Dio _dio;

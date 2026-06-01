@@ -1,127 +1,161 @@
+# Flutter CLI — 디바이스 테스트 가이드 (OS 별)
 
-## 기본 실행 명령어
+> 프로젝트: `flutter_ar_spike/`. 모든 명령은 이 폴더에서 실행.
 
-
-# 연결된 기기 자동 감지해서 실행
-flutter run
-
-# 연결 가능한 기기/시뮬레이터 목록 확인
-flutter devices
-
-
-`flutter devices`로 확인하면 이런 식으로 나와요:
-
-iPhone 15 (mobile)        • 00008110-xxx • ios     • iOS 17.4
-sdk gphone64 arm64        • emulator-5554 • android-arm64 • Android 14
-Chrome (web)              • chrome        • web-javascript
-macOS (desktop)           • macos         • darwin-arm64
-
-
-## 플랫폼별 실행
-
-**iOS**
-
-# 시뮬레이터 또는 연결된 아이폰
-flutter run -d ios
-
-# 특정 기기 지정
-flutter run -d "iPhone 15"
-
-# 실기기에 release 모드로
-flutter run -d ios --release
-
-※ macOS + Xcode 필요. 실기기 설치는 Apple Developer 계정(무료/유료) 필요.
-
-**Android**
-
-# 에뮬레이터 또는 연결된 안드로이드 폰
-flutter run -d android
-
-# 에뮬레이터 띄우기 (먼저 목록 확인)
-flutter emulators
-flutter emulators --launch <emulator_id>
-
-※ Android Studio + SDK 설치 필요. USB 디버깅 켜진 실기기도 인식돼요.
-
-**Web**
-
-# Chrome으로 실행 (가장 일반적)
-flutter run -d chrome
-
-# Edge로 실행
-flutter run -d edge
-
-# 특정 포트로 웹 서버만 띄우기
-flutter run -d web-server --web-port 8080
-```
-
-**데스크탑**
-```bash
-flutter run -d macos      # macOS
-flutter run -d windows    # Windows
-flutter run -d linux      # Linux
-```
-
-## 빌드 (배포용 파일 생성)
+## 시작 전
 
 ```bash
-flutter build apk              # Android APK
-flutter build appbundle        # Android AAB (Play Store용)
-flutter build ios              # iOS (이후 Xcode에서 아카이브)
-flutter build ipa              # iOS IPA 직접 생성
-flutter build web              # Web (build/web 폴더에 정적 파일)
-flutter build macos            # macOS 앱
-flutter build windows          # Windows 앱
-flutter build linux            # Linux 앱
-```
-
-## 유용한 옵션
-
-```bash
-# 모드 지정
-flutter run --debug      # 기본값, 핫 리로드 가능
-flutter run --profile    # 성능 측정용
-flutter run --release    # 배포용 최적화
-
-# Flavor (개발/스테이징/프로덕션 분리)
-flutter run --flavor dev -t lib/main_dev.dart
-
-# 전체 기기에 동시 실행
-flutter run -d all
-```
-
-## 사전 체크
-
-프로젝트가 어떤 플랫폼을 지원하는지는 프로젝트 루트의 폴더로 알 수 있어요:
-```
-my_app/
-├── android/    ← 안드로이드 지원
-├── ios/        ← iOS 지원
-├── web/        ← 웹 지원
-├── macos/      ← macOS 지원
-├── windows/    ← Windows 지원
-└── linux/      ← Linux 지원
-```
-
-기존 프로젝트에 플랫폼 추가하려면:
-```bash
-flutter create --platforms=web,macos,windows .
-```
-
-환경 설정이 잘 됐는지 확인하는 만능 명령어:
-```bash
-flutter doctor
-```
-체크리스트 형태로 뭐가 빠졌는지 다 알려줘요. iOS 빌드하려면 Xcode, 안드로이드는 Android Studio, 웹은 Chrome 같은 식으로요.
-
-**한 줄 요약**: `flutter devices`로 뭐가 붙어있는지 보고 → `flutter run -d <기기>`로 실행, 끝이에요. 진짜 편해요.
-
-
-1.
 cd /Users/root1/Documents/workspace/TreasureHunter/flutter_ar_spike
 
-2.
-flutter devices
+flutter devices     # 연결된 기기 + ID 목록
+flutter doctor      # 환경 점검 (한 번만)
+```
 
-3.
+`flutter run -d <ID>` 형태가 가장 확실. 같은 OS 에 기기가 한 대뿐이면 라벨(`android`/`ios`/`chrome`) 도 가능.
+
+빌드 모드 공통: `--debug` (기본, hot reload) · `--profile` (성능 측정) · `--release` (배포)
+
+콘솔 키 (run 중): `r` hot reload · `R` hot restart · `d` DevTools URL · `q` 종료
+
+---
+
+## Android
+
+### 실기기
+```bash
+# USB 디버깅 켠 폰을 케이블로 연결
+flutter devices
+flutter run -d ce10171a43e9930a04         # ID 로 직접 (가장 확실)
+flutter run -d android                    # 한 대만 붙어 있을 때
+
+# CLI 로 APK 만들고 직접 설치
+flutter build apk --debug --target-platform android-arm64
+adb -s <ID> install -r build/app/outputs/flutter-apk/app-debug.apk
+```
+
+### 에뮬레이터
+```bash
+flutter emulators                            # 가용 에뮬 목록
+flutter emulators --launch Pixel_7_API_34    # 부팅
+flutter run -d emulator-5554                 # 부팅된 에뮬 ID
+```
+
+### 도구
+```bash
+# adb 경로 (PATH 미설정 시)
+~/Library/Android/sdk/platform-tools/adb
+
+# 디바이스 스크린샷
+adb shell screencap -p /sdcard/s.png && adb pull /sdcard/s.png /tmp/s.png
+```
+
+---
+
+## iOS (macOS + Xcode 필요)
+
+### 시뮬레이터
+```bash
+open -a Simulator
+flutter run -d "iPhone 16 Pro"           # 이름으로
+flutter run -d ios                       # 한 대만 부팅 시
+
+# 시뮬 도구
+xcrun simctl list devices booted         # 부팅된 시뮬 + UDID
+xcrun simctl io booted screenshot /tmp/s.png
+```
+
+### 실기기 (무료 Apple ID 도 OK)
+```bash
+flutter devices                          # iPhone + UDID 보임
+flutter run -d 00008110-...              # UDID 로
+flutter run -d ios --release             # 실기기 release
+```
+
+### 빌드만 (Xcode 에서 archive 시)
+```bash
+flutter build ios                        # Generic iOS Device
+flutter build ipa                        # 서명 + IPA 직접
+```
+
+---
+
+## Web (Chrome 또는 LAN 서버)
+
+### Chrome 자동
+```bash
+flutter run -d chrome                    # localhost (secure context, crypto.subtle OK)
+flutter run -d chrome --web-port=8080    # 포트 고정 (개발 중 URL 유지)
+```
+
+### 같은 와이파이의 폰/태블릿에서 접속
+```bash
+flutter run -d web-server \
+  --web-port=8080 \
+  --web-hostname=0.0.0.0
+# → 디바이스 브라우저: http://$(ipconfig getifaddr en0):8080
+```
+
+### 배포용 정적 빌드
+```bash
+flutter build web --release              # build/web/ (index.html + main.dart.js)
+```
+
+### 주의 (이 프로젝트)
+- 백엔드 = `https://playapi.letsbidding.com` (HTTPS) → secure context 정상
+- 카메라/AR/sensors_plus(흔들기) 는 웹 제한적 — 탭 폴백
+- 처음 컴파일 30~60초, 이후 hot reload 빠름
+- `flutter devices` 에 `Chrome (web)` 안 보이면 → `flutter config --enable-web`
+
+---
+
+## Desktop
+
+```bash
+flutter run -d macos       # Mac 호스트만
+flutter run -d windows     # Windows 호스트만
+flutter run -d linux       # Linux 호스트만
+
+# 빌드 산출물
+# macOS:   build/macos/Build/Products/Release/*.app
+# Windows: build/windows/runner/Release/*.exe
+# Linux:   build/linux/x64/release/bundle/
+```
+
+---
+
+## 트러블슈팅
+
+```bash
+flutter clean        # build/ + .dart_tool/ 삭제 (캐시 꼬임)
+flutter pub get      # 의존성 재설치
+flutter analyze      # 정적 분석
+flutter test         # 단위/위젯 테스트
+flutter doctor -v    # 환경 상세 점검
+```
+
+### 자주 만나는 문제
+| 증상 | 원인 / 해결 |
+|---|---|
+| `flutter devices` 에 Chrome 안 보임 | `flutter config --enable-web` |
+| Android USB 인식 안 됨 | "USB 디버깅" 켜기 + 데이터 케이블 확인 |
+| iOS 실기기 signing 에러 | Xcode → Signing & Capabilities → Team 선택 |
+| Gradle daemon `errno 49` | macOS ephemeral 포트 고갈 — Mac 재부팅 또는 잠시 대기 |
+| Plugin 추가 후 동작 안 함 | hot reload/restart 부족 — stop 후 `flutter run` 재실행 (네이티브 재등록 필요) |
+
+---
+
+## 자주 쓰는 패턴 (이 프로젝트)
+
+```bash
+# Android 실기기 (가장 자주)
 flutter run -d ce10171a43e9930a04
+
+# iOS 시뮬레이터
+flutter run -d "iPhone 16 Pro"
+
+# Chrome 로컬
+flutter run -d chrome
+
+# Web LAN 노출 (모바일 브라우저로 확인)
+flutter run -d web-server --web-port=8080 --web-hostname=0.0.0.0
+```

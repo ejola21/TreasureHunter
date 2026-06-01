@@ -5,7 +5,7 @@ import os
 actor RestAPIClient {
     static let shared = RestAPIClient()
 
-    private static let baseURL = URL(string: "http://43.201.188.35:8080")!
+    private static let baseURL = URL(string: "https://playapi.letsbidding.com")!
     private static let log = Logger(subsystem: "com.ejola.playspot", category: "RestAPI")
 
     private let decoder: JSONDecoder = {

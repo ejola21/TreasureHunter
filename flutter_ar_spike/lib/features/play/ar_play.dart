@@ -18,6 +18,8 @@ import '../../design_system/play_hud.dart';
 import '../../game/game_engine.dart';
 import '../../models/item_type.dart';
 import '../../models/mission_item.dart';
+import '../../services/web_compass.dart';
+import '../../services/web_shake.dart';
 import 'ar_item_billboard.dart';
 
 const _dist = Distance();
@@ -41,7 +43,11 @@ class ArPlay extends StatefulWidget {
 class _ArPlayState extends State<ArPlay> {
   CameraController? _cam;
   StreamSubscription<CompassEvent>? _compassSub;
+  StreamSubscription<double>? _webCompassSub;
+  WebCompass? _webCompass;
   StreamSubscription<UserAccelerometerEvent>? _accelSub;
+  StreamSubscription<double>? _webShakeSub;
+  WebShake? _webShake;
   double _heading = 0.0; // 도, 절대(시계방향 from N). 폴백 = 0(=북).
   bool _hasHeading = false;
   bool _showHelp = false;
@@ -71,7 +77,22 @@ class _ArPlayState extends State<ArPlay> {
   }
 
   void _initCompass() {
-    if (kIsWeb) return; // 웹은 별도 권한 흐름 — 우선 모바일만 지원.
+    if (kIsWeb) {
+      // 웹: DeviceOrientationEvent JS interop. iOS Safari 는 사전 권한 요청 후 시작.
+      _webCompass = WebCompass();
+      WebCompass.requestPermission().then((granted) {
+        if (!granted || !mounted) return;
+        _webCompass!.start();
+        _webCompassSub = _webCompass!.headingStream.listen((h) {
+          if (!mounted) return;
+          setState(() {
+            _heading = (h + 360.0) % 360.0;
+            _hasHeading = true;
+          });
+        });
+      });
+      return;
+    }
     _compassSub = FlutterCompass.events?.listen((e) {
       if (!mounted || e.heading == null) return;
       setState(() {
@@ -84,7 +105,22 @@ class _ArPlayState extends State<ArPlay> {
   /// 흔들기 감지 — SwiftUI MotionService 의 isShaking + ARGameView.handleShake 동등.
   /// userAccelerometer (중력 제거된 가속도, m/s²) 의 크기가 1.4G 이상 + 0.5s 쿨다운.
   void _initShake() {
-    if (kIsWeb) return;
+    if (kIsWeb) {
+      // 웹: DeviceMotionEvent JS interop (sensors_plus 미지원 대체).
+      _webShake = WebShake();
+      WebShake.requestPermission().then((granted) {
+        if (!granted || !mounted) return;
+        _webShake!.start();
+        _webShakeSub = _webShake!.magnitudeStream.listen((mag) {
+          if (mag < _shakeThreshold) return;
+          final now = DateTime.now();
+          if (now.difference(_lastShake) < _shakeCooldown) return;
+          _lastShake = now;
+          _handleShake();
+        });
+      });
+      return;
+    }
     _accelSub = userAccelerometerEventStream().listen((e) {
       final mag = math.sqrt(e.x * e.x + e.y * e.y + e.z * e.z);
       if (mag < _shakeThreshold) return;
@@ -131,7 +167,11 @@ class _ArPlayState extends State<ArPlay> {
   @override
   void dispose() {
     _compassSub?.cancel();
+    _webCompassSub?.cancel();
+    _webCompass?.stop();
     _accelSub?.cancel();
+    _webShakeSub?.cancel();
+    _webShake?.stop();
     _cam?.dispose();
     widget.engine.removeListener(_onEngine);
     super.dispose();

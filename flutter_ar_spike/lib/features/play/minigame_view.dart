@@ -6,6 +6,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/foundation.dart' show kIsWeb;
+import '../../services/web_shake.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show HapticFeedback;
 import 'package:sensors_plus/sensors_plus.dart';
@@ -38,6 +39,8 @@ class _MiniGameViewState extends State<MiniGameView> {
   int _tickCount = 0;
   Timer? _tick;
   StreamSubscription<UserAccelerometerEvent>? _accelSub;
+  StreamSubscription<double>? _webShakeSub;
+  WebShake? _webShake;
   DateTime _lastShake = DateTime.fromMillisecondsSinceEpoch(0);
   final _sound = SoundService();
 
@@ -47,8 +50,24 @@ class _MiniGameViewState extends State<MiniGameView> {
   void initState() {
     super.initState();
     _tick = Timer.periodic(_tickInterval, _onTick);
-    if (!kIsWeb && _isShakeMode) {
-      _accelSub = userAccelerometerEventStream().listen(_onAccel);
+    if (_isShakeMode) {
+      if (kIsWeb) {
+        // 웹: DeviceMotionEvent JS interop (sensors_plus 미지원 대체).
+        _webShake = WebShake();
+        WebShake.requestPermission().then((granted) {
+          if (!granted || !mounted) return;
+          _webShake!.start();
+          _webShakeSub = _webShake!.magnitudeStream.listen((mag) {
+            if (mag < _shakeThreshold) return;
+            final now = DateTime.now();
+            if (now.difference(_lastShake) < _shakeCooldown) return;
+            _lastShake = now;
+            _addProgress();
+          });
+        });
+      } else {
+        _accelSub = userAccelerometerEventStream().listen(_onAccel);
+      }
     }
   }
 
@@ -98,6 +117,8 @@ class _MiniGameViewState extends State<MiniGameView> {
     _won = true;
     _tick?.cancel();
     _accelSub?.cancel();
+    _webShakeSub?.cancel();
+    _webShake?.stop();
     _sound.play(SoundEffect.gameFinish);
     HapticFeedback.heavyImpact();
     widget.engine.acquireItem(widget.item);
@@ -108,6 +129,8 @@ class _MiniGameViewState extends State<MiniGameView> {
   void dispose() {
     _tick?.cancel();
     _accelSub?.cancel();
+    _webShakeSub?.cancel();
+    _webShake?.stop();
     _sound.dispose();
     super.dispose();
   }

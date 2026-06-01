@@ -122,6 +122,7 @@ class MissionDetailPage extends ConsumerWidget {
         borderRadius: BorderRadius.circular(10),
         child: url != null && url.isNotEmpty
             ? Image.network(url, fit: BoxFit.cover,
+                webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
                 errorBuilder: (_, _, _) => const Icon(Icons.workspace_premium, color: DuoColors.macawDeep, size: 28))
             : const Center(child: Icon(Icons.workspace_premium, color: DuoColors.macawDeep, size: 28, weight: 900)),
       ),

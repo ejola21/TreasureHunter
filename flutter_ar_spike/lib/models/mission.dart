@@ -112,15 +112,16 @@ class Mission {
     );
   }
 
-  /// 뱃지 다운로드 URL.
+  /// 뱃지 다운로드 URL. 호스트는 RestApiClient.baseUrl 과 일치 (현재 https://playapi.letsbidding.com).
   /// - http(s):// 시작 → 그대로 사용
-  /// - "/badge/..." 절대경로 → 호스트(43.201.188.35:8080) + path
+  /// - "/badge/..." 절대경로 → 호스트 + path
   /// - "badge-xxx.png" 단순 파일명 → `…/playspot/badge/<name>` (레거시 경로)
   String? get badgeImageUrl {
     final name = badgeImageName;
     if (name == null || name.isEmpty) return null;
     if (name.startsWith('http://') || name.startsWith('https://')) return name;
-    if (name.startsWith('/')) return 'http://43.201.188.35:8080$name';
-    return 'http://43.201.188.35:8080/playspot/badge/$name';
+    const host = 'https://playapi.letsbidding.com';
+    if (name.startsWith('/')) return '$host$name';
+    return '$host/playspot/badge/$name';
   }
 }

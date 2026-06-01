@@ -43,3 +43,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# mkcert local TLS certs (가짜 인증서 — git 커밋 금지)
+.certs/
+
+# Firebase Hosting deploy cache
+.firebase/

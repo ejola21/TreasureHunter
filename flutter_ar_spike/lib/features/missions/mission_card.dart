@@ -99,6 +99,8 @@ class _Thumb extends StatelessWidget {
         width: 44,
         height: 44,
         fit: BoxFit.cover,
+        // 웹: <img> 태그 사용 (CORS 없는 S3 도 표시 가능). 비-웹은 무시.
+        webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
         errorBuilder: (_, _, _) => _placeholder(),
         loadingBuilder: (_, child, p) =>
             p == null ? child : _placeholder(bg: DuoColors.swan2, icon: Icons.image_outlined),

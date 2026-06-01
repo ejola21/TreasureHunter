@@ -178,6 +178,7 @@ class _DesignThumb extends StatelessWidget {
         width: 40,
         height: 40,
         fit: BoxFit.cover,
+        webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
         errorBuilder: (_, _, _) => _placeholder(),
         loadingBuilder: (_, child, p) =>
             p == null ? child : _placeholder(bg: DuoColors.swan2, icon: Icons.image_outlined),

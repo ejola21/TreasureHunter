@@ -426,7 +426,7 @@ class _LoginSheetState extends State<_LoginSheet> {
         // Server 표시 (현재 백엔드).
         Padding(
           padding: const EdgeInsets.only(top: 6),
-          child: Text('서버: ${RestApiClient.baseUrl.replaceFirst('http://', '')}',
+          child: Text('서버: ${RestApiClient.baseUrl.replaceFirst(RegExp(r'^https?://'), '')}',
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 11, color: DuoColors.hare)),
         ),

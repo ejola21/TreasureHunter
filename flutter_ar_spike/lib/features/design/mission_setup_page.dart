@@ -641,9 +641,10 @@ class _MissionSetupPageState extends ConsumerState<MissionSetupPage> {
       final name = _badgeRemoteName!;
       final url = (name.startsWith('http://') || name.startsWith('https://'))
           ? name
-          : 'http://43.201.188.35:8080/playspot/badge/$name';
+          : 'https://playapi.letsbidding.com/playspot/badge/$name';
       content = Image.network(url,
           fit: BoxFit.contain,
+          webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
           errorBuilder: (_, _, _) => _badgeEmpty(error: true));
     } else {
       content = _badgeEmpty();
