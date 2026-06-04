@@ -226,6 +226,9 @@ struct LegacyRemoteDataSource: MissionDataSource {
     /// 신규 `/files/upload` 엔드포인트는 레거시 백엔드에 없음 — nil.
     func uploadFile(pngData: Data, fileName: String) async throws -> FileUploadRes? { nil }
 
+    /// R3.1 신규 — 레거시 백엔드에 없음. 동일 동작이 필요하면 기존 전체 PATCH 로 우회.
+    func updateMissionStatus(missionID: String, status: Int) async throws -> Bool { false }
+
     // MARK: - Legacy 페이로드 유틸
 
     private static let payloadDateFormatter: DateFormatter = {

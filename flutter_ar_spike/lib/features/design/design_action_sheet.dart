@@ -9,7 +9,10 @@ import '../../models/mission.dart';
 // SwiftUI DesignActionSheet.swift 와 1:1 — 4 액션 (Modify / Test / Publish/Unpublish / Delete).
 // "Test" 액션이 곧 **MissionDetailView 진입** 으로, 거기서 Play 버튼으로 실제 플레이 시작.
 // (별도 View/Detail 액션 없음 — Test 가 그 역할 겸함)
-enum DesignAction { modify, test, togglePublish, delete }
+/// 미션 진행 단계 액션:
+/// - togglePublish: 0→1 또는 1→2 (전진, R3.1 신규 엔드포인트)
+/// - demote: 2→1 (공개→테스트로 되돌리기, 전체 PATCH 우회)
+enum DesignAction { modify, test, togglePublish, demote, delete }
 
 /// 결과: 선택된 액션 (취소 = null).
 Future<DesignAction?> showDesignActionSheet(BuildContext context, Mission mission) {
@@ -27,6 +30,35 @@ class _DesignActionSheet extends StatelessWidget {
   const _DesignActionSheet({required this.mission});
 
   bool get _isPublished => mission.status == MissionStatus.published;
+  bool get _isTesting => mission.status == MissionStatus.testing;
+
+  // 단방향 진행 라벨 — 서버 0→1→2 룰. 공개 상태에선 변경 불가.
+  String get _advanceTitle {
+    switch (mission.status) {
+      case MissionStatus.unpublished: return 'Test Pass · 테스트 통과로 표시';
+      case MissionStatus.testing:     return 'Publish · 서버 업로드';
+      case MissionStatus.published:   return '공개됨 (변경 불가)';
+    }
+  }
+  String get _advanceSubtitle {
+    switch (mission.status) {
+      case MissionStatus.unpublished: return '테스트 플레이를 마쳤다면 다음 단계로';
+      case MissionStatus.testing:     return 'Missions 탭에 공개합니다 (되돌릴 수 없음)';
+      case MissionStatus.published:   return '이미 공개된 미션입니다';
+    }
+  }
+  IconData get _advanceIcon {
+    switch (mission.status) {
+      case MissionStatus.unpublished: return Icons.verified_outlined;
+      case MissionStatus.testing:     return Icons.cloud_upload;
+      case MissionStatus.published:   return Icons.lock;
+    }
+  }
+  Color get _advanceTint {
+    if (_isPublished) return DuoColors.hare;
+    if (_isTesting) return DuoColors.green500;
+    return DuoColors.macaw;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,20 +102,35 @@ class _DesignActionSheet extends StatelessWidget {
             onTap: () => Navigator.pop(context, DesignAction.test),
           ),
           const SizedBox(height: 12),
-          _ActionRow(
-            icon: _isPublished ? Icons.lock_open : Icons.cloud_upload,
-            tint: _isPublished ? DuoColors.beetle : DuoColors.green500,
-            title: _isPublished ? 'Unpublish · 공개 해제' : 'Publish · 서버 업로드',
-            subtitle: _isPublished ? '비공개 상태로 되돌립니다' : 'Missions 탭에 공개합니다',
-            important: true,
-            onTap: () => Navigator.pop(context, DesignAction.togglePublish),
-          ),
-          const SizedBox(height: 12),
+          // 전진 진행 (0→1 또는 1→2). 공개 상태에선 표시 안 함.
+          if (!_isPublished) ...[
+            _ActionRow(
+              icon: _advanceIcon,
+              tint: _advanceTint,
+              title: _advanceTitle,
+              subtitle: _advanceSubtitle,
+              important: true,
+              onTap: () => Navigator.pop(context, DesignAction.togglePublish),
+            ),
+            const SizedBox(height: 12),
+          ],
+          // 후퇴 (2→1). 공개 상태에서만 표시.
+          if (_isPublished) ...[
+            _ActionRow(
+              icon: Icons.undo,
+              tint: DuoColors.fox,
+              title: 'Demote · 테스트로 되돌리기',
+              subtitle: 'Missions 탭에서 내리고 테스트 단계로 돌아갑니다',
+              important: true,
+              onTap: () => Navigator.pop(context, DesignAction.demote),
+            ),
+            const SizedBox(height: 12),
+          ],
           _ActionRow(
             icon: Icons.delete_outline,
             tint: _isPublished ? DuoColors.hare : DuoColors.cardinal,
             title: 'Delete · 삭제',
-            subtitle: _isPublished ? '먼저 공개 해제 후 삭제 가능' : '되돌릴 수 없습니다',
+            subtitle: _isPublished ? '먼저 테스트 단계로 되돌린 뒤 삭제하세요' : '되돌릴 수 없습니다',
             muted: _isPublished,
             onTap: _isPublished ? null : () => Navigator.pop(context, DesignAction.delete),
           ),

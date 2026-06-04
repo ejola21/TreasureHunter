@@ -37,6 +37,38 @@ struct MissionSetupView: View {
 
     private var limitSeconds: Int { limitH * 3600 + limitM * 60 + limitS }
 
+    // MARK: - 상태 표시 (3단계 진행)
+    // 서버 R3.1 룰: 0(편집)→1(테스트 완료)→2(공개) 단방향. 빌더 메타 화면에선 표시만.
+    // 단계 진행은 디자인 목록의 액션시트에서 수행.
+    private var statusLabel: String {
+        switch viewModel.mission.status {
+        case .unpublished: return "편집 중 (비공개)"
+        case .testing:     return "테스트 완료"
+        case .published:   return "공개"
+        }
+    }
+    private var statusSubtitle: String {
+        switch viewModel.mission.status {
+        case .unpublished: return "저장 후 디자인 목록에서 ‘Test Pass’ → ‘Publish’ 로 단계별 공개."
+        case .testing:     return "디자인 목록에서 ‘Publish’ 를 눌러 Missions 탭에 공개하세요."
+        case .published:   return "Missions 탭에 노출 중. 되돌릴 수 없습니다."
+        }
+    }
+    private var statusIcon: String {
+        switch viewModel.mission.status {
+        case .unpublished: return "pencil.circle.fill"
+        case .testing:     return "checkmark.seal.fill"
+        case .published:   return "checkmark.circle.fill"
+        }
+    }
+    private var statusColor: Color {
+        switch viewModel.mission.status {
+        case .unpublished: return .duoMacaw
+        case .testing:     return .duoBee
+        case .published:   return .duoGreen500
+        }
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
@@ -67,16 +99,16 @@ struct MissionSetupView: View {
                 }
 
                 FormGroup(
-                    title: "공개 설정",
-                    subtitle: viewModel.mission.status == .published
-                        ? "다른 사용자가 Missions 탭에서 플레이할 수 있습니다."
-                        : "비공개 — 내 디자인 목록에만 보이고 Missions 탭에는 노출되지 않습니다."
+                    title: "현재 상태",
+                    subtitle: statusSubtitle
                 ) {
-                    toggleRow(label: "공개 (Missions 탭에 노출)",
-                              isOn: Binding(
-                                get: { viewModel.mission.status == .published },
-                                set: { viewModel.mission.status = $0 ? .published : .unpublished
-                                       viewModel.isDirty = true }))
+                    HStack(spacing: 8) {
+                        Image(systemName: statusIcon).foregroundColor(statusColor)
+                        Text(statusLabel).font(.duoBody(size: 15, weight: .semibold))
+                            .foregroundColor(.duoEel2)
+                        Spacer()
+                    }
+                    .padding(14)
                 }
 
                 FormGroup(title: "뱃지 이미지") {

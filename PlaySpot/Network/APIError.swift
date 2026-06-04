@@ -62,13 +62,42 @@ enum APIError: Error, LocalizedError {
     }
 
     /// 사용자에게 보일 한국어 안내문 매핑 (분류별 fallback). 서버 message 보다 명확한 라벨 필요 시 사용.
+    /// Flutter `mission_setup_page._humanReadableError` 와 동등 — 400 details 를 필드별로 풀어서 표시.
     var userFacingMessage: String {
         if isNotFound      { return "미션을 찾을 수 없어요. 다른 디바이스에서 삭제됐을 수 있습니다." }
         if isForbidden     { return "이 미션을 수정/삭제할 권한이 없어요." }
         if isNotDeletable  { return "공개된 미션은 바로 삭제할 수 없어요. 먼저 ‘공개 해제’ 한 뒤 시도해주세요." }
-        if isValidationError { return errorDescription ?? "입력값을 확인해주세요." }
+        if isValidationError {
+            // VALIDATION_FAILED 의 details 가 있으면 필드별 사람-읽기 좋게 풀어줌.
+            if case .server(_, _, _, let details) = self, !details.isEmpty {
+                let lines = details.map { "• \(Self.fieldLabel($0.field)): \($0.reason)" }.joined(separator: "\n")
+                return "저장 실패 — 다음을 확인하세요:\n\(lines)"
+            }
+            if case .server(_, let message, _, _) = self, !message.isEmpty {
+                return "저장 실패: \(message)"
+            }
+            return "입력값을 확인해주세요."
+        }
         if isUnauthorized  { return "로그인이 필요합니다." }
         return errorDescription ?? "요청 처리 중 오류가 발생했습니다."
+    }
+
+    /// 서버 응답 details[].field → 한국어 라벨.
+    private static func fieldLabel(_ field: String) -> String {
+        switch field {
+        case "mission.title":       return "미션 제목"
+        case "mission.description": return "미션 설명"
+        case "mission.place":       return "미션 장소"
+        case "mission.limitTime":   return "제한 시간"
+        case "mission.lang":        return "언어"
+        case "mission.virtual":     return "가상 모드"
+        case "items":               return "아이템 목록"
+        case "quizzes":             return "퀴즈 목록"
+        default:
+            return field
+                .replacingOccurrences(of: "mission.", with: "")
+                .replacingOccurrences(of: "items.", with: "아이템 ")
+        }
     }
 }
 

@@ -89,10 +89,17 @@ flutter run -d chrome --web-port=8080    # 포트 고정 (개발 중 URL 유지)
 
 ### 같은 와이파이의 폰/태블릿에서 접속
 ```bash
+
+http :
+flutter run -d web-server --web-port=8080 --web-hostname=0.0.0.0
+# → 디바이스 브라우저: http://$(ipconfig getifaddr en0):8080
+
+https: 
 flutter run -d web-server \
   --web-port=8080 \
-  --web-hostname=0.0.0.0
-# → 디바이스 브라우저: http://$(ipconfig getifaddr en0):8080
+  --web-hostname=0.0.0.0 \
+  --web-tls-cert-path=.certs/195.114.1.206+2.pem \
+  --web-tls-cert-key-path=.certs/195.114.1.206+2-key.pem
 ```
 
 ### 배포용 정적 빌드

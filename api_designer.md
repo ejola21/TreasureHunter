@@ -15,7 +15,7 @@
 | **R1.3** | `DELETE /api/v1/missions/{missionId}` | **블로커** | [`RestRemoteDataSource.deleteMission`](PlaySpot/Network/RestRemoteDataSource.swift) | 미션 삭제 |
 | **R1.4** | `GET /api/v1/users/{userId}/missions/designed` *(시멘틱 명문화)* | **High** | [`RestRemoteDataSource.fetchMyDesigned`](PlaySpot/Network/RestRemoteDataSource.swift) | Design 탭 — **본인이 작성한 미션 전체 목록** |
 | **R2.1** | `POST /api/v1/badges` *(존재 확인 + 사양 명문화)* | High | [`RestRemoteDataSource.uploadBadgeImage`](PlaySpot/Network/RestRemoteDataSource.swift) | 뱃지 이미지 첨부 |
-| **R3.1** | `PATCH /api/v1/missions/{missionId}/status` | Optional | (미사용 — 추가 시 클라 변경 필요) | DESIGNING→TESTED→SERVER_UPLOAD 전이 게이트 |
+| **R3.1** | `PATCH /api/v1/missions/{missionId}/status` | **🔴 P0 (즉시 필요)** | Flutter 웹/안드로이드 publish 토글 | **Flutter 측 publish/unpublish 동작 불가 (HTTP 400) — §7 상세** |
 
 ### 0.1 두 미션 목록의 분리 — **반드시 구분할 것**
 
@@ -635,35 +635,140 @@ curl -i -s http://43.201.188.35:8080/api/v1/users/playspot/missions/designed | h
 
 ---
 
-## 7. R3.1 — `PATCH /api/v1/missions/{missionId}/status` *(선택)*
+## 7. R3.1 — `PATCH /api/v1/missions/{missionId}/status` 🔴 **신규 필수**
 
-### 6.1 동기
+### 7.1 동기
 
-현재 클라이언트는 `Status` 를 mission POST body 에 직접 명시 (`Status: 0`). 임의 전이 가능. 비즈니스 룰을 서버에서 강제하려면 별도 엔드포인트 권장.
+**현 문제**: 기존 `PATCH /api/v1/missions/{missionId}` 는 `BuilderMissionReq` (mission + items + quizzes 모두 required) 의 전체 교체 (PUT 의미). 부분 업데이트 미지원.
 
-### 6.2 요청 / 응답
+→ Flutter 웹/안드로이드 클라가 publish 토글 시 mission.Status 만 변경하는 작은 페이로드 전송 → **HTTP 400 VALIDATION_FAILED**.
+
+검증 (2026-06-02):
+```bash
+curl -X PATCH /api/v1/missions/{id} -d '{"mission":{"Status":2}}'
+# → 400 {"code":"VALIDATION_FAILED","details":[
+#   {"field":"mission.title","reason":"must not be blank"},
+#   {"field":"mission.limitTime","reason":"must not be null"},
+#   {"field":"mission.lang","reason":"must not be blank"},
+#   {"field":"quizzes","reason":"must not be null"},
+#   {"field":"mission.description","reason":"must not be blank"},
+#   {"field":"mission.place","reason":"must not be blank"},
+#   {"field":"mission.virtual","reason":"must not be null"},
+#   {"field":"items","reason":"must not be empty"}
+# ]}
+```
+
+iOS 는 SwiftUI 빌더가 메모리에 전체 보유 → 항상 전체 페이로드 전송 → OK. **Flutter (웹/안드로이드) 와 향후 추가될 모든 클라이언트가 publish 못 함**.
+
+### 7.2 요청
 
 ```http
 PATCH /api/v1/missions/{missionId}/status
-{ "status": 2 }
+Authorization: Bearer <JWT>
+Content-Type: application/json
 
-→ 204 No Content
+{ "status": 2 }
 ```
 
-### 6.3 전이 규칙
+| 필드 | 타입 | 필수 | 값 | 의미 |
+|---|---|---|---|---|
+| `status` | int | ✅ | `0` 또는 `2` | 0 = 비공개 (DESIGNING/unpublished) / 2 = 공개 (SERVER_UPLOAD/published) |
 
-- 0 (DESIGNING) → 1 (TESTED) ✓
-- 1 (TESTED) → 2 (SERVER_UPLOAD) ✓
-- 역방향 / 점프 (0→2 등) → `400 INVALID_STATE_TRANSITION`
+> 클라이언트(iOS·Flutter) 모두 [`MissionStatus`](PlaySpot/Models/GameState.swift) 가 `unpublished=0, published=2` 두 값만 사용. legacy 1/3 은 사용 안 함.
 
-### 6.4 호환성
+### 7.3 응답
 
-본 엔드포인트가 추가되면 클라이언트의 [`MissionBuilderViewModel.save()`](PlaySpot/Game/MissionBuilderViewModel.swift) 흐름 변경:
-1. createMission/updateMission 호출 시 `Status: 0` 로 저장
-2. 테스트 통과 시 별도 PATCH /status 호출
-3. 업로드 단계에서 PATCH /status → 2
+| HTTP | 의미 | Body |
+|---|---|---|
+| **204 No Content** | 성공 — 상태 변경됨 | (없음) |
+| **400** `INVALID_STATUS_VALUE` | `status` 가 0/2 외의 값 | `{"code":"INVALID_STATUS_VALUE","message":"status 는 0 또는 2 만 허용"}` |
+| **401** | 토큰 없음/만료 | 표준 에러 |
+| **403** `FORBIDDEN` | 본인 작성 미션 아님 (`Designer != JWT.userId`) | 표준 에러 |
+| **404** `NOT_FOUND` | missionId 없음 | 표준 에러 |
+| **409** `INVALID_STATE_TRANSITION` *(선택 — 1차에선 생략 가능)* | 룰 위반 전이 시도 | `{"code":"INVALID_STATE_TRANSITION","message":"현재 ${current} → ${target} 불가"}` |
 
-1차 버전에서는 R3.1 없이 클라가 Status 직접 명시. R3.1 은 추후 보안 강화 단계.
+### 7.4 권한 검증
+
+`PATCH /api/v1/missions/{id}` 와 동일:
+1. JWT 검증 → userId 추출
+2. `SELECT Designer FROM Mission WHERE MissionID = :id`
+3. `Designer != JWT.userId` → 403
+4. 통과 시 `UPDATE Mission SET Status = :new_status WHERE MissionID = :id`
+
+### 7.5 동작 순서 (서버)
+
+```
+1. JWT 인증 (필터)
+2. status 값 검증 (0 또는 2)
+3. SELECT mission WHERE MissionID = path_id
+   → 없으면 404
+4. mission.Designer == JWT.userId ?
+   → 아니면 403
+5. (선택) 전이 룰 검사
+   - status 0→0, 2→2: idempotent OK (204)
+   - 0→2: OK
+   - 2→0: OK (unpublish 허용 — 디자이너가 비공개로 되돌릴 수 있어야 함)
+6. UPDATE Mission SET Status = :new_status WHERE MissionID = :id
+   - WriteDate 갱신 안 함 (메타 보존)
+   - items / quizzes 절대 손대지 않음
+7. 204 응답
+```
+
+### 7.6 사이드 이펙트 / 비검토 사항
+
+- ❌ `WriteDate` 변경 안 함 — 메타데이터 무결성
+- ❌ items / quizzes 삭제·재삽입 안 함 — 전체 PATCH 와 다른 점
+- ❌ RecommendAvg / PlayCnt 등 통계 컬럼 영향 없음
+- ✅ Audit 로그는 일반 PATCH 와 동일 수준 (선택)
+
+### 7.7 클라이언트 통합
+
+**Flutter (Dart)** 예시:
+```dart
+Future<bool> publishMission(String missionId) async {
+  final response = await dio.patch(
+    '/api/v1/missions/$missionId/status',
+    data: {'status': 2},
+  );
+  return response.statusCode == 204;
+}
+```
+
+**iOS (Swift)** 예시 — `MissionDataSource` 프로토콜에 추가:
+```swift
+func updateMissionStatus(missionID: String, status: Int) async throws -> Bool
+```
+
+기존 `updateMission()` (전체 페이로드) 는 빌더의 메타·아이템·퀴즈 통째 변경용으로 그대로 유지. publish 토글 같은 단일 status 전환에만 R3.1 사용.
+
+### 7.8 우선순위 / 일정
+
+- **🔴 P0 — 즉시 필요**. Flutter publish 기능 동작 불가 상태.
+- **공수 추정**: 컨트롤러 1개 + Service 메서드 1개 + 권한 검증 (기존 재사용) + 단위 테스트 1개 ≈ **반나절**
+- **롤아웃**:
+  1. 서버 배포 후 `curl -X PATCH /api/v1/missions/{id}/status -d '{"status":2}'` 단독 테스트
+  2. Flutter / iOS 의 publish 호출 부분만 신규 엔드포인트로 교체 (기존 `updateMission` 호출 유지)
+  3. 회귀 영향 없음 — 기존 PATCH 엔드포인트 그대로
+
+### 7.9 임시 우회 (서버 배포 전)
+
+서버 배포 전 디자이너가 publish 필요한 경우, 다음 스크립트로 토글 가능:
+
+```bash
+bash scripts/toggle_mission_status.sh <missionId> publish
+bash scripts/toggle_mission_status.sh <missionId> unpublish
+```
+
+스크립트 동작: GET 으로 미션 전체 받아 → 메모리에서 Status 만 변경 → 기존 PATCH 로 전체 전송. 본질적으로 R3.1 의 클라 측 흉내내기.
+
+### 7.10 향후 확장 (참고)
+
+같은 패턴으로 향후 추가 가능:
+- `PATCH /missions/{id}/badge` — 뱃지만 교체
+- `PATCH /missions/{id}/place` — 장소만 교체
+- `POST /missions/{id}/report` — 신고
+
+하지만 R3.1 (status) 가 가장 빈번하고 시급. 나머지는 필요할 때 추가.
 
 ---
 

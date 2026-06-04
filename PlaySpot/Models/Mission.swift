@@ -162,8 +162,9 @@ struct Mission: Identifiable, Codable, Hashable {
 
         quiz = try container.decodeIfPresent(String.self, forKey: .quiz) ?? ""
         answer = try container.decodeIfPresent(String.self, forKey: .answer) ?? ""
-        // Status: 신규 서버 Int(0/2), 레거시 mock 은 문자열("0"/"2").
-        // 폐기값 1(TESTED)·3(FIRST_DESIGN) 또는 알 수 없는 값 → .unpublished 로 흡수 (throw 방지).
+        // Status: 신규 서버 Int(0/1/2), 레거시 mock 은 문자열.
+        // 0=unpublished(편집), 1=testing(테스트 완료), 2=published(공개).
+        // 알 수 없는 값(legacy 3 등) → .unpublished 로 흡수.
         if let intVal = try? container.decodeIfPresent(Int.self, forKey: .status) {
             status = MissionStatus(rawValue: intVal) ?? .unpublished
         } else if let strVal = try? container.decodeIfPresent(String.self, forKey: .status),
@@ -217,10 +218,17 @@ extension Mission {
     /// - 신규 흐름: `POST /api/v1/files/upload` 응답의 fileUrl 을 그대로 저장 (`https://…/file/X.png`).
     /// - 레거시 데이터: 짧은 fileName (`badge-X.png`) — `badgeBaseURL` 과 합쳐 URL 조립.
     /// http(s) 스킴이면 그대로, 아니면 prefix.
+    /// 신규 흐름: `POST /api/v1/files/upload` 응답의 `fileUrl` 전체 https URL.
+    /// 절대 경로: 서버가 `/badge/...` 형태로 응답하는 경우 host 만 prefix.
+    /// 레거시 fileName: 짧은 `badge-X.png` — `badgeBaseURL` 과 결합.
+    /// Flutter rest_api_client.dart 와 동등 (3-format 분기).
     var badgeImageURL: URL? {
         guard let name = badgeImageName, !name.isEmpty else { return nil }
         if name.hasPrefix("http://") || name.hasPrefix("https://") {
             return URL(string: name)
+        }
+        if name.hasPrefix("/") {
+            return URL(string: "\(APIEndpoint.scheme)://\(APIEndpoint.serverHost)\(name)")
         }
         return URL(string: "\(APIEndpoint.badgeBaseURL)\(name)")
     }

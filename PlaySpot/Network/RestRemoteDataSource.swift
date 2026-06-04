@@ -213,6 +213,20 @@ struct RestRemoteDataSource: MissionDataSource {
         }
     }
 
+    /// `PATCH /api/v1/missions/{id}/status` — 단일 status 전환 (R3.1).
+    /// 서버 전이 룰: 0→1→2 단방향만 허용.
+    func updateMissionStatus(missionID: String, status: Int) async throws -> Bool {
+        struct StatusReq: Encodable { let status: Int }
+        do {
+            try await client.send(.PATCH, "/api/v1/missions/\(urlEncode(missionID))/status",
+                                  body: StatusReq(status: status))
+            return true
+        } catch {
+            Self.log.error("updateMissionStatus: \(error.localizedDescription, privacy: .public)")
+            throw error
+        }
+    }
+
     /// `DELETE /api/v1/missions/{id}`.
     /// 실패 시 `APIError` rethrow — `isNotFound` (이미 삭제됨) / `isForbidden` / `isNotDeletable` (Status=2) 분기.
     func deleteMission(missionID: String) async throws -> Bool {

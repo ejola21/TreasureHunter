@@ -35,7 +35,7 @@ class _MissionSetupPageState extends ConsumerState<MissionSetupPage> {
   late bool _limitEnabled;
   late int _limitH, _limitM, _limitS;
   late bool _virtual;
-  late bool _published;
+  late MissionStatus _status;
   late String _lang;
   Uint8List? _badgeBytes; // 새로 선택+크롭된 PNG bytes (저장 시 업로드)
   String? _badgeRemoteName;
@@ -80,7 +80,7 @@ class _MissionSetupPageState extends ConsumerState<MissionSetupPage> {
     _limitM = (s % 3600) ~/ 60;
     _limitS = s % 60;
     _virtual = (m?.isVirtual ?? PlayMode.real) == PlayMode.virtual;
-    _published = (m?.status ?? MissionStatus.unpublished) == MissionStatus.published;
+    _status = m?.status ?? MissionStatus.unpublished;
     _lang = (m?.lang.isEmpty ?? true) ? 'ko' : m!.lang;
     _badgeRemoteName = m?.badgeImageName;
     // 편집 모드 — 디자인 리스트 API 는 items 를 안 줘서 items=[] 인 상태.
@@ -171,7 +171,10 @@ class _MissionSetupPageState extends ConsumerState<MissionSetupPage> {
     m.description = _desc.text.trim();
     m.limitTime = _limitEnabled ? _limitSeconds : 0;
     m.isVirtual = _virtual ? PlayMode.virtual : PlayMode.real;
-    m.status = _published ? MissionStatus.published : MissionStatus.unpublished;
+    // 빌더 저장은 status 를 직접 변경하지 않음. status 전이는 디자인 목록의
+    // 액션 시트 (Test Pass / Publish) 가 R3.1 신규 엔드포인트로 처리.
+    // 신규 미션이면 unpublished(0) 로 저장.
+    m.status = _status;
     m.lang = _lang;
 
     try {
@@ -381,18 +384,20 @@ class _MissionSetupPageState extends ConsumerState<MissionSetupPage> {
               ]),
               const SizedBox(height: 20),
               FormGroup(
-                title: '공개 설정',
-                subtitle: _published
-                    ? '다른 사용자가 Missions 탭에서 플레이할 수 있습니다.'
-                    : '비공개 — 내 디자인 목록에만 보이고 Missions 탭에는 노출되지 않습니다.',
+                title: '현재 상태',
+                subtitle: _statusSubtitle(_status),
                 children: [
-                  _toggleRow(
-                    label: '공개 (Missions 탭에 노출)',
-                    value: _published,
-                    onChanged: (v) => setState(() {
-                      _published = v;
-                      _markDirty();
-                    }),
+                  Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Row(children: [
+                      Icon(_statusIcon(_status), color: _statusColor(_status), size: 20),
+                      const SizedBox(width: 8),
+                      Text(_statusLabel(_status),
+                          style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: DuoColors.eel2)),
+                    ]),
                   ),
                 ],
               ),
@@ -775,4 +780,37 @@ class _MissionSetupPageState extends ConsumerState<MissionSetupPage> {
 
   Widget get _rowDivider =>
       Container(height: 1, margin: const EdgeInsets.only(left: 14), color: DuoColors.swan);
+
+  // MARK: 상태 표시 헬퍼 (3단계 — 단방향 진행)
+  String _statusLabel(MissionStatus s) {
+    switch (s) {
+      case MissionStatus.unpublished: return '편집 중 (비공개)';
+      case MissionStatus.testing:     return '테스트 완료';
+      case MissionStatus.published:   return '공개';
+    }
+  }
+  String _statusSubtitle(MissionStatus s) {
+    switch (s) {
+      case MissionStatus.unpublished:
+        return '저장 후 디자인 목록에서 ‘Test Pass’ → ‘Publish’ 로 단계별 공개.';
+      case MissionStatus.testing:
+        return '디자인 목록에서 ‘Publish’ 를 눌러 Missions 탭에 공개하세요.';
+      case MissionStatus.published:
+        return 'Missions 탭에 노출 중. 되돌릴 수 없습니다.';
+    }
+  }
+  IconData _statusIcon(MissionStatus s) {
+    switch (s) {
+      case MissionStatus.unpublished: return Icons.edit_note;
+      case MissionStatus.testing:     return Icons.verified_outlined;
+      case MissionStatus.published:   return Icons.check_circle;
+    }
+  }
+  Color _statusColor(MissionStatus s) {
+    switch (s) {
+      case MissionStatus.unpublished: return DuoColors.macaw;
+      case MissionStatus.testing:     return DuoColors.bee;
+      case MissionStatus.published:   return DuoColors.green500;
+    }
+  }
 }

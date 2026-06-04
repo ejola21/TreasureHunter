@@ -225,6 +225,16 @@ class RestRemoteDataSource implements MissionDataSource {
     return true;
   }
 
+  /// R3.1 — `PATCH /api/v1/missions/{id}/status` body `{"status":N}`.
+  /// 서버 전이 룰: 0→1→2 단방향. n→n / 2→0 / 0→2 점프 모두 400 INVALID_STATE_TRANSITION.
+  @override
+  Future<bool> updateMissionStatus(String missionID, int status) async {
+    await _client.send('PATCH',
+        '/api/v1/missions/${Uri.encodeComponent(missionID)}/status',
+        body: {'status': status});
+    return true;
+  }
+
   /// SwiftUI RestRemoteDataSource.uploadFile 1:1 — POST /api/v1/files/upload (multipart `file`).
   /// 응답 `fileUrl` (S3 전체 https URL) 을 그대로 반환. mission.badgeImageName 에 저장하면 됨.
   /// `BadgeImageName: "https://playspot-badge-dev.s3.amazonaws.com/file/..."`

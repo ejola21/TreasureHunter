@@ -35,6 +35,10 @@ abstract interface class MissionDataSource {
   Future<bool> updateMission(String missionID, BuilderMissionReq req);
   Future<bool> deleteMission(String missionID);
 
+  /// `PATCH /api/v1/missions/{id}/status` — 단일 status 전환 (R3.1).
+  /// 서버 전이 룰: 0→1→2 단방향만 허용. n→n / 역방향 거부 → 400 INVALID_STATE_TRANSITION.
+  Future<bool> updateMissionStatus(String missionID, int status);
+
   /// `POST /api/v1/badges` — 레거시 뱃지 endpoint. (현재는 uploadFile 권장)
   /// 응답 fileName 을 mission.badgeImageName 에 저장.
   Future<String?> uploadBadgeImage(List<int> bytes, String fileName);

@@ -37,6 +37,7 @@ struct LocalDataSource: MissionDataSource {
     func deleteMission(missionID: String) async throws -> Bool { true }
     func uploadBadgeImage(pngData: Data) async throws -> String? { "mock-badge.png" }
     func uploadFile(pngData: Data, fileName: String) async throws -> FileUploadRes? { nil }
+    func updateMissionStatus(missionID: String, status: Int) async throws -> Bool { true }
 
     func recordPlayStart(missionID: String, playerID: String, startTime: Date, isVirtual: Bool) async throws -> Bool { true }
     func recordPlayFinish(missionID: String, playerID: String, startTime: Date, endTime: Date, isVirtual: Bool) async throws -> Bool { true }

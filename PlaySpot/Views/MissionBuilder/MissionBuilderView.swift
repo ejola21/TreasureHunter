@@ -6,8 +6,9 @@ import SwiftUI
 import os
 
 struct MissionBuilderView: View {
-    @State private var drafts: [Mission] = []
-    @State private var uploaded: [Mission] = []
+    @State private var drafts: [Mission] = []      // status 0
+    @State private var testing: [Mission] = []     // status 1
+    @State private var uploaded: [Mission] = []    // status 2
     @State private var showCreate = false
     @State private var uploadResult: String?
     @State private var deleteBlockedAlert = false
@@ -27,7 +28,10 @@ struct MissionBuilderView: View {
                         .padding(.top, 4)
 
                     if !drafts.isEmpty {
-                        FormGroup(title: "비공개") {
+                        FormGroup(
+                            title: "비공개",
+                            subtitle: "편집 중인 미션. 액션 시트에서 ‘Test Pass’ 로 다음 단계로."
+                        ) {
                             ForEach(Array(drafts.enumerated()), id: \.element.id) { idx, m in
                                 DesignRowV2(
                                     mission: m,
@@ -39,10 +43,26 @@ struct MissionBuilderView: View {
                         }
                     }
 
+                    if !testing.isEmpty {
+                        FormGroup(
+                            title: "테스트 완료",
+                            subtitle: "공개 직전. ‘Publish’ 로 Missions 탭에 노출."
+                        ) {
+                            ForEach(Array(testing.enumerated()), id: \.element.id) { idx, m in
+                                DesignRowV2(
+                                    mission: m,
+                                    statusKind: .testingMission,
+                                    isLast: idx == testing.count - 1,
+                                    onTap: { actionTarget = m }
+                                )
+                            }
+                        }
+                    }
+
                     if !uploaded.isEmpty {
                         FormGroup(
                             title: "공개",
-                            subtitle: "공개된 미션은 바로 삭제할 수 없어요. 먼저 ‘공개 해제’ 한 뒤 비공개 목록에서 삭제하세요."
+                            subtitle: "Missions 탭에 노출 중. 액션 시트의 ‘Demote · 테스트로 되돌리기’ 로 비공개 단계로 내릴 수 있어요."
                         ) {
                             ForEach(Array(uploaded.enumerated()), id: \.element.id) { idx, m in
                                 DesignRowV2(
@@ -55,7 +75,7 @@ struct MissionBuilderView: View {
                         }
                     }
 
-                    if drafts.isEmpty && uploaded.isEmpty && !isLoading {
+                    if drafts.isEmpty && testing.isEmpty && uploaded.isEmpty && !isLoading {
                         emptyState
                     }
 
@@ -109,11 +129,12 @@ struct MissionBuilderView: View {
                     onTogglePublish: {
                         let target = mission
                         actionTarget = nil
-                        if target.status == .published {
-                            Task { await unpublish(target) }
-                        } else {
-                            Task { await publish(target) }
-                        }
+                        Task { await advanceStatus(target) }
+                    },
+                    onDemote: {
+                        let target = mission
+                        actionTarget = nil
+                        Task { await demoteToTesting(target) }
                     },
                     onDelete: {
                         let target = mission
@@ -182,39 +203,45 @@ struct MissionBuilderView: View {
         defer { isLoading = false }
 
         let serverMissions = (try? await dataSource.fetchMyDesigned(userID: AppState.shared.userID)) ?? []
-        drafts = serverMissions.filter { $0.status != .published }
+        // 3-state 분리: 0 → 비공개 / 1 → 테스트 완료 / 2 → 공개
+        drafts = serverMissions.filter { $0.status == .unpublished }
+        testing = serverMissions.filter { $0.status == .testing }
         uploaded = serverMissions.filter { $0.status == .published }
         Self.log.info("load: server=\(serverMissions.count, privacy: .public) drafts=\(self.drafts.count, privacy: .public) uploaded=\(self.uploaded.count, privacy: .public)")
     }
 
-    /// 공개 → 비공개 전환 (Status 2 → 0).
-    private func unpublish(_ mission: Mission) async {
-        let vm = MissionBuilderViewModel(mission: mission, items: mission.items,
-                                         quizzes: mission.items.flatMap(\.quizzes))
-        await vm.loadDetail()
-        vm.mission.status = .unpublished
-        let ok = await vm.save()
-        if ok {
+    /// 다음 단계 진행 (0→1→2). 서버 R3.1 단일 status 엔드포인트 사용.
+    private func advanceStatus(_ mission: Mission) async {
+        guard let next = mission.status.next else {
+            uploadResult = "이미 공개된 미션입니다."
+            return
+        }
+        do {
+            _ = try await dataSource.updateMissionStatus(missionID: mission.id, status: next.rawValue)
+            uploadResult = next == .testing
+                ? "테스트 완료로 표시됐어요. 다시 한번 ‘Publish’ 를 눌러 Missions 탭에 공개하세요."
+                : "공개되었습니다. Missions 탭에서 모든 사용자가 볼 수 있어요."
             await load()
-        } else if let err = vm.saveError, err.isNotFound {
-            uploadResult = "이 미션은 서버에서 이미 삭제됐어요. 목록을 새로고침합니다."
-            await load()
-        } else {
-            uploadResult = vm.saveError?.userFacingMessage ?? "공개 해제에 실패했습니다. 잠시 후 다시 시도하세요."
+        } catch let err as APIError {
+            uploadResult = err.userFacingMessage
+        } catch {
+            uploadResult = "상태 변경 실패: \(error.localizedDescription)"
         }
     }
 
-    /// 비공개 → 공개 전환 (Status 0 → 2).
-    private func publish(_ mission: Mission) async {
+    /// 공개(2) → 테스트(1) 후퇴. 서버 R3.1 가 역방향 거부하므로 전체 PATCH 우회.
+    /// GET 으로 전체 받아 Status=1 변환 → updateMission 호출.
+    private func demoteToTesting(_ mission: Mission) async {
         let vm = MissionBuilderViewModel(mission: mission, items: mission.items,
                                          quizzes: mission.items.flatMap(\.quizzes))
         await vm.loadDetail()
-        vm.mission.status = .published
+        vm.mission.status = .testing
         let ok = await vm.save()
         if ok {
+            uploadResult = "테스트 단계로 되돌렸어요. Missions 탭에서 더 이상 안 보입니다."
             await load()
         } else {
-            uploadResult = vm.saveError?.userFacingMessage ?? "공개에 실패했습니다. 잠시 후 다시 시도하세요."
+            uploadResult = vm.saveError?.userFacingMessage ?? "되돌리기 실패. 잠시 후 다시 시도하세요."
         }
     }
 }
@@ -222,7 +249,7 @@ struct MissionBuilderView: View {
 // MARK: - Design Row v2
 
 private struct DesignRowV2: View {
-    enum StatusKind { case privateMission, publicMission }
+    enum StatusKind { case privateMission, testingMission, publicMission }
 
     let mission: Mission
     let statusKind: StatusKind
@@ -264,6 +291,7 @@ private struct DesignRowV2: View {
         Group {
             switch statusKind {
             case .privateMission: DuoChip.orange("비공개")
+            case .testingMission: DuoChip.yellow("테스트")
             case .publicMission:  DuoChip.green("공개")
             }
         }

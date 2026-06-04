@@ -46,6 +46,11 @@ protocol MissionDataSource {
     /// Legacy 백엔드에서는 미지원 — `NotSupportedError` throw.
     func deleteMission(missionID: String) async throws -> Bool
 
+    /// `PATCH /api/v1/missions/{id}/status` — 단일 status 전환 (R3.1, api_designer.md §7).
+    /// 서버 전이 룰: 0→1→2 단방향만 허용. n→n / 역방향 거부.
+    /// Legacy 백엔드 미지원 — 그쪽은 전체 PATCH 로 우회.
+    func updateMissionStatus(missionID: String, status: Int) async throws -> Bool
+
     /// `POST /api/v1/badges` (multipart `file`) — 뱃지 이미지 업로드. 응답 fileName 반환.
     /// 받은 fileName 은 호출자가 mission payload 의 `BadgeImageName` 에 담아 create/update 로 연결한다.
     /// (서버에 `?missionId=...` 옵션도 있으나 어차피 PATCH 가 같은 작업을 하므로 미사용.)
