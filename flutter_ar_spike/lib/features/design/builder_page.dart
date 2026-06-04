@@ -1,10 +1,19 @@
 // features/design/builder_page.dart — SwiftUI MissionBuilderMapView.swift 1:1.
-// AppBar: "EDITING / 아이템 배치" + 완료 / 지도 longPress → ItemPicker / 핀 탭 → 콜아웃 → ItemDetail
-// / 하단 다크 Fox 마스코트 toolbar + validation banner.
+// AppBar: "EDITING / 아이템 배치" + 현재 위치 아이콘 / 지도 longPress → ItemPicker / 핀 탭 → 콜아웃 → ItemDetail
+// / 하단 다크 Fox 마스코트 toolbar + validation banner. 닫기는 좌측 back arrow.
+import 'dart:async';
+import 'dart:math' as math;
+import 'dart:ui' as ui;
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter_compass/flutter_compass.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
+
+import '../../services/web_compass.dart';
 
 import '../../design_system/duo_tokens.dart';
 import '../../game/mission_validator.dart';
@@ -34,11 +43,78 @@ class _BuilderPageState extends ConsumerState<BuilderPage> {
   final MapController _mapController = MapController();
   final GlobalKey _mapKey = GlobalKey();
 
+  // 현재 사용자 위치 — 지도 위 파란 점으로 표시. geolocator 스트림 구독.
+  LatLng? _currentLocation;
+  StreamSubscription<Position>? _locationSub;
+  // 폰 방향 (heading 0~360, 시계방향, 진북 기준). null = 미지원 또는 권한 거부.
+  // 네이티브: flutter_compass / 웹: WebCompass (DeviceOrientationEvent).
+  double? _heading;
+  StreamSubscription<CompassEvent>? _compassSub;
+  WebCompass? _webCompass;
+  StreamSubscription<double>? _webCompassSub;
+
   @override
   void initState() {
     super.initState();
     _m = widget.initial ?? Mission(id: widget.missionID);
     _load();
+    _initLocationStream();
+    _initCompass();
+  }
+
+  @override
+  void dispose() {
+    _locationSub?.cancel();
+    _compassSub?.cancel();
+    _webCompassSub?.cancel();
+    _webCompass?.stop();
+    super.dispose();
+  }
+
+  /// flutter_compass(네이티브) / WebCompass(웹) 분기. 권한 없거나 미지원 시 _heading = null 유지.
+  /// ar_play._initCompass 와 동일 패턴.
+  void _initCompass() {
+    if (kIsWeb) {
+      _webCompass = WebCompass();
+      WebCompass.requestPermission().then((granted) {
+        if (!granted || !mounted) return;
+        _webCompass!.start();
+        _webCompassSub = _webCompass!.headingStream.listen((h) {
+          if (!mounted) return;
+          setState(() => _heading = (h + 360.0) % 360.0);
+        });
+      });
+      return;
+    }
+    _compassSub = FlutterCompass.events?.listen((e) {
+      if (!mounted || e.heading == null) return;
+      setState(() => _heading = (e.heading! + 360.0) % 360.0);
+    });
+  }
+
+  Future<void> _initLocationStream() async {
+    try {
+      var perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+      }
+      if (perm != LocationPermission.always && perm != LocationPermission.whileInUse) {
+        return; // 권한 없음 — 현재 위치 표시 안 함.
+      }
+      // 초기 위치 1회 + 이후 5m 이동마다 갱신.
+      final initial = await Geolocator.getCurrentPosition();
+      if (!mounted) return;
+      setState(() => _currentLocation = LatLng(initial.latitude, initial.longitude));
+      _locationSub = Geolocator.getPositionStream(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          distanceFilter: 5,
+        ),
+      ).listen((p) {
+        if (!mounted) return;
+        setState(() => _currentLocation = LatLng(p.latitude, p.longitude));
+      });
+    } catch (_) {/* 위치 미지원/거부 — 무시 */}
   }
 
   Future<void> _load() async {
@@ -138,15 +214,12 @@ class _BuilderPageState extends ConsumerState<BuilderPage> {
               style: TextStyle(fontFamily: DuoFonts.display, fontSize: 14, color: DuoColors.eel2)),
         ]),
         actions: [
-          // SwiftUI MissionBuilderMapView 와 동일 — 단순 dismiss.
-          // 서버 저장은 부모(MissionSetupPage)의 "저장" 한 곳에서만 일어남.
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('완료',
-                style: TextStyle(
-                    color: DuoColors.macaw,
-                    fontFamily: DuoFonts.display,
-                    fontWeight: FontWeight.w900)),
+          // 현재 위치로 카메라 이동 — SwiftUI MKUserTrackingButton 동등.
+          // 닫기는 좌측 기본 뒤로가기(back arrow) 사용. 서버 저장은 부모 MissionSetupPage 의 "저장" 한 곳.
+          IconButton(
+            tooltip: '현재 위치',
+            icon: const Icon(Icons.my_location, color: DuoColors.macaw),
+            onPressed: _moveToCurrentLocation,
           ),
         ],
       ),
@@ -204,6 +277,19 @@ class _BuilderPageState extends ConsumerState<BuilderPage> {
                 ),
           ],
         ),
+        // 현재 위치 파란 점 + heading 방향 부채꼴 빔(있을 때만).
+        if (_currentLocation != null)
+          MarkerLayer(
+            markers: [
+              Marker(
+                point: _currentLocation!,
+                width: 64,
+                height: 64,
+                alignment: Alignment.center,
+                child: _currentLocationMarker(),
+              ),
+            ],
+          ),
         MarkerLayer(
           markers: [
             for (final it in _m.items)
@@ -407,4 +493,110 @@ class _BuilderPageState extends ConsumerState<BuilderPage> {
       }
     });
   }
+
+  // ───── 현재 위치 ─────
+  // AppBar IconButton(my_location) 탭 → 권한 확인 → getCurrentPosition → 카메라 이동.
+  // 동시에 _currentLocation 도 갱신해 지도의 파란 점 마커 동기화.
+  Future<void> _moveToCurrentLocation() async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      var perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+      }
+      if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) {
+        messenger.showSnackBar(const SnackBar(
+            content: Text('위치 권한이 거부됐어요. 설정에서 허용해주세요.')));
+        return;
+      }
+      final p = await Geolocator.getCurrentPosition();
+      if (!mounted) return;
+      final here = LatLng(p.latitude, p.longitude);
+      final zoom = _mapController.camera.zoom;
+      _mapController.move(here, zoom);
+      setState(() => _currentLocation = here);
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('현재 위치를 가져오지 못했어요: $e')));
+    }
+  }
+
+  /// 파란 점 + (heading 있을 때만) 점 바깥에서 시작하는 부채꼴 빔.
+  /// 컨테이너 64×64 — 빔이 점 바깥 32pt 까지 뻗을 공간 확보.
+  Widget _currentLocationMarker() {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        if (_heading != null)
+          Transform.rotate(
+            angle: _heading! * math.pi / 180.0,
+            child: CustomPaint(
+              size: const Size(64, 64),
+              painter: _HeadingConePainter(color: DuoColors.macaw),
+            ),
+          ),
+        Container(
+          width: 14,
+          height: 14,
+          decoration: BoxDecoration(
+            color: DuoColors.macaw,
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 2.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.35),
+                blurRadius: 4,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// heading 방향(위쪽=북) 으로 펼쳐지는 부채꼴 빔.
+/// 점 바깥(반경 10pt 부터) 부터 시작 — 흰 보더에 가려지지 않음.
+/// 시작 70% 불투명도 → 끝 0% 페이드.
+class _HeadingConePainter extends CustomPainter {
+  final Color color;
+  _HeadingConePainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+    const double halfAngle = math.pi / 5; // 36° → 총 72° (넓게)
+    const double innerR = 10;   // 점 바깥에서 시작
+    const double outerR = 30;   // 빔 끝
+
+    // 안쪽 호(점에 가까움) → 직선 → 바깥 호 → 직선 → 닫기.
+    final path = ui.Path()
+      ..moveTo(cx + innerR * math.sin(-halfAngle), cy - innerR * math.cos(halfAngle))
+      ..arcToPoint(
+        Offset(cx + innerR * math.sin(halfAngle), cy - innerR * math.cos(halfAngle)),
+        radius: const Radius.circular(innerR),
+        clockwise: false,
+      )
+      ..lineTo(cx + outerR * math.sin(halfAngle), cy - outerR * math.cos(halfAngle))
+      ..arcToPoint(
+        Offset(cx + outerR * math.sin(-halfAngle), cy - outerR * math.cos(halfAngle)),
+        radius: const Radius.circular(outerR),
+        clockwise: false,
+      )
+      ..close();
+
+    // 시작은 진하게, 끝으로 갈수록 페이드. 위쪽(-Y) 방향 그라디언트.
+    final paint = Paint()
+      ..shader = ui.Gradient.linear(
+        Offset(cx, cy - innerR),
+        Offset(cx, cy - outerR),
+        [color.withValues(alpha: 0.70), color.withValues(alpha: 0.0)],
+      );
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _HeadingConePainter oldDelegate) =>
+      oldDelegate.color != color;
 }
