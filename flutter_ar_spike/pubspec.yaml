@@ -66,6 +66,24 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
 
+  # 앱 아이콘 생성 (Android mipmap + iOS AppIcon).
+  # 실행: dart run flutter_launcher_icons
+  flutter_launcher_icons: ^0.14.4
+
+flutter_launcher_icons:
+  android: "ic_launcher"        # mipmap-{hdpi,mdpi,xhdpi,xxhdpi,xxxhdpi}/ic_launcher.png 생성
+  ios: true                     # ios/Runner/Assets.xcassets/AppIcon.appiconset 갱신
+  remove_alpha_ios: true        # iOS 는 alpha 채널 금지 — 자동 제거
+  image_path: "assets/launcher_icon/app_icon.png"
+  # 안드로이드 8.0+ 어댑티브 아이콘 — 같은 PNG 를 foreground 로, 듀오링고 그린 배경.
+  adaptive_icon_background: "#58CC02"
+  adaptive_icon_foreground: "assets/launcher_icon/app_icon.png"
+  web:
+    generate: true
+    image_path: "assets/launcher_icon/app_icon.png"
+    background_color: "#58CC02"
+    theme_color: "#58CC02"
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
