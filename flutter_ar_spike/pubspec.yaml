@@ -75,14 +75,14 @@ flutter_launcher_icons:
   ios: true                     # ios/Runner/Assets.xcassets/AppIcon.appiconset 갱신
   remove_alpha_ios: true        # iOS 는 alpha 채널 금지 — 자동 제거
   image_path: "assets/launcher_icon/app_icon.png"
-  # 안드로이드 8.0+ 어댑티브 아이콘 — 같은 PNG 를 foreground 로, 듀오링고 그린 배경.
-  adaptive_icon_background: "#58CC02"
+  # 안드로이드 8.0+ 어댑티브 아이콘 — 같은 PNG 를 foreground 로, AR 블루 배경.
+  adaptive_icon_background: "#1E6BFF"
   adaptive_icon_foreground: "assets/launcher_icon/app_icon.png"
   web:
     generate: true
     image_path: "assets/launcher_icon/app_icon.png"
-    background_color: "#58CC02"
-    theme_color: "#58CC02"
+    background_color: "#1E6BFF"
+    theme_color: "#1E6BFF"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
