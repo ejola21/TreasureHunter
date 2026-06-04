@@ -38,6 +38,23 @@ class _QuizViewState extends State<QuizView> {
     _sound.play(SoundEffect.quizWrong);
     final fail = widget.engine.quizFailCount(widget.item) + 1;
     widget.engine.recordQuizFailure(widget.item, 1);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Row(children: const [
+            Icon(Icons.close_rounded, color: Colors.white, size: 18),
+            SizedBox(width: 8),
+            Expanded(child: Text('틀렸어요! 다시 시도해보세요',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700))),
+          ]),
+          backgroundColor: DuoColors.cardinal,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          duration: const Duration(milliseconds: 1600),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
     setState(() {
       // 실패 힌트: 1회=글자수, 2회+=첫 글자.
       if (fail >= 2 && _correct.isNotEmpty) {
