@@ -1,0 +1,27 @@
+{
+  "asset_id": "tongin_cat_wave",
+  "spot_id": "tongin_market",
+  "frame_count": 8,
+  "frame_rate": 8,
+  "loop": true,
+  "frame_size": [
+    1254,
+    1254
+  ],
+  "frames": [
+    "assets/ar/tongin_market/cat_wave/tongin_cat_wave_01.png",
+    "assets/ar/tongin_market/cat_wave/tongin_cat_wave_02.png",
+    "assets/ar/tongin_market/cat_wave/tongin_cat_wave_03.png",
+    "assets/ar/tongin_market/cat_wave/tongin_cat_wave_04.png",
+    "assets/ar/tongin_market/cat_wave/tongin_cat_wave_05.png",
+    "assets/ar/tongin_market/cat_wave/tongin_cat_wave_06.png",
+    "assets/ar/tongin_market/cat_wave/tongin_cat_wave_07.png",
+    "assets/ar/tongin_market/cat_wave/tongin_cat_wave_08.png"
+  ],
+  "recommended_flutter_asset_prefix": "assets/ar/tongin_market/cat_wave/",
+  "notes": [
+    "All frames share the same canvas size for stable animation alignment.",
+    "Use 8fps for a friendly waving loop; test 10-12fps if it feels slow.",
+    "For AR camera capture, render inside the AR overlay Stack and wrap with RepaintBoundary."
+  ]
+}

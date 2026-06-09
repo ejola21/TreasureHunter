@@ -71,6 +71,10 @@ flutter:
     # Day 3 에 실사진 교체할 위치도 동일.
     - assets/markers/
 
+    # AR 오버레이 — 통인시장 고양이 손 흔들기 시퀀스 (jung11 마커 인식 시)
+    # 참조: ar_marker/tongin_cat_flutter_handoff_package/tongin_cat_flutter_handoff.md
+    - assets/ar/tongin_market/cat_wave/
+
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 

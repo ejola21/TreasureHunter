@@ -155,10 +155,17 @@ flutter doctor -v    # 환경 상세 점검
 
 ```bash
 # Android 실기기 (가장 자주)
-flutter run -d ce10171a43e9930a04
+
+
 
 # iOS 시뮬레이터
 flutter run -d "iPhone 16 Pro"
+
+# ios 디바이스 릴리즈 모드 
+flutter run --release -d 00008110-000255503629401E
+
+# ios 디방이스 디버그 모드
+flutter run -d "RoRo iPhone"
 
 # Chrome 로컬
 flutter run -d chrome
@@ -166,3 +173,9 @@ flutter run -d chrome
 # Web LAN 노출 (모바일 브라우저로 확인)
 flutter run -d web-server --web-port=8080 --web-hostname=0.0.0.0
 ```
+
+# flutter
+cd /Users/root1/Documents/workspace/TreasureHunter/flutter_ar_spike
+
+# poc
+cd /Users/root1/Documents/workspace/TreasureHunter/ar_marker/flutter_ar_poc

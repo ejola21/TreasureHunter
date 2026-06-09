@@ -6,6 +6,7 @@
 // 해결: await 없이 호출 + onImageTrackingConfigured 콜백으로 완료 감지.
 // 이 패턴이 플러그인 예제와 동일.
 
+import 'dart:async';
 import 'dart:io' show Platform;
 
 import 'package:ar_flutter_plugin_plus/datatypes/config_planedetection.dart';
@@ -22,6 +23,10 @@ import 'package:vector_math/vector_math_64.dart' as vm;
 
 import 'models/treasure_marker.dart';
 import 'services/detection_logger.dart';
+import 'widgets/png_sequence_animator.dart';
+
+/// 마커 인식 시 특수 오버레이가 트리거될 마커 id 들.
+const _kCatMarkerId = 'jung11';
 
 Future<void> main() async {
   // AssetBundle 접근 (마커 자동 발견) 전에 Flutter 엔진 초기화 필요.
@@ -146,11 +151,16 @@ class _ARScanPageState extends State<ARScanPage> {
   int _score = 0;
   TreasureMarker? _lastFound;
 
-  /// 지금 카메라가 보고 있는 마커 id (continuousImageTracking 으로 매 프레임 갱신).
-  /// 보던 마커가 바뀔 때만 setState 호출해 UI 깜빡임 방지.
-  String? _currentTracking;
-
   DateTime? _sessionStart;
+
+  /// 통인시장 고양이 오버레이 가시성 + 자동 숨김 타이머.
+  /// jung11 인식 시 4초간 노출 (참조: tongin_cat_flutter_handoff.md §8 "캐릭터 표시 시간 2~4초").
+  bool _showCatOverlay = false;
+  Timer? _catHideTimer;
+
+  /// 하단 마커 설명 카드 자동 숨김 타이머 (5초).
+  /// 카드가 떠있는 동안 같은 마커 재인식 시 스킵 — 사용자 요청.
+  Timer? _cardHideTimer;
 
   final _logger = DetectionLogger();
   final _placedNodes = <String, ARNode>{};
@@ -211,17 +221,20 @@ class _ARScanPageState extends State<ARScanPage> {
     final marker = kTreasureMarkers.where((m) => m.id == id).firstOrNull;
     if (marker == null) return;
 
+    // 통인시장 고양이 — jung11 인식 시 손 흔들기 오버레이.
+    // 카드와 같은 규칙: 이미 떠있으면 스킵, 안 떠있으면 표시.
+    if (id == _kCatMarkerId && !_showCatOverlay) {
+      _showCatOverlayFor4s();
+    }
+
     final isFirstTime = !_foundMarkers.contains(id);
 
+    // 점수·햅틱·로깅 — 첫 발견 시에만 (가시성과 무관).
     if (isFirstTime) {
-      // 첫 발견 — 보상 + 햅틱 + 로깅
       setState(() {
         _foundMarkers.add(id);
         _score += marker.rewardPts;
-        _lastFound = marker;
-        _currentTracking = id;
       });
-
       HapticFeedback.heavyImpact();
       SystemSound.play(SystemSoundType.click);
 
@@ -232,20 +245,30 @@ class _ARScanPageState extends State<ARScanPage> {
         latencyMs: latency,
         device: Platform.operatingSystem,
       ));
-    } else {
-      // 재인식 — UI 만 갱신 (지금 보고 있는 마커가 누군지 표시).
-      // 보상 중복 X, 햅틱 X (계속 진동하면 거슬림).
-      if (_currentTracking != id || _lastFound?.id != id) {
-        setState(() {
-          _lastFound = marker;
-          _currentTracking = id;
-        });
-        // 가벼운 selection 햅틱 (살짝 톡)
+    }
+
+    // 마커 설명 카드 — 떠있으면 스킵, 안 떠있을 때만 표시 (사용자 요청).
+    // _lastFound == null 이면 카드 숨김 상태 → 새로 띄움.
+    if (_lastFound == null) {
+      _showMarkerCard(marker);
+      if (!isFirstTime) {
+        // 첫 발견 외의 재등장 시 가벼운 selection 햅틱
         HapticFeedback.selectionClick();
       }
     }
+    // else: 카드 이미 떠있음 → 스킵 (어떤 마커든)
 
     await _placeTreasure(id, transformation);
+  }
+
+  /// 하단 카드 표시 + 5초 후 자동 숨김.
+  /// 카드 숨김 = _lastFound = null → build 의 `if (_lastFound != null)` false → 안 그려짐.
+  void _showMarkerCard(TreasureMarker marker) {
+    _cardHideTimer?.cancel();
+    setState(() => _lastFound = marker);
+    _cardHideTimer = Timer(const Duration(seconds: 5), () {
+      if (mounted) setState(() => _lastFound = null);
+    });
   }
 
   Future<void> _placeTreasure(String id, Matrix4 transformation) async {
@@ -275,8 +298,22 @@ class _ARScanPageState extends State<ARScanPage> {
     }
   }
 
+  /// jung11 인식 시 오버레이 4초간 노출 (참조: tongin_cat_flutter_handoff.md §8).
+  /// 4초 안에 다시 인식되면 타이머 리셋 — 마커 보고 있는 동안 계속 표시.
+  void _showCatOverlayFor4s() {
+    _catHideTimer?.cancel();
+    if (!_showCatOverlay) {
+      setState(() => _showCatOverlay = true);
+    }
+    _catHideTimer = Timer(const Duration(seconds: 4), () {
+      if (mounted) setState(() => _showCatOverlay = false);
+    });
+  }
+
   @override
   void dispose() {
+    _catHideTimer?.cancel();
+    _cardHideTimer?.cancel();
     _sessionMgr?.dispose();
     super.dispose();
   }
@@ -309,6 +346,29 @@ class _ARScanPageState extends State<ARScanPage> {
                 ),
               ),
             ),
+
+          // 통인시장 고양이 손 흔들기 오버레이 — jung11 마커 인식 시 4초간 노출.
+          // tongin_cat_flutter_handoff.md §5 의 Stack 오버레이 패턴.
+          Positioned.fill(
+            child: IgnorePointer(
+              ignoring: true,
+              child: AnimatedOpacity(
+                opacity: _showCatOverlay ? 1 : 0,
+                duration: const Duration(milliseconds: 250),
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 180),
+                    child: PngSequenceAnimator(
+                      frames: tonginCatWaveFrames,
+                      fps: 8,
+                      width: 220,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
 
           // 상단 스코어 바
           Positioned(

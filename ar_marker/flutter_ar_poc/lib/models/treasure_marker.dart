@@ -98,6 +98,14 @@ const Map<String, _MarkerMetadata> _knownMarkers = {
     rewardPts: 100,
     widthCm: 20,
   ),
+  // 통인시장 고양이 마커 — 인식 시 8프레임 손 흔들기 애니메이션 트리거
+  // 참조: tongin_cat_flutter_handoff.md
+  'jung11': _MarkerMetadata(
+    label: 'Tongin Cat',
+    clue: 'Welcome to Tongin Market!\nTry the Yeopjeon Lunchbox Mission.',
+    rewardPts: 300,
+    widthCm: 60,
+  ),
 };
 
 /// 마커로 인식할 이미지 확장자 (소문자, 점 포함).
