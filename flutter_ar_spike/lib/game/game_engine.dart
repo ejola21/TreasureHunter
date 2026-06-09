@@ -93,7 +93,11 @@ class GameEngine extends ChangeNotifier {
     }
     m.items = fetchedItems;
 
-    if (isNewStart) _store.deleteAll(missionID, playerID);
+    if (isNewStart) {
+      await _store.deleteAll(missionID, playerID);
+    } else {
+      await _store.hydrate(missionID, playerID);
+    }
     _acquisitionOrder.clear();
 
     var playState = _store.fetchMissionInPlay(missionID, playerID);

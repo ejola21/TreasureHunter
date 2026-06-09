@@ -1,0 +1,10 @@
+# gen-l10n 설정 — Flutter 내장 코드젠 (flutter pub get 시 자동 실행).
+# 생성물: .dart_tool/flutter_gen/gen_l10n/app_localizations.dart
+# 사용:   import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+#         AppLocalizations.of(context)!.helloWorld
+
+arb-dir: lib/l10n
+template-arb-file: app_en.arb            # en 이 placeholder 메타 기준
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+nullable-getter: false                   # of(context)! 강제 — 항상 non-null

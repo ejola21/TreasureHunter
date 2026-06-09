@@ -1,6 +1,8 @@
 // test/game_engine_test.dart — GameEngine 상태머신 회귀 (plan_playspot_flutter.md Phase 12).
 // Swift GameEngine 의 엣지케이스(완료 게이트 / 지뢰 손실 / Defense 흡수 / Dark zone / Run 타임아웃)를
 // 결정론적으로 고정한다. 타이머/네트워크 비의존 — FakeDataSource + 메모리 PlayStateStore.
+import 'package:drift/native.dart';
+import 'package:flutter_ar_spike/database/app_database.dart';
 import 'package:flutter_ar_spike/game/game_engine.dart';
 import 'package:flutter_ar_spike/game/play_state_store.dart';
 import 'package:flutter_ar_spike/models/game_state.dart';
@@ -66,7 +68,7 @@ class _FakeDataSource implements MissionDataSource {
 Future<GameEngine> _engine(List<MissionItem> items) async {
   final e = GameEngine(
     dataSource: _FakeDataSource(items),
-    playState: PlayStateStore(),
+    playState: PlayStateStore(AppDatabase.forTesting(NativeDatabase.memory())),
     soundService: SoundService(),
     hapticService: HapticService(),
     playerID: 'tester',

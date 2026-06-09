@@ -6,14 +6,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Play Spot** is a location-based treasure hunt iOS game with augmented reality features. Players create and play GPS-based missions with quiz challenges, collectible items, power-ups, and hazards. Supports "real mode" (actual GPS) and "virtual mode" (simulated locations). Localized in English and Korean.
 
-The repo contains **two parallel projects**:
+## 프로젝트 명칭 (4 트랙)
 
-| Project | Path | Status | Bundle ID |
+레포 안에 4 개의 병렬 프로젝트가 있음. 사용자가 "mvp 플러터", "poc 마커" 등으로 지칭하면 아래 매핑으로 해석:
+
+| 명칭 | 경로 | 언어/스택 | 상태 |
 |---|---|---|---|
-| **New (active)** | `PlaySpot.xcodeproj` + `PlaySpot/` | Swift / SwiftUI 미그레이션 진행 중 | `com.ejola.playspot.dev` (Personal Team) |
-| **Legacy (참고용)** | `TreasureHunter.xcodeproj` + `Classes/` | Objective-C iOS 4 시대 원본 | `com.mking.trasurehunter` |
+| **mvp 플러터** | `./flutter_ar_spike/` | Flutter / Dart | **상용화 타겟** — 앞으로 이 프로젝트를 업그레이드해서 출시 예정 |
+| **mvp 스위프트** | `./PlaySpot/` + `PlaySpot.xcodeproj` | Swift / SwiftUI | SwiftUI 미그레이션 진행 중 (`com.ejola.playspot.dev`, Personal Team) |
+| **레가시** | `./Classes/` + `TreasureHunter.xcodeproj` | Objective-C (iOS 4 시대) | 참조용 원본 (`com.mking.trasurehunter`) |
+| **poc 마커** | `./ar_marker/` | Flutter (Image Target AR) | 마커기반 PoC — iOS 검증 완료 |
 
-**작업 기본 대상은 새 PlaySpot 프로젝트입니다.** 레거시는 마이그레이션 시 참조용으로만 사용.
+**작업 우선순위**:
+1. 사용자가 명시한 트랙으로 작업
+2. 명시 없으면 **mvp 플러터 (`flutter_ar_spike`)** 가 기본 — 상용화 타겟
+3. mvp 스위프트는 iOS 네이티브 작업 시
+4. 레가시는 마이그레이션 시 참조용
+5. poc 마커는 AR 마커 실험용 (상용 빌드와 격리)
 
 ## ⚠️ Build & Modification Rules (반드시 준수)
 

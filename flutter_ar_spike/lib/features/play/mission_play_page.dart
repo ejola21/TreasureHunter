@@ -47,7 +47,7 @@ class _MissionPlayPageState extends ConsumerState<MissionPlayPage> {
     super.initState();
     _engine = GameEngine(
       dataSource: ref.read(dataSourceProvider),
-      playState: PlayStateStore(),
+      playState: PlayStateStore(ref.read(appDatabaseProvider)),
       soundService: SoundService(),
       hapticService: HapticService(),
       playerID: ref.read(authSessionProvider).userId ?? 'guest',

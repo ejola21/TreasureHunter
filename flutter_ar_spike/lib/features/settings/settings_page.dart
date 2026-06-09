@@ -8,6 +8,7 @@ import '../../design_system/candy_button.dart';
 import '../../design_system/duo_tokens.dart';
 import '../../design_system/form_group.dart';
 import '../../design_system/seg_btn_pair.dart';
+import '../../l10n/app_localizations.dart';
 import '../../network/app_config.dart';
 import '../../network/rest_api_client.dart';
 import '../help/help_root.dart';
@@ -25,6 +26,7 @@ class SettingsPage extends ConsumerWidget {
     final userId = ref.watch(authSessionProvider).userId ?? '-';
     final isGuest = userId.startsWith('Guest@') || userId == '-';
     final backend = ref.watch(backendProvider);
+    final currentLocale = ref.watch(localeProvider);
 
     return Scaffold(
       backgroundColor: DuoColors.snow,
@@ -90,6 +92,41 @@ class SettingsPage extends ConsumerWidget {
                           }
                         },
                       ),
+                    ),
+                  ]),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            // LANGUAGE · 언어 — gen-l10n supportedLocales 자동 추출 (ARB 추가 시 자동 노출).
+            FormGroup(
+              title: 'LANGUAGE · 언어',
+              subtitle: 'System default 선택 시 디바이스 언어를 따름. 새 ARB 추가 시 자동 노출.',
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Row(children: [
+                    const Text('Language',
+                        style: TextStyle(fontFamily: DuoFonts.display, fontSize: 15, color: DuoColors.eel)),
+                    const Spacer(),
+                    DropdownButton<Locale?>(
+                      value: currentLocale,
+                      underline: const SizedBox(),
+                      items: [
+                        const DropdownMenuItem<Locale?>(value: null, child: Text('System default')),
+                        ...AppLocalizations.supportedLocales.map(
+                          (l) => DropdownMenuItem<Locale?>(value: l, child: Text(localeDisplayName(l))),
+                        ),
+                      ],
+                      onChanged: (v) async {
+                        await ref.read(localeProvider.notifier).set(v);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Language: ${localeDisplayName(v)}')),
+                          );
+                        }
+                      },
                     ),
                   ]),
                 ),

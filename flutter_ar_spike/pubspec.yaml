@@ -55,6 +55,12 @@ dependencies:
   sensors_plus: ^6.1.0          # 흔들기(가속도) 감지 — AR/미니게임
   image_picker: ^1.1.2          # 미션 디자인 뱃지 이미지 선택
 
+  # 플레이 상태 영속화 — ItemRnPInPlay / MissionItemInPlay / MissionInPlay.
+  # SQLite (FMDB · GRDB 와 같은 엔진), Dart 코드젠 타입세이프 래퍼.
+  # cold restart 안전, 미션 종료 시 DAO.deleteAll 로 청소.
+  drift: ^2.20.0
+  drift_flutter: ^0.2.0         # path_provider + sqlite3_flutter_libs 번들
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -69,6 +75,10 @@ dev_dependencies:
   # 앱 아이콘 생성 (Android mipmap + iOS AppIcon).
   # 실행: dart run flutter_launcher_icons
   flutter_launcher_icons: ^0.14.4
+
+  # drift 코드젠 — `dart run build_runner build` 로 *.g.dart 생성.
+  drift_dev: ^2.20.0
+  build_runner: ^2.4.13
 
 flutter_launcher_icons:
   android: "ic_launcher"        # mipmap-{hdpi,mdpi,xhdpi,xxhdpi,xxxhdpi}/ic_launcher.png 생성
@@ -90,6 +100,10 @@ flutter_launcher_icons:
 
 # The following section is specific to Flutter packages.
 flutter:
+
+  # gen-l10n 활성화 — lib/l10n/*.arb 를 자동으로 AppLocalizations 클래스로 변환.
+  # 설정: l10n.yaml (프로젝트 루트). pub get 시점에 코드젠 실행.
+  generate: true
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

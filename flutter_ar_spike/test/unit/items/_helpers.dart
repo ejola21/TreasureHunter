@@ -1,5 +1,7 @@
 // test/unit/items/_helpers.dart — 아이템별 단위 테스트 공용 헬퍼.
 // SwiftUI GameEngine.swift 의 acquireItem / _setAcquiredAlert 분기를 1:1 검증한다.
+import 'package:drift/native.dart';
+import 'package:flutter_ar_spike/database/app_database.dart';
 import 'package:flutter_ar_spike/game/game_engine.dart';
 import 'package:flutter_ar_spike/game/play_state_store.dart';
 import 'package:flutter_ar_spike/models/game_state.dart';
@@ -82,7 +84,7 @@ Future<TestEngine> buildEngine(
   final ds = FakeDataSource(items, quizzes: quizzes);
   final e = GameEngine(
     dataSource: ds,
-    playState: PlayStateStore(),
+    playState: PlayStateStore(AppDatabase.forTesting(NativeDatabase.memory())),
     soundService: sound,
     hapticService: haptic,
     playerID: 'tester',
